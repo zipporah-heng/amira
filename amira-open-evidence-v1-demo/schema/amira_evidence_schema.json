@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0-demo",
+  "title": "AMIRA Open Women's Hormonal Evidence \u2014 study record",
+  "disclaimer": "DEMO DATA FOR HACKATHON PROTOTYPE. NOT VALIDATED CLINICAL EVIDENCE.",
+  "fields": {
+    "study_id": "string \u2014 stable identifier",
+    "medicine": "string",
+    "condition": "string",
+    "study_type": "enum \u2014 RCT | Observational | Post-hoc Analysis | Other",
+    "year": "integer",
+    "total_n": "integer >= 0",
+    "female_n": "integer >= 0 (<= total_n)",
+    "female_pct": "number 0-100",
+    "sex_specific_efficacy_reported": "enum yes|no|uncertain|not_reported",
+    "sex_specific_safety_reported": "enum yes|no|uncertain|not_reported",
+    "sex_by_treatment_interaction": "enum yes|no|uncertain|not_reported",
+    "menopause_reported": "enum yes|no|uncertain|not_reported",
+    "perimenopause_reported": "enum yes|no|uncertain|not_reported",
+    "postmenopause_reported": "enum yes|no|uncertain|not_reported",
+    "hormone_therapy_reported": "enum yes|no|uncertain|not_reported",
+    "pregnancy_reported": "enum yes|no|uncertain|not_reported",
+    "relevant_evidence_passage": "string \u2014 supporting text span",
+    "source": "string",
+    "source_url": "string (uri)",
+    "ai_confidence": "number 0-1",
+    "human_verified": "boolean"
+  }
+}

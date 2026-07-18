@@ -11,6 +11,15 @@ AMIRA evaluates **evidence completeness**. It does **not** diagnose, prescribe,
 recommend treatment, tell anyone whether a medicine is safe for them, or rank
 medicines as better, safer, or more effective.
 
+> **Clickable mockup:** the primary UI is the four-route clickable prototype
+> (`/amira/check-evidence`, `/amira/research-map`, `/amira/open-benchmark`,
+> `/amira/methodology`) built around the **Open Women's Hormonal Evidence Dataset and
+> Benchmark**, with a 1–5 Evidence Maturity Model and downloadable sample files. All its
+> numbers are **DEMO DATA** derived from one fixture (`ui/src/data/amira_demo_evidence.json`).
+> See [FOUNDER_VERIFICATION_MOCKUP.md](FOUNDER_VERIFICATION_MOCKUP.md). Regenerate the
+> fixture + sample package with `python scripts/generate_demo_data.py`. The backend,
+> schema, and pipeline below are the real infrastructure underneath.
+
 Current focus: **cardiovascular disease**, through the lens of **perimenopause and
 postmenopause**.
 
