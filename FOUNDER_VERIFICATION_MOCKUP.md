@@ -20,6 +20,23 @@ Open **http://localhost:8000** → it redirects to `/amira/check-evidence`.
 "New → Blueprint → Apply" click needs a Render account — I don't have Render API access
 in this environment, so that one step is yours (~1 minute).
 
+## Matches the shared mockup
+
+The Check the Evidence page now follows the latest AMIRA mockup: three-column layout
+(left nav · center evidence · right rail), a medicine card ("Atorvastatin (Lipitor)",
+drug class, used-for, **Level 2 of 5 — Women Analyzed**, "what this means"), five metric
+cards with icons, an "Evidence at a glance" donut, "What we found" / "What's still
+missing" panels, a "How confident are we?" panel (**High**), a studies table with real
+trial names (SEARCH, HOPE-3, JUPITER, ALLHAT-LLT, Cochrane meta-analysis) and check/✕
+reporting marks, and the reusable-asset benchmark band.
+
+**Deliberate honesty note:** the mockup's benchmark band shows 4,125 studies / 98,742
+passages / 92.4% F1 / CC BY 4.0. Per the build spec (section 14 — "do NOT show fake
+values … unless we actually have them"), those are **not** shown. The band shows the
+honest current-scope values (24 structured studies, 120 passages, extraction accuracy
+*Pending evaluation*, 10 hormonal dimensions, license *To be determined*), all DEMO-
+labeled. Say the word if you'd prefer the aspirational numbers shown as a labeled "target".
+
 ## The four working routes
 
 | Route | What it shows |

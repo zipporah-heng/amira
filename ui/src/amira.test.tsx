@@ -22,10 +22,10 @@ describe("fixture is the single source of truth", () => {
 
   it("study-type volumes sum to 24 (12/7/3/2)", () => {
     const counts = Object.fromEntries(stats.studyTypes.map((t) => [t.type, t.count]));
-    expect(counts["Randomized Controlled Trial"]).toBe(12);
-    expect(counts["Observational Study"]).toBe(7);
-    expect(counts["Post-hoc Analysis"]).toBe(3);
-    expect(counts["Other"]).toBe(2);
+    expect(counts["Randomized Controlled Trials"]).toBe(12);
+    expect(counts["Observational Studies"]).toBe(7);
+    expect(counts["Post-hoc Analyses"]).toBe(3);
+    expect(counts["Other Study Types"]).toBe(2);
   });
 });
 
@@ -35,10 +35,19 @@ describe("Check the Evidence page", () => {
     expect(screen.getByText("Was this medicine studied in women like me?")).toBeInTheDocument();
   });
 
-  it("renders the evidence level (Level 2 of 5, Women Analyzed)", () => {
+  it("renders the medicine card with brand and evidence level (2 of 5, Women Analyzed)", () => {
+    const { container } = wrap(<CheckEvidence />);
+    expect(container.querySelector(".med-name")!.textContent).toContain("Atorvastatin");
+    expect(screen.getByText("(Lipitor)")).toBeInTheDocument();
+    expect(container.querySelector(".ml-num")!.textContent).toContain("2");
+    expect(screen.getByText("of 5")).toBeInTheDocument();
+    expect(screen.getByText("Women Analyzed")).toBeInTheDocument();
+  });
+
+  it("renders the evidence-at-a-glance donut legend with study-type buckets", () => {
     wrap(<CheckEvidence />);
-    expect(screen.getByText("Level 2 of 5")).toBeInTheDocument();
-    expect(screen.getAllByText("Women Analyzed").length).toBeGreaterThan(0);
+    expect(screen.getByText("Randomized Controlled Trials")).toBeInTheDocument();
+    expect(screen.getByText("Observational Studies")).toBeInTheDocument();
   });
 
   it("shows numbers that come from the fixture, not vague words", () => {
@@ -50,28 +59,43 @@ describe("Check the Evidence page", () => {
     expect(screen.queryByText(/many studies|some women|usually not reported/i)).toBeNull();
   });
 
-  it("CHECK THE EVIDENCE button is present and clickable", () => {
+  it("Check Evidence button is present and clickable", () => {
     wrap(<CheckEvidence />);
-    const btn = screen.getByRole("button", { name: "CHECK THE EVIDENCE" });
+    const btn = screen.getByRole("button", { name: "Check Evidence" });
     fireEvent.click(btn);
-    expect(screen.getByText("Evidence result")).toBeInTheDocument();
+    expect(screen.getByText("Studies behind this result (24)")).toBeInTheDocument();
   });
 
   it("filters update state", () => {
     wrap(<CheckEvidence />);
     const medicine = screen.getByLabelText("Medicine") as HTMLSelectElement;
-    fireEvent.change(medicine, { target: { value: "Rosuvastatin" } });
-    expect(medicine.value).toBe("Rosuvastatin");
+    fireEvent.change(medicine, { target: { value: "Rosuvastatin (Crestor)" } });
+    expect(medicine.value).toBe("Rosuvastatin (Crestor)");
   });
 
-  it("loads the study table with all 24 studies and opens the source drawer", () => {
+  it("shows the featured trials, expands to all 24, and opens the source drawer", () => {
     wrap(<CheckEvidence />);
     const table = document.querySelector("table.studies")!;
-    const rows = within(table as HTMLElement).getAllByRole("row");
-    expect(rows.length).toBe(1 + 24); // header + 24
-    fireEvent.click(rows[1]);
+    // Default shows 5 featured rows.
+    expect(within(table as HTMLElement).getAllByRole("row").length).toBe(1 + 5);
+    expect(screen.getByText("SEARCH Trial")).toBeInTheDocument();
+    expect(screen.getByText("JUPITER Trial")).toBeInTheDocument();
+    // Expand to all 24.
+    fireEvent.click(screen.getByRole("button", { name: /View all studies/i }));
+    expect(within(table as HTMLElement).getAllByRole("row").length).toBe(1 + 24);
+    // Open drawer from first row.
+    fireEvent.click(within(table as HTMLElement).getAllByRole("row")[1]);
     expect(screen.getByRole("dialog", { name: /study source detail/i })).toBeInTheDocument();
     expect(screen.getByText(/Human verified: No/i)).toBeInTheDocument();
+  });
+
+  it("renders the right rail: findings, missing, and confidence", () => {
+    wrap(<CheckEvidence />);
+    expect(screen.getByText("What we found")).toBeInTheDocument();
+    expect(screen.getByText("What's still missing")).toBeInTheDocument();
+    expect(screen.getByText("How confident are we?")).toBeInTheDocument();
+    expect(screen.getByText(/did not report menopause status/i)).toBeInTheDocument();
+    expect(screen.getByText("High")).toBeInTheDocument();
   });
 
   it("shows the safety line and DEMO DATA labeling", () => {

@@ -6,6 +6,7 @@ export interface Study {
   medicine: string;
   condition: string;
   study_type: string;
+  category: string;
   year: number;
   total_n: number;
   female_n: number;
@@ -61,12 +62,16 @@ export interface Benchmark {
 export interface AmiraFixture {
   meta: {
     medicine: string;
+    brand: string;
     drug_class: string;
+    used_for: string;
     condition: string;
     life_stage_demo: string;
     hormone_therapy_demo: string;
     evidence_level: number;
     evidence_level_label: string;
+    what_this_means: string;
+    confidence: { level: string; rationale: string };
     data_label: string;
     disclaimer: string;
   };

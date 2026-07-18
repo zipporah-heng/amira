@@ -1,29 +1,25 @@
+import { Link } from "react-router-dom";
 import { stats } from "../fixture";
 
 export function FindingsPanel() {
+  const items = [
+    `Women were included in ${stats.studyCount} studies.`,
+    `${stats.femaleTotal.toLocaleString()} women participants identified.`,
+    `Cholesterol-lowering efficacy was reported in women in ${stats.sexSpecificOutcomes} studies.`,
+    `Safety outcomes were reported in women in ${stats.sexSpecificSafety} studies.`,
+  ];
   return (
-    <div className="panel found">
-      <h3>
-        <span>✅</span> What we found
-      </h3>
-      <ul>
-        <li>
-          <span className="ic">•</span>
-          <span><b>{stats.studyCount}</b> studies in the reviewed sample included women.</span>
-        </li>
-        <li>
-          <span className="ic">•</span>
-          <span><b>{stats.femaleTotal.toLocaleString()}</b> female participants were identified.</span>
-        </li>
-        <li>
-          <span className="ic">•</span>
-          <span><b>{stats.sexSpecificOutcomes} of {stats.studyCount}</b> studies reported outcomes separately for women.</span>
-        </li>
-        <li>
-          <span className="ic">•</span>
-          <span><b>{stats.sexSpecificSafety} of {stats.studyCount}</b> studies reported sex-specific safety outcomes.</span>
-        </li>
+    <div className="rail-card">
+      <h3 className="rail-title">What we found</h3>
+      <ul className="rail-list found">
+        {items.map((t) => (
+          <li key={t}>
+            <span className="ic ok">✓</span>
+            <span>{t}</span>
+          </li>
+        ))}
       </ul>
+      <Link to="/amira/methodology" className="rail-link">See all findings →</Link>
     </div>
   );
 }

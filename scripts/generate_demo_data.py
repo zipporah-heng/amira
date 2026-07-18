@@ -37,17 +37,43 @@ MENOPAUSE_YES = 1             # 1 / 24 reported menopause status
 HORMONE_THERAPY_YES = 0
 PREGNANCY_YES = 0
 
-STUDY_TYPES = (
-    ["Randomized Controlled Trial"] * 12
+# Donut buckets shown in "Evidence at a glance" (12 / 7 / 3 / 2 = 24).
+CATEGORY_OF = {
+    "Randomized Controlled Trial": "Randomized Controlled Trials",
+    "Observational Study": "Observational Studies",
+    "Post-hoc Analysis": "Post-hoc Analyses",
+    "Meta-analysis": "Other Study Types",
+    "Other": "Other Study Types",
+}
+
+# Five featured studies shown in the table (real trial names, DEMO values).
+# Their % women match the mockup; counts are sized so all 24 studies still sum
+# exactly to the required aggregates.
+FEATURED = [
+    {"name": "SEARCH Trial", "year": 2010, "female_n": 1531, "total_n": 3645,
+     "sex_eff": True, "sex_saf": True, "type": "Randomized Controlled Trial", "src": "PubMed"},
+    {"name": "HOPE-3 Trial", "year": 2016, "female_n": 1948, "total_n": 5265,
+     "sex_eff": True, "sex_saf": True, "type": "Randomized Controlled Trial", "src": "PubMed"},
+    {"name": "JUPITER Trial", "year": 2008, "female_n": 1695, "total_n": 4346,
+     "sex_eff": True, "sex_saf": False, "type": "Randomized Controlled Trial", "src": "PubMed"},
+    {"name": "ALLHAT-LLT", "year": 2002, "female_n": 1222, "total_n": 2716,
+     "sex_eff": False, "sex_saf": False, "type": "Randomized Controlled Trial", "src": "PubMed"},
+    {"name": "Meta-analysis", "year": 2021, "female_n": 1556, "total_n": 3536,
+     "sex_eff": True, "sex_saf": False, "type": "Meta-analysis", "src": "Cochrane"},
+]
+
+# 19 filler studies complete the type mix: 8 RCT + 7 obs + 3 post-hoc + 1 other
+# (featured contribute 4 RCT + 1 "Other" via the meta-analysis).
+FILLER_TYPES = (
+    ["Randomized Controlled Trial"] * 8
     + ["Observational Study"] * 7
     + ["Post-hoc Analysis"] * 3
-    + ["Other"] * 2
+    + ["Other"] * 1
 )
-
-# Indices chosen deterministically so counts are exact and spread across types.
-SEX_EFFICACY_IDX = [0, 1, 2, 12, 19, 22]     # 6
-SEX_SAFETY_IDX = [0, 1, 2, 12, 19]          # 5 (subset of efficacy)
-MENOPAUSE_IDX = [2]                          # 1 (also postmenopause)
+# Featured give 4 sex-efficacy and 2 sex-safety; filler supplies the rest.
+FILLER_SEX_EFFICACY_IDX = [0, 8]        # -> 6 total
+FILLER_SEX_SAFETY_IDX = [0, 1, 8]       # -> 5 total
+FILLER_MENOPAUSE_IDX = [5]              # -> 1 total
 
 DIMENSIONS = [
     "female_enrollment",
@@ -63,92 +89,105 @@ DIMENSIONS = [
 ]  # 10 hormonal/sex evidence dimensions
 
 
+def _passage(sid: str, female_n: int, female_pct: float, total_n: int,
+             sex_eff: bool, meno: bool) -> str:
+    if meno:
+        return (
+            f"[DEMO] Sample record {sid} enrolled {female_n:,} women "
+            f"({female_pct}% of {total_n:,} participants). A postmenopausal subgroup "
+            "was described and outcomes were reported separately for women. "
+            "Illustrative mock text — not a real research finding."
+        )
+    if sex_eff:
+        return (
+            f"[DEMO] Sample record {sid} reported cardiovascular outcomes separately "
+            f"for women (n={female_n:,}, {female_pct}% of {total_n:,}). Illustrative "
+            "mock text — not a real research finding."
+        )
+    return (
+        f"[DEMO] Sample record {sid} enrolled {female_n:,} women ({female_pct}% of "
+        f"{total_n:,} participants); results were not reported separately by sex. "
+        "Illustrative mock text — not a real research finding."
+    )
+
+
+def _study(sid, title, study_type, year, total_n, female_n, sex_eff, sex_saf, meno,
+           source_name, confidence):
+    female_pct = round(female_n / total_n * 100, 1)
+    return {
+        "study_id": sid,
+        "title": title,
+        "medicine": "Atorvastatin",
+        "condition": "Heart Disease",
+        "study_type": study_type,
+        "category": CATEGORY_OF[study_type],
+        "year": year,
+        "total_n": total_n,
+        "female_n": female_n,
+        "female_pct": female_pct,
+        "sex_specific_efficacy_reported": "yes" if sex_eff else "no",
+        "sex_specific_safety_reported": "yes" if sex_saf else "no",
+        "sex_by_treatment_interaction": "yes" if sex_eff else "no",
+        "menopause_reported": "yes" if meno else "no",
+        "perimenopause_reported": "no",
+        "postmenopause_reported": "yes" if meno else "no",
+        "hormone_therapy_reported": "no",
+        "pregnancy_reported": "no",
+        "relevant_evidence_passage": _passage(sid, female_n, female_pct, total_n, sex_eff, meno),
+        "source": source_name,
+        "source_url": f"https://example.org/amira-demo/{sid}",
+        "ai_confidence": confidence,
+        "human_verified": False,
+        "evidence_status": "DEMO DATA",
+    }
+
+
 def build_studies() -> list[dict]:
     rng = random.Random(42)
-    studies = []
-    # First assign deterministic per-study totals/female for studies 0..22,
-    # then force study 23 to make both sums land exactly on target.
-    partial_total = 0
-    partial_female = 0
-    rows = []
-    for i in range(N_STUDIES - 1):
-        total_n = rng.randint(300, 3200)
-        pct = rng.uniform(0.30, 0.52)
-        female_n = int(round(total_n * pct))
-        rows.append([total_n, female_n])
-        partial_total += total_n
-        partial_female += female_n
+    studies: list[dict] = []
 
-    last_total = TARGET_TOTAL - partial_total
-    last_female = TARGET_FEMALE - partial_female
-    # Keep the last study sane; nudge earlier studies if it went out of range.
-    while last_total < 400 or last_female < 100 or last_female > last_total:
-        # Shrink the largest earlier study a little and recompute.
+    # --- Featured studies (shown in the table) --- #
+    for f in FEATURED:
+        sid = f["name"].replace(" ", "-").upper()
+        studies.append(_study(
+            sid, f"{f['name']} — atorvastatin cardiovascular evidence (DEMO)",
+            f["type"], f["year"], f["total_n"], f["female_n"],
+            f["sex_eff"], f["sex_saf"], False, f["src"],
+            round(0.75 + rng.uniform(0, 0.2), 2),
+        ))
+
+    # --- Filler studies, balanced so the aggregates land exactly --- #
+    feat_female = sum(f["female_n"] for f in FEATURED)
+    feat_total = sum(f["total_n"] for f in FEATURED)
+    need_female = TARGET_FEMALE - feat_female
+    need_total = TARGET_TOTAL - feat_total
+    n_filler = N_STUDIES - len(FEATURED)
+
+    rows = []
+    for _ in range(n_filler - 1):
+        total_n = rng.randint(700, 1900)
+        female_n = int(round(total_n * rng.uniform(0.33, 0.50)))
+        rows.append([total_n, female_n])
+
+    last_total = need_total - sum(r[0] for r in rows)
+    last_female = need_female - sum(r[1] for r in rows)
+    while last_total < 500 or last_female < 150 or last_female > last_total:
         j = max(range(len(rows)), key=lambda k: rows[k][0])
-        rows[j][0] -= 100
-        rows[j][1] = int(round(rows[j][1] * 0.97))
-        partial_total = sum(r[0] for r in rows)
-        partial_female = sum(r[1] for r in rows)
-        last_total = TARGET_TOTAL - partial_total
-        last_female = TARGET_FEMALE - partial_female
+        rows[j][0] -= 60
+        rows[j][1] = int(round(rows[j][1] * 0.98))
+        last_total = need_total - sum(r[0] for r in rows)
+        last_female = need_female - sum(r[1] for r in rows)
     rows.append([last_total, last_female])
 
     for i, (total_n, female_n) in enumerate(rows):
-        female_pct = round(female_n / total_n * 100, 1)
-        sex_eff = i in SEX_EFFICACY_IDX
-        sex_saf = i in SEX_SAFETY_IDX
-        meno = i in MENOPAUSE_IDX
-        study_type = STUDY_TYPES[i]
         sid = f"AMIRA-DEMO-{i + 1:03d}"
-
-        if meno:
-            passage = (
-                f"[DEMO] Sample study {sid} enrolled {female_n:,} women "
-                f"({female_pct}% of {total_n:,} participants). A postmenopausal "
-                "subgroup was described and outcomes were reported separately for "
-                "women. Illustrative mock text — not a real research finding."
-            )
-        elif sex_eff:
-            passage = (
-                f"[DEMO] Sample study {sid} reported cardiovascular outcomes "
-                f"separately for women (n={female_n:,}, {female_pct}% of "
-                f"{total_n:,}). Illustrative mock text — not a real research finding."
-            )
-        else:
-            passage = (
-                f"[DEMO] Sample study {sid} enrolled {female_n:,} women "
-                f"({female_pct}% of {total_n:,} participants); results were not "
-                "reported separately by sex. Illustrative mock text — not a real "
-                "research finding."
-            )
-
-        studies.append(
-            {
-                "study_id": sid,
-                "title": f"Atorvastatin cardiovascular evidence — sample study {i + 1} (DEMO)",
-                "medicine": "Atorvastatin",
-                "condition": "Heart Disease",
-                "study_type": study_type,
-                "year": 2005 + (i % 18),
-                "total_n": total_n,
-                "female_n": female_n,
-                "female_pct": female_pct,
-                "sex_specific_efficacy_reported": "yes" if sex_eff else "no",
-                "sex_specific_safety_reported": "yes" if sex_saf else "no",
-                "sex_by_treatment_interaction": "yes" if sex_eff else "no",
-                "menopause_reported": "yes" if meno else "no",
-                "perimenopause_reported": "no",
-                "postmenopause_reported": "yes" if meno else "no",
-                "hormone_therapy_reported": "no",
-                "pregnancy_reported": "no",
-                "relevant_evidence_passage": passage,
-                "source": "DEMO DATA",
-                "source_url": f"https://example.org/amira-demo/{sid}",
-                "ai_confidence": round(0.6 + rng.uniform(0, 0.3), 2),
-                "human_verified": False,
-                "evidence_status": "DEMO DATA",
-            }
-        )
+        studies.append(_study(
+            sid, f"Atorvastatin cardiovascular evidence — sample record {i + 1} (DEMO)",
+            FILLER_TYPES[i], 2005 + (i % 18), total_n, female_n,
+            i in FILLER_SEX_EFFICACY_IDX, i in FILLER_SEX_SAFETY_IDX,
+            i in FILLER_MENOPAUSE_IDX, "PubMed",
+            round(0.6 + rng.uniform(0, 0.3), 2),
+        ))
     return studies
 
 
@@ -246,12 +285,22 @@ def build_fixture(studies, benchmark) -> dict:
     return {
         "meta": {
             "medicine": "Atorvastatin",
-            "drug_class": "Statin (HMG-CoA reductase inhibitor)",
+            "brand": "Lipitor",
+            "drug_class": "Statin",
+            "used_for": "Lowering cholesterol / heart disease prevention",
             "condition": "Heart Disease",
             "life_stage_demo": "Postmenopause",
             "hormone_therapy_demo": "Any",
             "evidence_level": 2,
             "evidence_level_label": "Women Analyzed",
+            "what_this_means": (
+                "Women were included and analysed in some studies, but important life "
+                "stage and hormonal factors are rarely considered."
+            ),
+            "confidence": {
+                "level": "High",
+                "rationale": "Based on multiple randomized trials and systematic reviews.",
+            },
             "data_label": "DEMO DATA",
             "disclaimer": DISCLAIMER,
         },
@@ -491,6 +540,15 @@ def main():
     assert sum(s["pregnancy_reported"] == "yes" for s in studies) == PREGNANCY_YES
     overall_pct = round(TARGET_FEMALE / TARGET_TOTAL * 100)
     assert overall_pct == 41, overall_pct
+    cats = {}
+    for s in studies:
+        cats[s["category"]] = cats.get(s["category"], 0) + 1
+    assert cats == {
+        "Randomized Controlled Trials": 12,
+        "Observational Studies": 7,
+        "Post-hoc Analyses": 3,
+        "Other Study Types": 2,
+    }, cats
 
     UI_DATA.mkdir(parents=True, exist_ok=True)
     (UI_DATA / "amira_demo_evidence.json").write_text(
@@ -504,7 +562,7 @@ def main():
     print(f"  female total: {sum(s['female_n'] for s in studies):,}")
     print(f"  participants total: {sum(s['total_n'] for s in studies):,} ({overall_pct}% female)")
     print(f"  sex-specific outcomes: {SEX_EFFICACY_YES}/{N_STUDIES}")
-    print(f"  study types: " + ", ".join(f"{STUDY_TYPES.count(t)} {t}" for t in dict.fromkeys(STUDY_TYPES)))
+    print("  donut buckets: " + ", ".join(f"{v} {k}" for k, v in cats.items()))
     print(f"  fixture -> {UI_DATA / 'amira_demo_evidence.json'}")
     print(f"  package -> {PACKAGE_DIR}")
 

@@ -4,42 +4,44 @@ import { AssetBadge, DemoBadge } from "./DemoBadge";
 
 export function BenchmarkSummary() {
   const d = fixture.dataset_summary;
-  const cards = [
-    { num: String(d.structured_studies), lab: "Structured studies" },
-    { num: String(d.evidence_passages), lab: "Evidence passages" },
-    { num: String(d.human_labeled_benchmark_examples), lab: "Human-labeled benchmark examples" },
-    { num: d.extraction_accuracy, lab: "Extraction accuracy" },
-    { num: String(d.hormonal_evidence_dimensions), lab: "Hormonal evidence dimensions" },
-    { num: d.license, lab: "License" },
+  const items = [
+    { icon: "🗄️", num: String(d.structured_studies), lab: "structured studies", note: "processed" },
+    { icon: "📄", num: String(d.evidence_passages), lab: "evidence passages", note: "human-labeled" },
+    { icon: "🎯", num: d.extraction_accuracy, lab: "extraction accuracy", note: "evaluation" },
+    { icon: "🧬", num: String(d.hormonal_evidence_dimensions), lab: "hormonal dimensions", note: "standardized schema" },
+    { icon: "🔓", num: d.license, lab: "open license", note: "reuse terms" },
   ];
 
   return (
     <div className="asset-band">
-      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-        <span className="eyebrow">Our reusable scientific asset</span>
-        <AssetBadge />
+      <div className="asset-head">
+        <h2 className="asset-title">The AMIRA Open Women's Hormonal Evidence Benchmark</h2>
+        <AssetBadge label="Our reusable asset" />
         <DemoBadge />
       </div>
-      <h2 className="page-q" style={{ fontSize: 24, margin: "10px 0 6px" }}>
-        The AMIRA Open Women's Hormonal Evidence Dataset and Benchmark
-      </h2>
-      <p style={{ maxWidth: 720, fontSize: 15 }}>
-        AMIRA turns fragmented women's health research into standardized, machine-readable
-        evidence that researchers can download, extend, and use to evaluate future AI systems.
-      </p>
-      <div className="summary-cards">
-        {cards.map((c) => (
-          <div className="summary-card" key={c.lab}>
-            <div className="sc-num">{c.num}</div>
-            <div className="sc-lab">{c.lab}</div>
+      <div className="asset-grid">
+        {items.map((it) => (
+          <div className="asset-item" key={it.lab}>
+            <span className="asset-ic">{it.icon}</span>
+            <div>
+              <div className="asset-num">{it.num}</div>
+              <div className="asset-lab">{it.lab}</div>
+            </div>
           </div>
         ))}
+        <div className="asset-copy">
+          <p>
+            AMIRA turns fragmented research into a standardized, machine-readable evidence
+            foundation so researchers worldwide can build better studies and better care for
+            women.
+          </p>
+          <Link to="/amira/open-benchmark" className="rail-link">Explore the Benchmark →</Link>
+        </div>
       </div>
-      <div style={{ marginTop: 18 }}>
-        <Link to="/amira/open-benchmark" className="cta" style={{ display: "inline-block", textDecoration: "none" }}>
-          EXPLORE THE OPEN BENCHMARK →
-        </Link>
-      </div>
+      <p className="disclaimer" style={{ marginTop: 12 }}>
+        Demo scope: values reflect the current prototype dataset. Extraction accuracy is pending
+        evaluation and the license is to be determined — no benchmark scores are claimed yet.
+      </p>
     </div>
   );
 }

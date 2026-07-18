@@ -15,7 +15,7 @@ export interface DerivedStats {
   menopauseReported: number;
   hormoneTherapyReported: number;
   pregnancyReported: number;
-  studyTypes: { type: string; count: number }[];
+  studyTypes: { type: string; count: number; color: string }[];
   notSexSpecific: number;
   notMenopause: number;
   notHormoneTherapy: number;
@@ -37,12 +37,18 @@ export function derive(studies: Study[]): DerivedStats {
   const hormoneTherapyReported = studies.filter((s) => yes(s.hormone_therapy_reported)).length;
   const pregnancyReported = studies.filter((s) => yes(s.pregnancy_reported)).length;
 
+  // Group into the four "Evidence at a glance" donut buckets, in fixed order.
   const typeMap = new Map<string, number>();
-  for (const s of studies) typeMap.set(s.study_type, (typeMap.get(s.study_type) || 0) + 1);
-  const order = ["Randomized Controlled Trial", "Observational Study", "Post-hoc Analysis", "Other"];
+  for (const s of studies) typeMap.set(s.category, (typeMap.get(s.category) || 0) + 1);
+  const order: { type: string; color: string }[] = [
+    { type: "Randomized Controlled Trials", color: "#2c8a6b" },
+    { type: "Observational Studies", color: "#3f74c9" },
+    { type: "Post-hoc Analyses", color: "#c68a1e" },
+    { type: "Other Study Types", color: "#7c53e0" },
+  ];
   const studyTypes = order
-    .filter((t) => typeMap.has(t))
-    .map((type) => ({ type, count: typeMap.get(type)! }));
+    .filter((o) => typeMap.has(o.type))
+    .map((o) => ({ type: o.type, count: typeMap.get(o.type)!, color: o.color }));
 
   return {
     studyCount,
