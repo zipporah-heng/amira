@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0",
+  "medicine": "Icosapent ethyl",
+  "condition": "Cardiovascular disease",
+  "life_stage": "postmenopause",
+  "hormonal_context": { "hormone_therapy": "yes" },
+  "evidence_state": "NO_EVIDENCE_FOUND",
+  "evidence_summary": {
+    "female_n": 2359,
+    "female_pct": 28.8,
+    "total_n": 8179,
+    "sex_stratified_efficacy_reported": "uncertain",
+    "sex_stratified_safety_reported": "not_reported",
+    "sex_by_treatment_interaction_tested": "not_reported",
+    "menopausal_status_reported": "not_reported",
+    "hormonal_factors_reported": "not_reported",
+    "hormone_therapy_reported": "not_reported",
+    "pregnancy_excluded": "unknown"
+  },
+  "evidence_tier": null,
+  "classification": "NO RELEVANT EVIDENCE FOUND",
+  "missing_fields": [
+    "Outcomes in postmenopausal women on menopausal hormone therapy",
+    "Menopausal status",
+    "Hormonal factors",
+    "Hormone therapy use"
+  ],
+  "extraction_confidence": 0.85,
+  "human_verified": true,
+  "sources": [
+    {
+      "source_id": "SEARCH-RECORD-ICOSAPENT-MHT",
+      "source_title": "Reviewed source set — search record for icosapent ethyl outcomes in postmenopausal women on menopausal hormone therapy",
+      "source_type": "other",
+      "url": "https://clinicaltrials.gov/search?term=icosapent%20ethyl%20cardiovascular",
+      "publication_year": 2024,
+      "study_design": "Search of the explicitly reviewed source set",
+      "nct_id": "NCT01492361",
+      "population": "Reviewed trials and labels for icosapent ethyl",
+      "total_n": null,
+      "female_n": null,
+      "female_pct": null,
+      "relevant_passage": "The reviewed source set (including the REDUCE-IT trial, NCT01492361, in which women were 28.8% of participants) contained no source that reported cardiovascular outcomes specifically for postmenopausal women using menopausal hormone therapy. No relevant women-and-hormone-specific evidence was located in the reviewed sources.",
+      "source_location": "Search record over the reviewed source set",
+      "ai_confidence": 0.85,
+      "human_verified": true,
+      "provenance": "VERIFIED_DEMO_DATA",
+      "classification": "not_reported",
+      "classification_rationale": "A search was executed and returned no source reporting outcomes for the selected women-and-hormone context. This is an evidence gap, not a finding about whether the medicine works."
+    }
+  ]
+}

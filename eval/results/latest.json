@@ -1,0 +1,79 @@
+{
+  "benchmark": "AMIRA pilot benchmark (30 examples: 20 dev / 10 held-out)",
+  "note": "Pilot benchmark. Small scale; does not prove broad generalization.",
+  "backend": "heuristic",
+  "splits": {
+    "dev": {
+      "backend": "heuristic",
+      "n_examples": 20,
+      "overall_field_accuracy": 0.842,
+      "per_field_accuracy": {
+        "sex_specific_efficacy": 0.6,
+        "sex_specific_safety": 0.8,
+        "sex_treatment_interaction": 0.85,
+        "menopause_reported": 0.95,
+        "hormonal_factors_reported": 0.9,
+        "hormone_therapy_reported": 0.95
+      },
+      "macro_f1_reported": 0.63,
+      "numeric_accuracy": {
+        "female_n": 0.55,
+        "female_pct": 0.5,
+        "total_n": 0.5
+      },
+      "numeric_accuracy_overall": 0.517,
+      "citation_support_accuracy": 1.0,
+      "citation_claims_evaluated": 22,
+      "abstention_accuracy": 0.976,
+      "abstention_cases": 83
+    },
+    "heldout": {
+      "backend": "heuristic",
+      "n_examples": 10,
+      "overall_field_accuracy": 0.917,
+      "per_field_accuracy": {
+        "sex_specific_efficacy": 0.6,
+        "sex_specific_safety": 0.9,
+        "sex_treatment_interaction": 1.0,
+        "menopause_reported": 1.0,
+        "hormonal_factors_reported": 1.0,
+        "hormone_therapy_reported": 1.0
+      },
+      "macro_f1_reported": 0.586,
+      "numeric_accuracy": {
+        "female_n": 0.5,
+        "female_pct": 0.6,
+        "total_n": 0.4
+      },
+      "numeric_accuracy_overall": 0.5,
+      "citation_support_accuracy": 1.0,
+      "citation_claims_evaluated": 10,
+      "abstention_accuracy": 0.979,
+      "abstention_cases": 48
+    },
+    "all": {
+      "backend": "heuristic",
+      "n_examples": 30,
+      "overall_field_accuracy": 0.867,
+      "per_field_accuracy": {
+        "sex_specific_efficacy": 0.6,
+        "sex_specific_safety": 0.833,
+        "sex_treatment_interaction": 0.9,
+        "menopause_reported": 0.967,
+        "hormonal_factors_reported": 0.933,
+        "hormone_therapy_reported": 0.967
+      },
+      "macro_f1_reported": 0.642,
+      "numeric_accuracy": {
+        "female_n": 0.533,
+        "female_pct": 0.533,
+        "total_n": 0.467
+      },
+      "numeric_accuracy_overall": 0.511,
+      "citation_support_accuracy": 1.0,
+      "citation_claims_evaluated": 32,
+      "abstention_accuracy": 0.977,
+      "abstention_cases": 131
+    }
+  }
+}

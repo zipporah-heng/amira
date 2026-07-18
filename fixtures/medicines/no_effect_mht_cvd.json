@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0",
+  "medicine": "Conjugated equine estrogens + medroxyprogesterone (menopausal hormone therapy)",
+  "condition": "Cardiovascular disease",
+  "life_stage": "postmenopause",
+  "hormonal_context": { "hormone_therapy": "yes" },
+  "evidence_state": "EVIDENCE_OF_NO_EFFECT",
+  "evidence_summary": {
+    "female_n": 16608,
+    "female_pct": 100.0,
+    "total_n": 16608,
+    "sex_stratified_efficacy_reported": "yes",
+    "sex_stratified_safety_reported": "yes",
+    "sex_by_treatment_interaction_tested": "not_reported",
+    "menopausal_status_reported": "yes",
+    "hormonal_factors_reported": "yes",
+    "hormone_therapy_reported": "yes",
+    "pregnancy_excluded": "yes"
+  },
+  "evidence_tier": null,
+  "classification": "NO RELEVANT EVIDENCE FOUND",
+  "missing_fields": [],
+  "extraction_confidence": 0.95,
+  "human_verified": true,
+  "sources": [
+    {
+      "source_id": "WHI-2002-EPT",
+      "source_title": "Risks and Benefits of Estrogen Plus Progestin in Healthy Postmenopausal Women — Women's Health Initiative Randomized Controlled Trial",
+      "source_type": "clinical_trial",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/12117397/",
+      "publication_year": 2002,
+      "study_design": "Randomised, double-blind, placebo-controlled primary prevention trial",
+      "nct_id": "NCT00000611",
+      "population": "16,608 postmenopausal women aged 50-79 with an intact uterus",
+      "total_n": 16608,
+      "female_n": 16608,
+      "female_pct": 100.0,
+      "relevant_passage": "In 16,608 postmenopausal women, estrogen plus progestin did not confer cardiovascular protection; the hazard ratio for coronary heart disease was 1.29 (nominal 95% CI 1.02-1.63). The intervention was stopped early because overall risks exceeded benefits.",
+      "source_location": "JAMA 2002; 288:321-333, Results",
+      "ai_confidence": 0.97,
+      "human_verified": true,
+      "provenance": "VERIFIED_DEMO_DATA",
+      "classification": "no",
+      "classification_rationale": "This outcome was explicitly tested in postmenopausal women and reported no cardiovascular benefit (with evidence of increased risk). This is evidence of no effect, not an evidence gap."
+    }
+  ]
+}

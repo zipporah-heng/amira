@@ -1,0 +1,79 @@
+{
+  "config_version": "1.0",
+  "note": "Evidence-COMPLETENESS rules. These describe how complete the women-specific evidence is, NOT whether the medicine is good, safe, or effective. Editable by Mantis/Bumble without touching UI code.",
+  "female_representation": {
+    "adequate_pct_threshold": 40.0,
+    "underrepresented_pct_threshold": 25.0,
+    "note": "pct of trial population that is female. >=adequate is 'adequately represented'; between under- and adequate is 'underrepresented'; below under- is 'severely underrepresented'."
+  },
+  "limited_source_types": [
+    "observational",
+    "drug_label",
+    "post_market_surveillance"
+  ],
+  "tiers": [
+    {
+      "tier": "T1",
+      "classification": "STRONG",
+      "label": "Strong evidence coverage",
+      "description": "Multiple strong sources with relevant sex-specific efficacy AND safety analysis.",
+      "requires": {
+        "min_strong_sources": 2,
+        "female_representation": "adequate",
+        "sex_stratified_efficacy_reported": ["yes"],
+        "sex_stratified_safety_reported": ["yes"]
+      }
+    },
+    {
+      "tier": "T2",
+      "classification": "MODERATE",
+      "label": "Moderate evidence coverage",
+      "description": "Women adequately represented but meaningful sex-specific or hormone-relevant analysis is incomplete.",
+      "requires": {
+        "female_representation": "adequate",
+        "at_least_one_of": [
+          "sex_stratified_efficacy_reported",
+          "sex_stratified_safety_reported"
+        ],
+        "at_least_one_values": ["yes"]
+      }
+    },
+    {
+      "tier": "T3",
+      "classification": "LIMITED",
+      "label": "Limited evidence coverage",
+      "description": "Women represented but underrepresented, subgroup analysis is limited, or important context is missing.",
+      "requires": {
+        "female_representation": "underrepresented_or_better"
+      }
+    },
+    {
+      "tier": "T4",
+      "classification": "INSUFFICIENT",
+      "label": "Insufficient evidence coverage",
+      "description": "Relevant women-specific evidence exists only through observational, label, post-market, retrospective, or similarly limited sources.",
+      "requires": {
+        "only_limited_source_types": true
+      }
+    },
+    {
+      "tier": "T5",
+      "classification": "NO RELEVANT EVIDENCE FOUND",
+      "label": "No relevant women-specific evidence found",
+      "description": "No relevant women-specific evidence found in the explicitly reviewed source set.",
+      "requires": {
+        "no_relevant_sources": true
+      }
+    }
+  ],
+  "trackable_fields": [
+    "female_representation",
+    "sex_stratified_efficacy_reported",
+    "sex_stratified_safety_reported",
+    "sex_by_treatment_interaction_tested",
+    "menopausal_status_reported",
+    "hormonal_factors_reported",
+    "hormone_therapy_reported",
+    "pregnancy_excluded"
+  ]
+}

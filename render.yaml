@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: amira
+    runtime: python
+    plan: free
+    # Build the React UI, then install the Python backend. Node is available on
+    # Render's Python runtime image for the UI build step.
+    buildCommand: >-
+      cd ui && npm ci && npm run build && cd ..
+      && pip install -r backend/requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --app-dir backend
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.4
+      - key: NODE_VERSION
+        value: 20.11.1
+      # OPENAI_API_KEY is optional. Without it, AMIRA serves verified demo
+      # fixtures and the heuristic benchmark baseline (the hero demo is
+      # fixtures-first by design and never depends on a live key).
+      - key: OPENAI_API_KEY
+        sync: false

@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.venv/
+backend/.venv/
+node_modules/
+ui/dist/
+.env
+.DS_Store
+*.egg-info/
+.pytest_cache/
+# tsc -b build artifacts
+ui/vite.config.js
+ui/vite.config.d.ts
+ui/*.tsbuildinfo
+ui/**/*.tsbuildinfo
