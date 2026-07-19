@@ -9,6 +9,7 @@ export function AmiraShell({ children }: { children: ReactNode }) {
         <div className="container">
           {children}
           <div className="footer-note">
+            <div className="brand-mission">Count women. Study women. Care for women.</div>
             AMIRA reviews published research evidence. It does not diagnose, prescribe, or
             recommend treatment.
             <br />

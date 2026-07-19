@@ -17,7 +17,7 @@ export function Sidebar() {
         <div className="mark">✦</div>
         <div>
           <div className="name">AMIRA</div>
-          <div className="tag">AI-powered evidence<br />for women's health</div>
+          <div className="tag">Evidence Intelligence Platform</div>
         </div>
       </div>
 

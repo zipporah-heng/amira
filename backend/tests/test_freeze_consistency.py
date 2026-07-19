@@ -123,3 +123,23 @@ def test_headline_copy_and_maturity_not_stored_survive():
     assert "women like me" not in ce
     blob = json.dumps(dataset.load())
     assert "\"maturity_level\"" not in blob and "\"evidence_level\"" not in blob
+
+
+def test_brand_descriptor_is_consistent():
+    """AMIRA's brand descriptor is 'Evidence Intelligence Platform' everywhere the
+    product identity is stated. The primary clinician headline is untouched."""
+    from pathlib import Path
+    ui = (Path(__file__).resolve().parents[2] / "ui" / "src")
+    sidebar = (ui / "components" / "Sidebar.tsx").read_text(encoding="utf-8")
+    assert "Evidence Intelligence Platform" in sidebar
+    assert "AI-powered evidence" not in sidebar
+    shell = (ui / "components" / "AmiraShell.tsx").read_text(encoding="utf-8")
+    assert "Count women. Study women. Care for women." in shell
+    # Forbidden descriptors must not appear anywhere in shipped UI source.
+    for f in ui.rglob("*.tsx"):
+        text = f.read_text(encoding="utf-8")
+        assert "Scientific Intelligence Platform" not in text
+        assert "Women's Health Evidence Intelligence" not in text
+    # The clinician product headline is preserved.
+    ce = (ui / "pages" / "CheckEvidence.tsx").read_text(encoding="utf-8")
+    assert "What does the evidence show for women?" in ce

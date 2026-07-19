@@ -1,4 +1,6 @@
-# AMIRA — Clearer evidence for women's health
+# AMIRA — Evidence Intelligence Platform
+
+*Count women. Study women. Care for women.*
 
 > **The question AMIRA answers:** *"What does the evidence show for women?"*
 >

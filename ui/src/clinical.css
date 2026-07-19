@@ -170,3 +170,9 @@ blockquote.passage { margin: 10px 0 0; }
   .hero-count span { text-align: left; }
   .why-line { flex-direction: column; gap: 6px; }
 }
+
+/* Brand mission line (used sparingly: footer, methodology, benchmark) */
+.brand-mission {
+  font-weight: 650; color: var(--lav-700); font-size: 14px;
+  letter-spacing: .01em; margin-bottom: 12px;
+}
