@@ -81,6 +81,23 @@ def evaluate(trial_ids: List[str]) -> Dict:
         else:
             break  # cumulative: stop at the first unmet level
 
+    # Scorability: a level of 0 is only a genuine score when a source was actually
+    # checked and found NOT to report enrolment (not_reported). If the level-1
+    # evidence is merely "not_located" (inaccessible source), the maturity cannot be
+    # established, and a 0/5 would misrepresent incomplete coverage as absent evidence.
+    enrol_reported = level >= 1
+    enrol_not_located = False
+    enrol_not_reported = False
+    for tid in trial_ids:
+        for dim in ("female_enrollment_count", "female_enrollment_pct"):
+            _, basis, _a = dataset.assertion_value(tid, dim)
+            if basis == "not_located":
+                enrol_not_located = True
+            elif basis == "not_reported":
+                enrol_not_reported = True
+    scorable = enrol_reported or not enrol_not_located
+    status = "established" if scorable else "not_established"
+
     # Dimensions whose assertions explain each level's pass/fail.
     level_dims = {
         1: ("female_enrollment_count", "female_enrollment_pct"),
@@ -118,10 +135,26 @@ def evaluate(trial_ids: List[str]) -> Dict:
             "evidence": _evidence(n),
         })
 
+    if scorable:
+        label = LEVEL_LABELS.get(level, "No women's evidence")
+        display = f"{level} / 5"
+    else:
+        label = "Not yet established"
+        display = "Not yet established"
+
     return {
         "level": level,
-        "label": LEVEL_LABELS.get(level, "No women's evidence"),
-        "description": LEVEL_DESCRIPTIONS.get(level, ""),
+        "scorable": scorable,
+        "status": status,
+        "label": label,
+        "display": display,
+        "unscored_reason": (
+            None if scorable else
+            "Female enrolment evidence was not located in the reviewed accessible sources, "
+            "so an evidence maturity level cannot be established. This is incomplete source "
+            "coverage, not confirmed absence of evidence."
+        ),
+        "description": LEVEL_DESCRIPTIONS.get(level, "") if scorable else "",
         "max_level": 5,
         "derived": True,
         "derivation_note": (

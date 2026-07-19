@@ -33,9 +33,9 @@ assertion carries an exact source passage and a resolvable URL.
 | Question | Rosuvastatin answer | Source |
 |---|---|---|
 | **How well studied in women?** | **2 / 5 — Women Analyzed** (derived) | 6,801 women reported |
-| **Did effectiveness differ?** | **No statistically significant sex difference** — women HR 0.54 (95% CI 0.37–0.80) vs men HR 0.58 (0.45–0.73); class-level heterogeneity-by-sex **p=0.33** | PMID 20176986, PMID 25579834 |
+| **Did effectiveness differ?** | **Sex-specific analysis reported, statistical comparison unclear** — women HR 0.54 (95% CI 0.37–0.80) vs men HR 0.58 (0.45–0.73), but no formal rosuvastatin-specific interaction test located. *Class-level* heterogeneity-by-sex p=0.33 (CTT) is shown separately and does not drive the drug-specific result | PMID 20176986; PMID 25579834 (class-level) |
 | **Did side effects differ?** | **Insufficient sex-specific safety evidence** — 0 of 2 trials reported adverse events by sex | evidence gap |
-| **How does the class compare?** | 1 of 2 verified statins by evidence maturity | class comparison |
+| **How does the class compare?** | 1 statin has a verified maturity score; 2 represented (atorvastatin's is **Not yet established** — female count not located) | class comparison |
 
 | Fact | Value | Basis |
 |---|---|---|

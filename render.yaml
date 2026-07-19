@@ -9,13 +9,12 @@ services:
       cd ui && npm ci && npm run build && cd ..
       && pip install -r backend/requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --app-dir backend
+    # The normalized real-evidence dataset (dataset/) and benchmark (benchmark/)
+    # are committed to the repo, so deployment serves the exact verified data
+    # without depending on live NCBI / ClinicalTrials.gov calls at build time.
+    # To refresh the corpus, run `python pipeline/ingest.py` locally and commit.
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.4
       - key: NODE_VERSION
         value: 20.11.1
-      # OPENAI_API_KEY is optional. Without it, AMIRA serves verified demo
-      # fixtures and the heuristic benchmark baseline (the hero demo is
-      # fixtures-first by design and never depends on a live key).
-      - key: OPENAI_API_KEY
-        sync: false

@@ -11,19 +11,19 @@
     "effect_measure": "Hazard ratio",
     "female_ci": "95% CI 0.37-0.80",
     "male_ci": "95% CI 0.45-0.73",
-    "comparison_test": "Authors report relative risk reduction in women similar to men; no formal sex-by-treatment interaction p-value stated in the abstract.",
+    "comparison_test": null,
     "comparison_p": null,
-    "significance": "no_significant_difference",
+    "significance": "not_tested",
     "female_rate": null,
     "male_rate": null,
-    "interpretation": "A prespecified sex-specific analysis found rosuvastatin reduced cardiovascular events in women (HR 0.54, 95% CI 0.37-0.80, P=0.002), with a relative risk reduction similar to men (HR 0.58). No formal interaction p-value was reported in the reviewed abstract, so 'no significant difference' reflects the authors' reported comparison, not an interaction test.",
+    "interpretation": "A prespecified sex-specific analysis reported that rosuvastatin reduced cardiovascular events in women (HR 0.54, 95% CI 0.37-0.80, P=0.002) and in men (HR 0.58, 95% CI 0.45-0.73). No formal rosuvastatin-specific sex-by-treatment interaction test was located in the reviewed sources, so AMIRA does not report a drug-specific significance conclusion.",
     "source_id": "SRC-PMID-20176986",
     "exact_passage": "milar relative risk reduction in women (hazard ratio, 0.54; 95% confidence interval, 0.37 to 0.80; P=0.002) and men (hazard ratio, 0.58; 95% confidence interval, 0.45 to 0.73; P<0.001). In women, there was significant reduction in revascularization/unstable angina and nonsignificant reductions in other components of the primary end point.",
     "source_locator": "Abstract, Methods and Results",
     "source_verified": true,
     "human_verified": false,
     "verifier": null,
-    "retrieved_at": "2026-07-19T02:20:10Z"
+    "retrieved_at": "2026-07-19T05:17:21Z"
   },
   {
     "finding_id": "F-EFF-CLASS-001",
@@ -49,7 +49,7 @@
     "source_verified": true,
     "human_verified": false,
     "verifier": null,
-    "retrieved_at": "2026-07-19T02:20:10Z"
+    "retrieved_at": "2026-07-19T05:17:21Z"
   },
   {
     "finding_id": "F-SAF-CLASS-001",
@@ -75,6 +75,6 @@
     "source_verified": true,
     "human_verified": false,
     "verifier": null,
-    "retrieved_at": "2026-07-19T02:20:10Z"
+    "retrieved_at": "2026-07-19T05:17:21Z"
   }
 ]

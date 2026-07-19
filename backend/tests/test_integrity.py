@@ -131,10 +131,10 @@ def test_response_carries_provenance_envelope():
 
 def test_life_stage_changes_evidence_context():
     a = _check(life_stage="not_specified")["life_stage_context"]
-    b = _check(life_stage="postmenopause")["life_stage_context"]
+    b = _check(life_stage="menopause_postmenopause")["life_stage_context"]
     assert a["status"] != b["status"]
     assert b["status"] == "not_established_in_corpus"
-    assert "postmenopause" in b["message"]
+    assert "menopause" in b["message"].lower()
     assert "age is not used to infer" in b["message"].lower()
 
 

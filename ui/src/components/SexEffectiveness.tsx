@@ -22,9 +22,11 @@ function FindingCard({ f }: { f: Finding }) {
       )}
       <div className="fc-test">
         {f.comparison_p != null ? (
-          <span className="test-badge ok">Sex comparison p = {f.comparison_p}</span>
+          <span className="test-badge ok">
+            {classLevel ? "Class-level" : "Drug-specific"} sex comparison p = {f.comparison_p}
+          </span>
         ) : (
-          <span className="test-badge neutral">No formal interaction p reported</span>
+          <span className="test-badge neutral">No formal drug-specific interaction test located</span>
         )}
         {f.comparison_test && <span className="test-note">{f.comparison_test}</span>}
       </div>
@@ -55,12 +57,31 @@ export function SexEffectiveness({ data }: { data: EffectivenessState }) {
         </div>
       </div>
 
+      <div style={{ marginTop: 16, marginBottom: 6, fontSize: 11, fontWeight: 800,
+        letterSpacing: ".06em", textTransform: "uppercase", color: "var(--ink-3)" }}>
+        Drug-specific evidence
+      </div>
       {data.findings.length > 0 ? (
         <div className="findings-grid">
           {data.findings.map((f) => <FindingCard key={f.finding_id} f={f} />)}
         </div>
       ) : (
-        <p className="muted">No sex-specific effectiveness finding was located in the reviewed sources.</p>
+        <p className="muted">
+          No drug-specific sex-specific effectiveness finding was located in the reviewed sources.
+        </p>
+      )}
+
+      {data.class_level_findings && data.class_level_findings.length > 0 && (
+        <>
+          <div style={{ marginTop: 22, marginBottom: 6, fontSize: 11, fontWeight: 800,
+            letterSpacing: ".06em", textTransform: "uppercase", color: "var(--lav-700)" }}>
+            Class-level evidence
+          </div>
+          {data.class_level_note && <p className="muted" style={{ marginBottom: 10 }}>{data.class_level_note}</p>}
+          <div className="findings-grid">
+            {data.class_level_findings.map((f) => <FindingCard key={f.finding_id} f={f} />)}
+          </div>
+        </>
       )}
 
       <p className="disclaimer">{data.caveat}</p>

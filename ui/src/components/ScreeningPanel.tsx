@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import type { StudySelection } from "../api";
 
 interface ScreeningRow {
   candidate: string; identifier_type: string; decision: string; reason: string;
 }
 
-export function ScreeningPanel() {
+export function ScreeningPanel({ selection }: { selection?: StudySelection }) {
   const [rows, setRows] = useState<ScreeningRow[]>([]);
   const [open, setOpen] = useState(false);
 
@@ -13,17 +14,23 @@ export function ScreeningPanel() {
     fetch("/api/screening-log").then((r) => r.json()).then((d) => setRows(d.screening_log || []));
   }, []);
 
-  const counts = rows.reduce((a, r) => { a[r.decision] = (a[r.decision] || 0) + 1; return a; }, {} as Record<string, number>);
-
   return (
     <section id="screening" className="card">
       <div className="section-title">How studies were selected</div>
-      <div className="screen-counts">
-        <div><b>{rows.length}</b><span>candidates screened</span></div>
-        <div className="ok"><b>{counts.include || 0}</b><span>included</span></div>
-        <div className="x"><b>{counts.exclude || 0}</b><span>excluded</span></div>
-        <div><b>{counts.defer || 0}</b><span>deferred</span></div>
-      </div>
+      {selection && (
+        <div className="screen-counts">
+          <div><b>{selection.candidate_records_screened}</b><span>candidate records screened</span></div>
+          <div className="ok"><b>{selection.evidence_sources_included}</b><span>evidence sources included</span></div>
+          <div><b>{selection.unique_phase3_rcts_identified}</b><span>unique Phase 3 RCTs</span></div>
+          <div className="x"><b>{selection.records_excluded}</b><span>records excluded</span></div>
+          <div><b>{selection.records_deferred}</b><span>deferred</span></div>
+        </div>
+      )}
+      {selection && (
+        <p className="muted" style={{ marginTop: 10 }}>
+          {selection.reconciliation}
+        </p>
+      )}
       <button className="mb-toggle" onClick={() => setOpen(!open)} style={{ marginTop: 12 }}>
         {open ? "Hide" : "View"} screening methodology
       </button>

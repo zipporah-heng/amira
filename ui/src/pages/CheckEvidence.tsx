@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { checkEvidence, type EvidenceResponse, type TrialRow } from "../api";
-import { EvidenceSearch, type Filters } from "../components/EvidenceSearch";
+import { EvidenceSearch, type Filters, type DrugClassCatalog } from "../components/EvidenceSearch";
 import { TopBanner } from "../components/TopBanner";
 import { EvidenceMetricCard } from "../components/EvidenceMetricCard";
 import { WhoWasStudied } from "../components/WhoWasStudied";
@@ -19,15 +19,16 @@ import { DatasetStamp } from "../components/DemoBadge";
 
 const DEFAULTS: Filters = {
   condition: "Cardiovascular disease prevention",
+  drugClass: "Statin",
   medicine: "Rosuvastatin",
-  lifeStage: "Postmenopause",
+  lifeStage: "menopause_postmenopause",
   hormoneTherapy: "Any",
 };
 
 const toApi = (f: Filters) => ({
   condition: f.condition,
   medicine: f.medicine,
-  life_stage: f.lifeStage.toLowerCase().replace(/\s+/g, "_"),
+  life_stage: f.lifeStage, // already a clean token from LIFE_STAGE_OPTIONS
   hormone_therapy: f.hormoneTherapy.toLowerCase().replace(/\s+/g, "_"),
 });
 
@@ -37,6 +38,7 @@ export function CheckEvidence() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [active, setActive] = useState<TrialRow | null>(null);
+  const [catalog, setCatalog] = useState<DrugClassCatalog[]>([]);
 
   const run = async (f: Filters) => {
     setLoading(true); setError(null);
@@ -45,7 +47,13 @@ export function CheckEvidence() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { run(DEFAULTS); }, []);
+  useEffect(() => {
+    fetch("/api/catalog")
+      .then((r) => r.json())
+      .then((d) => setCatalog(d.drug_classes || []))
+      .catch(() => setCatalog([]));
+    run(DEFAULTS);
+  }, []);
 
   const jump = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -68,7 +76,7 @@ export function CheckEvidence() {
         </button>
       </div>
 
-      <EvidenceSearch filters={filters} setFilters={setFilters} onCheck={() => run(filters)} />
+      <EvidenceSearch filters={filters} setFilters={setFilters} onCheck={() => run(filters)} catalog={catalog} />
 
       {loading && <p style={{ marginTop: 22 }}>Loading evidence…</p>}
       {error && (
@@ -92,7 +100,8 @@ export function CheckEvidence() {
           {/* 2. KEY EVIDENCE NUMBERS */}
           <div className="metrics" style={{ marginTop: 22 }}>
             <EvidenceMetricCard icon="🗂️" tint="#efe9fb" title="Studies included"
-              value={String(report.trials.length)} sub="Phase 3 RCTs in the reviewed corpus" />
+              value={String(report.trials.length)}
+              sub={`Phase 3 RCT${report.trials.length === 1 ? "" : "s"} for ${report.query.medicine}`} />
             <EvidenceMetricCard icon="👥" tint="#e9f1fb" title="Women (reported)"
               value={t.women_reported_count.toLocaleString()}
               sub={`exact count in ${t.trials_with_reported_female_count.length} of ${t.trials} trials`} />
@@ -156,7 +165,7 @@ export function CheckEvidence() {
           <StudyTable trials={report.trials} onOpen={setActive} />
 
           {/* 11. HOW STUDIES WERE SELECTED */}
-          <div style={{ marginTop: 22 }}><ScreeningPanel /></div>
+          <div style={{ marginTop: 22 }}><ScreeningPanel selection={report.study_selection} /></div>
 
           {/* 12. OPEN DATASET AND BENCHMARK */}
           <BenchmarkSummary report={report} />

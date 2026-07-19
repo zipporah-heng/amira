@@ -79,6 +79,10 @@ export interface Totals {
 
 export interface Maturity {
   level: number;
+  scorable?: boolean;
+  status?: string;
+  display?: string;
+  unscored_reason?: string | null;
   label: string;
   description: string;
   max_level: number;
@@ -125,11 +129,14 @@ export interface Finding {
 export interface EffectivenessState {
   dimension: string;
   state: string;
+  evidence_level?: string;
   headline: string;
   n_reporting: number;
   n_trials: number;
   caveat: string;
   findings: Finding[];
+  class_level_findings?: Finding[];
+  class_level_note?: string | null;
   derived: boolean;
 }
 
@@ -150,6 +157,8 @@ export interface ClassRow {
   medicine: string;
   drug_class: string;
   maturity_level: number;
+  maturity_scorable: boolean;
+  maturity_display: string;
   maturity_label: string;
   effectiveness_state: string;
   safety_state: string;
@@ -160,7 +169,9 @@ export interface ClassRow {
 export interface ClassComparison {
   drug_class: string;
   verified_count: number;
+  scored_count: number;
   verified_medicines: string[];
+  ranking: { rankable: boolean; summary: string; basis: string };
   sort: string;
   rows: ClassRow[];
   note: string;
@@ -190,10 +201,10 @@ export interface Banner {
   medicine: string;
   drug_class: string;
   indication: string | null;
-  maturity: { level: number; max_level: number; label: string };
-  effectiveness: { state: string; headline: string };
+  maturity: { level: number; max_level: number; label: string; display?: string; scorable?: boolean };
+  effectiveness: { state: string; headline: string; evidence_level?: string };
   safety: { state: string; headline: string };
-  class_comparison: { drug_class: string; verified_count: number; this_rank: string; summary: string };
+  class_comparison: { drug_class: string; verified_count: number; scored_count?: number; this_rank: string; summary: string; basis?: string; rankable?: boolean };
   why_this_result: string;
 }
 
@@ -205,8 +216,22 @@ export interface EvidenceGap {
   statement: string;
 }
 
+export interface StudySelection {
+  candidate_records_screened: number;
+  evidence_sources_included: number;
+  records_excluded: number;
+  records_deferred: number;
+  unique_phase3_rcts_identified: number;
+  publications_included: number;
+  rcts_for_selected_medicine: number;
+  publications_for_selected_medicine: number;
+  medicine: string;
+  reconciliation: string;
+}
+
 export interface EvidenceResponse {
   banner?: Banner;
+  study_selection?: StudySelection;
   effectiveness?: EffectivenessState;
   safety?: SafetyState;
   class_comparison?: ClassComparison;

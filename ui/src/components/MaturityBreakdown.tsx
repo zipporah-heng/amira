@@ -8,10 +8,20 @@ export function MaturityBreakdown({ maturity }: { maturity: Maturity }) {
       <div className="mb-head" onClick={() => setOpen(!open)}>
         <div>
           <div className="section-title">Evidence maturity — how well was this studied in women?</div>
-          <div className="mb-score"><b>{maturity.level}</b> / {maturity.max_level} · {maturity.label}</div>
+          {maturity.scorable === false ? (
+            <div className="mb-score" style={{ fontSize: 18, fontWeight: 650, color: "var(--ink-2)" }}>
+              Not yet established
+            </div>
+          ) : (
+            <div className="mb-score"><b>{maturity.level}</b> / {maturity.max_level} · {maturity.label}</div>
+          )}
         </div>
         <button className="mb-toggle" aria-expanded={open}>{open ? "Hide" : "Show"} breakdown</button>
       </div>
+
+      {maturity.scorable === false && maturity.unscored_reason && (
+        <div className="callout" style={{ marginTop: 12 }}>{maturity.unscored_reason}</div>
+      )}
 
       {open && (
         <div className="mb-levels">

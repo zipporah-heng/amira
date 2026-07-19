@@ -1,12 +1,12 @@
 import type { Banner } from "../api";
 
-/** State → visual tone. Significant findings are highlighted; insufficient/not-reported are neutral. */
+/** State → visual tone. A confirmed sex difference is highlighted; unclear /
+ *  insufficient / not-reported are neutral (never shown as reassuring). */
 function tone(state: string): string {
   const s = state.toLowerCase();
-  if (s.includes("significant sex difference identified") && !s.includes("no ")) return "warn";
+  if (s.includes("significant sex") && !s.includes("no ")) return "warn";
   if (s.startsWith("no statistically") || s.startsWith("no significant")) return "ok";
   if (s.includes("trend")) return "trend";
-  if (s.includes("insufficient") || s.includes("not reported") || s.includes("not analysed")) return "neutral";
   return "neutral";
 }
 
@@ -38,9 +38,9 @@ export function TopBanner({ banner, onJump }: { banner: Banner; onJump: (id: str
       <div className="banner-grid">
         <BannerCell
           label="Evidence maturity"
-          value={`${banner.maturity.level} / ${banner.maturity.max_level}`}
-          sub={banner.maturity.label}
-          tone="score"
+          value={banner.maturity.display || `${banner.maturity.level} / ${banner.maturity.max_level}`}
+          sub={banner.maturity.scorable === false ? undefined : banner.maturity.label}
+          tone={banner.maturity.scorable === false ? "neutral" : "score"}
           onClick={() => onJump("maturity")}
         />
         <BannerCell
@@ -58,7 +58,7 @@ export function TopBanner({ banner, onJump }: { banner: Banner; onJump: (id: str
         <BannerCell
           label={`Class comparison — ${banner.class_comparison.drug_class}`}
           value={banner.class_comparison.this_rank || banner.class_comparison.summary}
-          sub={banner.class_comparison.this_rank ? banner.class_comparison.summary : undefined}
+          sub={banner.class_comparison.this_rank ? banner.class_comparison.basis : undefined}
           onClick={() => onJump("class")}
         />
       </div>

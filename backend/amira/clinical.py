@@ -21,6 +21,7 @@ from . import dataset, maturity
 # ---- effectiveness states ---- #
 EFF_SIGNIFICANT = "Significant sex difference identified"
 EFF_NO_DIFF = "No statistically significant sex difference identified"
+EFF_REPORTED_UNCLEAR = "Sex-specific analysis reported, statistical comparison unclear"
 EFF_CONFLICTING = "Conflicting sex-specific results"
 EFF_INSUFFICIENT = "Insufficient sex-specific evidence"
 EFF_NOT_REPORTED = "Sex-specific effectiveness not reported"
@@ -70,40 +71,52 @@ def _efficacy_reporting_counts(medicine: str) -> Dict[str, int]:
 
 
 def effectiveness_state(medicine: str) -> dict:
-    findings = dataset.findings_for(medicine, "efficacy")
+    """Derive the sex-specific effectiveness state from DRUG-SPECIFIC findings only.
+
+    Class-level evidence (e.g. a statin-class meta-analysis) is surfaced separately
+    and is NEVER allowed to justify a drug-specific significance conclusion.
+    """
+    all_findings = dataset.findings_for(medicine, "efficacy")
+    drug_findings = [f for f in all_findings if f.get("scope", "").startswith("trial:")]
+    class_findings = [f for f in all_findings if f.get("scope", "").startswith("class:")]
     counts = _efficacy_reporting_counts(medicine)
 
-    sigs = {f.get("significance") for f in findings}
-    # A finding can only assert "no difference" when it carries an actual comparison.
-    has_real_comparison = any(
+    drug_sigs = {f.get("significance") for f in drug_findings}
+    # A drug-specific "no difference" claim requires a real drug-specific comparison
+    # (a numeric interaction/heterogeneity p reported for THIS medicine).
+    has_drug_comparison = any(
         f.get("significance") in ("significant", "no_significant_difference")
-        and (f.get("comparison_p") is not None or f.get("comparison_test"))
-        for f in findings
+        and f.get("comparison_p") is not None
+        for f in drug_findings
     )
 
-    if not findings:
-        # Distinguish "a source says it wasn't analysed" from "we haven't located one".
+    if not drug_findings:
+        # Distinguish "a source says it wasn't analysed" (not_reported) from
+        # "we haven't located an accessible source" (not_located/absent).
         bases = {
             dataset.assertion_value(t["trial_id"], "sex_specific_efficacy_reported")[1]
             for t in dataset.trials() if t["medicine"].lower() == medicine.lower()
         }
-        if bases == {"not_reported"}:
-            state = EFF_NOT_REPORTED
-        else:
-            state = EFF_INSUFFICIENT
-    elif "significant" in sigs:
-        state = EFF_SIGNIFICANT
-    elif "significant" in sigs and "no_significant_difference" in sigs:
+        state = EFF_NOT_REPORTED if bases == {"not_reported"} else EFF_INSUFFICIENT
+    elif "significant" in drug_sigs and "no_significant_difference" in drug_sigs:
         state = EFF_CONFLICTING
-    elif has_real_comparison and sigs <= {"no_significant_difference", "not_tested"}:
+    elif "significant" in drug_sigs:
+        state = EFF_SIGNIFICANT
+    elif has_drug_comparison and drug_sigs <= {"no_significant_difference", "not_tested"}:
         state = EFF_NO_DIFF
     else:
-        state = EFF_INSUFFICIENT
+        # Estimates were reported for women and men, but no formal drug-specific
+        # comparison was located. We do NOT infer equality.
+        state = EFF_REPORTED_UNCLEAR
 
     headline = {
-        EFF_SIGNIFICANT: "A sex difference in effectiveness was reported.",
-        EFF_NO_DIFF: "Effectiveness in women was reported and did not differ significantly from men.",
-        EFF_CONFLICTING: "Sex-specific effectiveness results conflict across sources.",
+        EFF_SIGNIFICANT: "A drug-specific sex difference in effectiveness was reported.",
+        EFF_NO_DIFF: "A drug-specific sex comparison was reported and found no significant difference.",
+        EFF_REPORTED_UNCLEAR: (
+            f"Effectiveness was reported separately for women and men, but a formal "
+            f"{medicine.lower()}-specific sex-by-treatment interaction test was not located in "
+            "the reviewed sources."),
+        EFF_CONFLICTING: "Drug-specific sex-specific effectiveness results conflict across sources.",
         EFF_INSUFFICIENT: "Not enough sex-specific effectiveness evidence to draw a conclusion.",
         EFF_NOT_REPORTED: "Effectiveness was not analysed separately for women in the reviewed trials.",
     }[state]
@@ -111,12 +124,18 @@ def effectiveness_state(medicine: str) -> dict:
     return {
         "dimension": "sex_specific_effectiveness",
         "state": state,
+        "evidence_level": "drug_specific",
         "headline": headline,
         "n_reporting": counts["n_reporting"],
         "n_trials": counts["n_trials"],
         "caveat": ("'No significant difference' does not mean identical effectiveness, and "
                    "'insufficient evidence' does not mean the medicine is ineffective in women."),
-        "findings": [_finding_view(f) for f in findings],
+        "findings": [_finding_view(f) for f in drug_findings],
+        "class_level_findings": [_finding_view(f) for f in class_findings],
+        "class_level_note": (
+            "Class-level evidence describes the statin class as a whole, not this medicine "
+            "specifically. It is shown for context and does not change the drug-specific result "
+            "above." if class_findings else None),
         "derived": True,
     }
 
@@ -201,18 +220,41 @@ def class_comparison(drug_class: str) -> dict:
             "medicine": med,
             "drug_class": drug_class,
             "maturity_level": m["level"],
+            "maturity_scorable": m["scorable"],
+            "maturity_display": m["display"],
             "maturity_label": m["label"],
             "effectiveness_state": eff["state"],
             "safety_state": saf["state"],
             "key_gap": gaps[0] if gaps else "None identified",
             "n_trials": len(trial_ids),
         })
-    rows.sort(key=lambda r: (-r["maturity_level"], r["medicine"]))
+    # Scored medicines first (by maturity desc); unscored medicines listed after,
+    # explicitly NOT ranked.
+    rows.sort(key=lambda r: (not r["maturity_scorable"], -r["maturity_level"], r["medicine"]))
+
+    scored = [r for r in rows if r["maturity_scorable"]]
+    if len(scored) >= 2:
+        ranking = {
+            "rankable": True,
+            "summary": f"Evidence maturity rank shown for {len(scored)} of {len(meds)} reviewed statins.",
+            "basis": "Based on women-specific evidence maturity, not clinical effectiveness.",
+        }
+    else:
+        ranking = {
+            "rankable": False,
+            "summary": (f"{len(scored)} statin currently has a verified Evidence Maturity score; "
+                        f"{len(meds)} statins currently represented in AMIRA."),
+            "basis": ("Medicines without enough verified evidence to establish a maturity level are "
+                      "not ranked."),
+        }
+
     return {
         "drug_class": drug_class,
         "verified_count": len(meds),
         "verified_medicines": meds,
-        "sort": "evidence_maturity_desc",
+        "scored_count": len(scored),
+        "ranking": ranking,
+        "sort": "evidence_maturity_desc_then_unscored",
         "rows": rows,
         "note": ("Only medicines with completed, verified evidence ingestion appear here. "
                  "Stronger women-specific evidence is not the same as greater effectiveness; "

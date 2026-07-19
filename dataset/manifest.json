@@ -1,8 +1,8 @@
 {
   "dataset_version": "2.0.0",
   "source_cutoff": "2026-07-18",
-  "generated_at": "2026-07-19T02:20:10Z",
-  "commit_hash": "a513b98ad09eb92f76944323dd500c36ab35fd93",
+  "generated_at": "2026-07-19T05:17:21Z",
+  "commit_hash": "f82ae178e64bae26be1df2928710ccd1c543d0f7",
   "medicine": "Rosuvastatin",
   "condition": "Cardiovascular disease prevention",
   "drug_class": "Statin",

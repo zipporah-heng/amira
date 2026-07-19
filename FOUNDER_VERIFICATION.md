@@ -24,9 +24,9 @@ The top banner answers all four questions above the fold:
 | Cell | Value |
 |---|---|
 | **Evidence maturity** | **2 / 5 — Women Analyzed** |
-| **Sex-specific effectiveness** | No statistically significant sex difference identified |
+| **Sex-specific effectiveness** | Sex-specific analysis reported, statistical comparison unclear |
 | **Sex-specific side effects** | Insufficient sex-specific safety evidence |
-| **Class comparison — Statin** | 1 of 2 by evidence maturity |
+| **Class comparison — Statin** | 1 statin has a verified maturity score; 2 represented |
 
 Plus a one-sentence **"Why this result"**. Each banner cell is clickable and jumps to
 its detailed section.
@@ -65,8 +65,11 @@ its detailed section.
 
 | Medicine | Maturity | Effectiveness | Side effects |
 |---|---|---|---|
-| Rosuvastatin | 2/5 Women Analyzed | No significant sex difference | Insufficient |
-| Atorvastatin | 0/5 No women's evidence | Insufficient | Insufficient |
+| Rosuvastatin | 2/5 Women Analyzed | Sex-specific analysis reported, comparison unclear | Insufficient |
+| Atorvastatin | **Not yet established** (female count not located) | Insufficient | Insufficient |
+
+*Atorvastatin is not scored 0/5 and is not ranked: its female enrolment count is `not_located`
+(in the paywalled CARDS full text), which is incomplete coverage, not confirmed absence.*
 
 ## Four honest boundaries — please read these
 

@@ -478,14 +478,13 @@ def build(offline: bool = False) -> dict:
           "Abstract, Methods and Results",
           female_estimate="HR 0.54", male_estimate="HR 0.58", effect_measure="Hazard ratio",
           female_ci="95% CI 0.37-0.80", male_ci="95% CI 0.45-0.73",
-          comparison_test="Authors report relative risk reduction in women similar to men; "
-                          "no formal sex-by-treatment interaction p-value stated in the abstract.",
-          comparison_p=None, significance="no_significant_difference",
-          interpretation="A prespecified sex-specific analysis found rosuvastatin reduced "
-                         "cardiovascular events in women (HR 0.54, 95% CI 0.37-0.80, P=0.002), with a "
-                         "relative risk reduction similar to men (HR 0.58). No formal interaction "
-                         "p-value was reported in the reviewed abstract, so 'no significant difference' "
-                         "reflects the authors' reported comparison, not an interaction test."),
+          comparison_test=None,
+          comparison_p=None, significance="not_tested",
+          interpretation="A prespecified sex-specific analysis reported that rosuvastatin reduced "
+                         "cardiovascular events in women (HR 0.54, 95% CI 0.37-0.80, P=0.002) and in "
+                         "men (HR 0.58, 95% CI 0.45-0.73). No formal rosuvastatin-specific "
+                         "sex-by-treatment interaction test was located in the reviewed sources, so "
+                         "AMIRA does not report a drug-specific significance conclusion."),
         F("F-EFF-CLASS-001", "Rosuvastatin", "class:Statin", "efficacy",
           "Major vascular events per 1.0 mmol/L LDL-C reduction", "SRC-PMID-25579834", p_ctt_sex,
           "Abstract, Findings",

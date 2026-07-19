@@ -22,7 +22,13 @@ from typing import Dict, List, Optional
 
 from . import clinical, dataset, maturity
 
-LIFE_STAGES = {"premenopause", "perimenopause", "postmenopause", "not_specified"}
+# The five agreed clinical life stages, plus an explicit "not specified" default.
+# Age is NEVER used to infer any of these — a specific stage returns a bounded
+# response unless a source actually reports menopausal status.
+LIFE_STAGES = {
+    "childhood_prepubertal", "puberty_adolescence", "reproductive_years",
+    "perimenopause", "menopause_postmenopause", "not_specified",
+}
 HORMONE_THERAPY = {"yes", "no", "any", "not_specified"}
 
 # Dimensions surfaced as the UI's evidence cards.
@@ -348,14 +354,20 @@ def check_evidence(condition: str, medicine: str,
             "medicine": medicine,
             "drug_class": drug_class,
             "indication": indication,
-            "maturity": {"level": mat["level"], "max_level": mat["max_level"], "label": mat["label"]},
-            "effectiveness": {"state": effectiveness["state"], "headline": effectiveness["headline"]},
+            "maturity": {"level": mat["level"], "max_level": mat["max_level"],
+                         "label": mat["label"], "display": mat["display"],
+                         "scorable": mat["scorable"]},
+            "effectiveness": {"state": effectiveness["state"], "headline": effectiveness["headline"],
+                              "evidence_level": effectiveness.get("evidence_level")},
             "safety": {"state": safety["state"], "headline": safety["headline"]},
             "class_comparison": {
                 "drug_class": drug_class,
                 "verified_count": comparison["verified_count"],
+                "scored_count": comparison["scored_count"],
                 "this_rank": _rank_of(medicine, comparison),
-                "summary": _class_summary(medicine, comparison),
+                "summary": comparison["ranking"]["summary"],
+                "basis": comparison["ranking"]["basis"],
+                "rankable": comparison["ranking"]["rankable"],
             },
             "why_this_result": why,
         },
@@ -364,6 +376,7 @@ def check_evidence(condition: str, medicine: str,
         "safety": safety,
         "class_comparison": comparison,
         "who_was_studied": clinical.who_was_studied(trial_ids),
+        "study_selection": study_selection(medicine, matched),
         "totals": totals,
         "dimensions": dimension_summary(trial_ids),
         "evidence_gaps": evidence_gaps(trial_ids, effectiveness, safety),
@@ -376,29 +389,66 @@ def check_evidence(condition: str, medicine: str,
 
 
 def _rank_of(medicine: str, comparison: dict) -> str:
-    rows = comparison["rows"]
-    for i, r in enumerate(rows, 1):
+    """Only return a rank when at least two medicines are actually scorable, and
+    only for a scorable medicine. Rank is over scored medicines, never over unscored."""
+    if not comparison["ranking"]["rankable"]:
+        return ""
+    scored = [r for r in comparison["rows"] if r["maturity_scorable"]]
+    for i, r in enumerate(scored, 1):
         if r["medicine"].lower() == medicine.lower():
-            return f"{i} of {len(rows)} by evidence maturity"
+            return f"Evidence maturity rank: {i} of {len(scored)} reviewed {comparison['drug_class'].lower()}s"
     return ""
-
-
-def _class_summary(medicine: str, comparison: dict) -> str:
-    n = comparison["verified_count"]
-    cls = comparison["drug_class"].lower()
-    if n <= 1:
-        return f"{n} of {n} {cls}s currently verified in AMIRA."
-    return f"{n} {cls}s verified in AMIRA; compared by evidence maturity."
 
 
 def _why_this_result(medicine, drug_class, mat, eff, saf, totals) -> str:
     women = totals["women_reported_count"]
+    if not mat["scorable"]:
+        return (
+            f"{medicine}'s evidence maturity is not yet established: female enrolment evidence "
+            "was not located in the reviewed accessible sources. This reflects incomplete source "
+            "coverage, not confirmed absence of evidence."
+        )
     return (
-        f"{medicine} reached evidence maturity {mat['level']}/5 ({mat['label']}): "
-        f"{women:,} women have a reported count and a sex-specific effectiveness analysis exists, "
-        f"but menopausal status and hormone therapy were not reported and no drug-specific "
-        f"sex-stratified side-effect analysis was located."
+        f"{medicine} reached evidence maturity {mat['display']} ({mat['label']}): "
+        f"{women:,} women have a reported count and effectiveness was analysed by sex, but no "
+        f"formal {medicine.lower()}-specific interaction test, menopausal status, hormone therapy, "
+        f"or sex-stratified side-effect analysis was located in the reviewed sources."
     )
+
+
+def study_selection(medicine: str, matched: List[dict]) -> dict:
+    """Reconcile study-selection counts by clearly-defined scope, so the
+    'Studies included' card and the screening section can never be confused."""
+    rows = dataset.load()["screening_log"]
+    included = [r for r in rows if r["decision"] == "include"]
+    excluded = [r for r in rows if r["decision"] == "exclude"]
+    deferred = [r for r in rows if r["decision"] == "defer"]
+
+    included_ncts = {r["candidate"] for r in included if r["identifier_type"] == "nct"}
+    included_pubs = [r for r in included if r["identifier_type"] in ("pmid", "pmcid")]
+
+    # Publications in the dataset linked to THIS medicine's trials.
+    med_ncts = {t["nct_id"] for t in matched}
+    med_pubs = [s for s in dataset.sources()
+                if s.get("source_type") == "journal_article" and s.get("nct_id") in med_ncts]
+
+    return {
+        "candidate_records_screened": len(rows),
+        "evidence_sources_included": len(included),
+        "records_excluded": len(excluded),
+        "records_deferred": len(deferred),
+        "unique_phase3_rcts_identified": len(included_ncts),
+        "publications_included": len(included_pubs),
+        "rcts_for_selected_medicine": len(matched),
+        "publications_for_selected_medicine": len(med_pubs),
+        "medicine": medicine,
+        "reconciliation": (
+            f"{len(rows)} candidate records screened → {len(included)} evidence sources included "
+            f"({len(included_ncts)} unique Phase 3 RCTs + {len(included_pubs)} linked publications). "
+            f"The 'Studies included' figure counts the {len(matched)} Phase 3 RCT(s) for "
+            f"{medicine} shown on this page."
+        ),
+    }
 
 
 def evidence_gaps(trial_ids: List[str], effectiveness: dict, safety: dict) -> List[dict]:

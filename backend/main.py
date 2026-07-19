@@ -66,6 +66,25 @@ def get_manifest():
     return dataset.manifest()
 
 
+@app.get("/api/catalog")
+def get_catalog():
+    """Verified drug classes and their medicines, for the upfront selectors.
+
+    Only medicines with completed evidence ingestion appear here.
+    """
+    classes: dict = {}
+    for t in dataset.trials():
+        cls = t.get("drug_class") or "Unclassified"
+        classes.setdefault(cls, set()).add(t["medicine"])
+    return {
+        **_envelope(),
+        "drug_classes": [
+            {"drug_class": c, "medicines": sorted(meds)}
+            for c, meds in sorted(classes.items())
+        ],
+    }
+
+
 @app.post("/api/check-evidence")
 def check_evidence(req: CheckRequest):
     return JSONResponse(engine.check_evidence(

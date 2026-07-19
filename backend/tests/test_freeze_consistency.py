@@ -1,0 +1,125 @@
+"""Product-freeze consistency tests (sponsor feedback closeout, section 9)."""
+
+import pytest
+from fastapi.testclient import TestClient
+
+from amira import clinical, dataset, engine, maturity
+from main import app
+
+client = TestClient(app)
+
+
+def _check(**kw):
+    body = {"condition": "Cardiovascular disease prevention", "medicine": "Rosuvastatin",
+            "life_stage": "not_specified", "hormone_therapy": "any"}
+    body.update(kw)
+    r = client.post("/api/check-evidence", json=body)
+    assert r.status_code == 200
+    return r.json()
+
+
+# 1. Class-level evidence cannot produce a drug-specific significance conclusion.
+def test_class_level_evidence_does_not_drive_drug_specific_state():
+    eff = clinical.effectiveness_state("Rosuvastatin")
+    # A class-level finding with p=0.33 exists...
+    assert any(f["scope"].startswith("class:") and f["comparison_p"] is not None
+               for f in eff["class_level_findings"])
+    # ...but the drug-specific state is NOT "no significant difference".
+    assert eff["state"] != clinical.EFF_NO_DIFF
+    assert eff["state"] == clinical.EFF_REPORTED_UNCLEAR
+
+
+# 2. A missing interaction test cannot yield "no statistically significant difference".
+def test_missing_interaction_test_does_not_yield_no_difference():
+    drug_findings = [f for f in dataset.findings_for("Rosuvastatin", "efficacy")
+                     if f["scope"].startswith("trial:")]
+    assert drug_findings
+    assert all(f["comparison_p"] is None for f in drug_findings)  # no drug-specific p
+    assert clinical.effectiveness_state("Rosuvastatin")["state"] != clinical.EFF_NO_DIFF
+
+
+# 3. "not_located" cannot render as "no women's evidence".
+def test_not_located_never_renders_as_no_womens_evidence():
+    m = maturity.evaluate(["CARDS"])
+    assert m["scorable"] is False
+    assert m["label"] == "Not yet established"
+    assert "no women's evidence" not in m["label"].lower()
+    # And it is not served with a hard 0/5 display.
+    assert m["display"] == "Not yet established"
+
+
+# 4. An unscored medicine cannot be ranked as a valid 0/5.
+def test_unscored_medicine_is_not_ranked():
+    cc = clinical.class_comparison("Statin")
+    assert cc["ranking"]["rankable"] is False  # only 1 scorable statin
+    ator = next(r for r in cc["rows"] if r["medicine"] == "Atorvastatin")
+    assert ator["maturity_scorable"] is False
+    # The rosuvastatin banner must not assert a rank against an unscored peer.
+    b = _check()["banner"]["class_comparison"]
+    assert b["this_rank"] == ""
+    assert "1 statin currently has a verified" in b["summary"]
+
+
+# 5. Class comparison language cannot imply clinical superiority.
+def test_no_superiority_language_anywhere():
+    cc = clinical.class_comparison("Statin")
+    text = " ".join([cc["note"], cc["ranking"]["summary"], cc["ranking"]["basis"]]
+                    + [r["effectiveness_state"] for r in cc["rows"]]).lower()
+    for banned in ("more effective", "outperforms", "better than", "superior", "best statin"):
+        assert banned not in text
+
+
+# 6. Study-selection counts reconcile by clearly defined scope.
+def test_study_selection_counts_reconcile():
+    sel = _check()["study_selection"]
+    assert sel["evidence_sources_included"] == (
+        sel["unique_phase3_rcts_identified"] + sel["publications_included"]
+    )
+    assert sel["rcts_for_selected_medicine"] == len(_check()["trials"])
+    assert sel["candidate_records_screened"] >= sel["evidence_sources_included"]
+    assert str(sel["rcts_for_selected_medicine"]) in sel["reconciliation"]
+
+
+# 7. Drug Class filters Medicine options correctly.
+def test_catalog_groups_medicines_by_class():
+    cat = client.get("/api/catalog").json()["drug_classes"]
+    statin = next(c for c in cat if c["drug_class"] == "Statin")
+    assert set(statin["medicines"]) == {"Rosuvastatin", "Atorvastatin"}
+    # Every catalog medicine actually has an ingested trial.
+    ingested = {t["medicine"] for t in dataset.trials()}
+    for c in cat:
+        for med in c["medicines"]:
+            assert med in ingested
+
+
+# 8. All five agreed Life Stage options exist and are accepted.
+def test_all_five_life_stages_supported():
+    required = {"childhood_prepubertal", "puberty_adolescence", "reproductive_years",
+                "perimenopause", "menopause_postmenopause"}
+    assert required <= engine.LIFE_STAGES
+    for stage in required:
+        r = _check(life_stage=stage)
+        assert r["life_stage_context"]["selected"] == stage
+
+
+# 9. Age is never used to infer Life Stage.
+def test_age_never_infers_life_stage():
+    r = _check(life_stage="menopause_postmenopause")
+    ctx = r["life_stage_context"]
+    assert ctx["supported"] is False
+    assert ctx["status"] == "not_established_in_corpus"
+    assert "age is not used to infer" in ctx["message"].lower()
+    for t in dataset.trials():
+        assert dataset.assertion_value(t["trial_id"], "menopause_status_reported")[0] != "yes"
+
+
+# 10. Existing suites still pass — covered by running the whole suite; here we assert
+#     the headline copy and maturity-not-stored invariant survive this mission.
+def test_headline_copy_and_maturity_not_stored_survive():
+    import json
+    from pathlib import Path
+    ce = (Path(__file__).resolve().parents[2] / "ui" / "src" / "pages" / "CheckEvidence.tsx").read_text(encoding="utf-8")
+    assert "What does the evidence show for women?" in ce
+    assert "women like me" not in ce
+    blob = json.dumps(dataset.load())
+    assert "\"maturity_level\"" not in blob and "\"evidence_level\"" not in blob
