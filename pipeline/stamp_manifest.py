@@ -7,11 +7,13 @@ at a commit that does not contain the corpus it describes.
 Workflow:
     python pipeline/ingest.py
     git add -A && git commit -m "..."      # corpus is now in HEAD
-    python pipeline/stamp_manifest.py      # writes HEAD into the manifest
-    git add dataset/manifest.json && git commit --amend --no-edit
+    python pipeline/stamp_manifest.py      # writes that HEAD into the manifest
+    git add dataset/manifest.json && git commit -m "Stamp dataset manifest provenance"
 
-After the amend, manifest.commit_hash equals the SHA of the commit containing the
-dataset, so the published dataset is reproducible from exactly that commit.
+Use a FOLLOW-UP COMMIT, not `--amend`: amending rewrites the SHA, which would leave
+the manifest pointing at a commit that no longer exists. After the follow-up commit,
+manifest.commit_hash is the SHA of the (real) commit containing the corpus, so the
+published dataset is reproducible from exactly that commit.
 """
 
 from __future__ import annotations
