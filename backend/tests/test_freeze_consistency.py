@@ -125,6 +125,50 @@ def test_headline_copy_and_maturity_not_stored_survive():
     assert "\"maturity_level\"" not in blob and "\"evidence_level\"" not in blob
 
 
+# "Why this result" must never contradict the derived hero states it summarizes.
+def test_why_this_result_matches_derived_states():
+    for med, cond in [("Dapagliflozin", "Heart Failure"),
+                      ("Rosuvastatin", "Cardiovascular disease prevention")]:
+        r = _check(medicine=med, condition=cond)
+        why = r["banner"]["why_this_result"].lower()
+        eff = clinical.effectiveness_state(med)
+        saf = clinical.safety_state(med)
+
+        # If effectiveness has a real drug-specific interaction test, the summary must
+        # cite it and must NOT claim the test was not reported/located.
+        drug_eff = [f for f in eff["findings"]
+                    if f["scope"].startswith("trial:") and f.get("comparison_p") is not None]
+        if drug_eff:
+            assert "interaction test" in why
+            assert f"p = {drug_eff[0]['comparison_p']}".lower() in why
+            assert "interaction test, " not in why  # not part of a "not reported" list
+            assert "interaction test was not" not in why
+            assert "interaction test, menopaus" not in why
+
+        # If safety was reported by sex, the summary must not say a sex-stratified
+        # side-effect analysis was missing.
+        if saf["n_reporting"] > 0:
+            assert "reported separately by sex" in why
+            assert "sex-stratified side-effect analysis" not in why
+
+        # Menopause / hormone therapy claims must match the derived maturity trace.
+        trace = {t["level"]: t["satisfied"] for t in r["maturity"]["rule_trace"]}
+        if trace.get(3):
+            assert "menopausal status" not in why or "not report" not in why
+
+
+def test_dapagliflozin_why_reflects_verified_evidence():
+    r = _check(medicine="Dapagliflozin", condition="Heart Failure")
+    why = r["banner"]["why_this_result"]
+    assert "1,109 women were included" in why
+    assert "P = 0.67" in why
+    assert "reported separately by sex" in why
+    assert "Menopausal status and hormone therapy use were not reported" in why
+    # The stale contradictory phrasing must be gone.
+    assert "was not located" not in why
+    assert "no formal dapagliflozin-specific interaction test" not in why.lower()
+
+
 def test_brand_descriptor_is_consistent():
     """AMIRA's brand descriptor is 'Evidence Intelligence Platform' everywhere the
     product identity is stated. The primary clinician headline is untouched."""

@@ -403,6 +403,11 @@ def _rank_of(medicine: str, comparison: dict) -> str:
 
 
 def _why_this_result(medicine, drug_class, mat, eff, saf, totals) -> str:
+    """Compose the one-line explanation from what the evidence ACTUALLY shows.
+
+    Every clause is derived from the reviewed records, so this can never contradict
+    the hero states rendered above it.
+    """
     women = totals["women_reported_count"]
     if not mat["scorable"]:
         return (
@@ -410,12 +415,51 @@ def _why_this_result(medicine, drug_class, mat, eff, saf, totals) -> str:
             "was not located in the reviewed accessible sources. This reflects incomplete source "
             "coverage, not confirmed absence of evidence."
         )
-    return (
-        f"{medicine} reached evidence maturity {mat['display']} ({mat['label']}): "
-        f"{women:,} women have a reported count and effectiveness was analysed by sex, but no "
-        f"formal {medicine.lower()}-specific interaction test, menopausal status, hormone therapy, "
-        f"or sex-stratified side-effect analysis was located in the reviewed sources."
-    )
+
+    # A drug-specific interaction test only counts when it comes from a trial-scoped
+    # finding for this medicine — class-level tests never justify a drug conclusion.
+    drug_findings = [f for f in eff["findings"] if f["scope"].startswith("trial:")]
+    interaction = next((f for f in drug_findings if f.get("comparison_p") is not None), None)
+
+    have: List[str] = [f"{women:,} women were included"]
+    missing: List[str] = []
+
+    if eff["n_reporting"] > 0:
+        if interaction:
+            clause = ("effectiveness was analysed by sex with a formal sex-by-treatment "
+                      f"interaction test (P = {interaction['comparison_p']})")
+            if interaction["significance"] == "no_significant_difference":
+                clause += " showing no statistically significant difference"
+            have.append(clause)
+        else:
+            have.append("effectiveness was analysed by sex")
+            missing.append(f"a formal {medicine.lower()}-specific sex-by-treatment interaction test")
+    else:
+        missing.append("sex-specific effectiveness analysis")
+
+    if saf["n_reporting"] > 0:
+        clause = "safety outcomes were reported separately by sex"
+        if saf["state"] == clinical.SAF_NO_DIFF:
+            clause += " with no significant sex-specific difference identified"
+        have.append(clause)
+    else:
+        missing.append("sex-stratified side-effect analysis")
+
+    trace = {r["level"]: r["satisfied"] for r in mat["rule_trace"]}
+    if not trace.get(3):
+        missing.append("menopausal status")
+    if not trace.get(4):
+        missing.append("hormone therapy use")
+
+    sentence = (f"{medicine} reached evidence maturity {mat['display']} ({mat['label']}): "
+                + ", ".join(have[:-1]) + (", and " if len(have) > 1 else "") + have[-1] + ".")
+    if missing:
+        joined = (", ".join(missing[:-1]) + (" and " if len(missing) > 1 else "") + missing[-1])
+        sentence += f" {joined[0].upper()}{joined[1:]} " + (
+            "were not reported in the reviewed evidence."
+            if len(missing) > 1 else "was not reported in the reviewed evidence."
+        )
+    return sentence
 
 
 def study_selection(medicine: str, matched: List[dict]) -> dict:
