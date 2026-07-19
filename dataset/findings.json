@@ -23,7 +23,7 @@
     "source_verified": true,
     "human_verified": false,
     "verifier": null,
-    "retrieved_at": "2026-07-19T06:04:50Z"
+    "retrieved_at": "2026-07-19T06:59:46Z"
   },
   {
     "finding_id": "F-EFF-CLASS-001",
@@ -49,7 +49,7 @@
     "source_verified": true,
     "human_verified": false,
     "verifier": null,
-    "retrieved_at": "2026-07-19T06:04:50Z"
+    "retrieved_at": "2026-07-19T06:59:46Z"
   },
   {
     "finding_id": "F-SAF-CLASS-001",
@@ -75,7 +75,7 @@
     "source_verified": true,
     "human_verified": false,
     "verifier": null,
-    "retrieved_at": "2026-07-19T06:04:50Z"
+    "retrieved_at": "2026-07-19T06:59:46Z"
   },
   {
     "finding_id": "F-EFF-DAPA-001",
@@ -101,7 +101,7 @@
     "source_verified": true,
     "human_verified": false,
     "verifier": null,
-    "retrieved_at": "2026-07-19T06:04:50Z"
+    "retrieved_at": "2026-07-19T06:59:46Z"
   },
   {
     "finding_id": "F-SAF-DAPA-001",
@@ -112,21 +112,21 @@
     "endpoint": "Serious adverse events and study-drug discontinuation",
     "female_estimate": null,
     "male_estimate": null,
-    "effect_measure": "Reported separately by sex",
+    "effect_measure": "Reported separately by sex (within-sex vs placebo)",
     "female_ci": null,
     "male_ci": null,
-    "comparison_test": "Serious adverse events and study-drug discontinuation reported by sex",
+    "comparison_test": null,
     "comparison_p": null,
-    "significance": "no_significant_difference",
+    "significance": "not_tested",
     "female_rate": null,
     "male_rate": null,
-    "interpretation": "Serious adverse events and study-drug discontinuation were reported separately by sex and were not more frequent with dapagliflozin than placebo in either men or women; the authors concluded dapagliflozin was safe and well-tolerated irrespective of sex. No numeric sex-by-treatment safety interaction p-value was reported in the reviewed source.",
+    "interpretation": "Serious adverse events and study-drug discontinuation were reported separately by sex, and were not more frequent with dapagliflozin than placebo in either men or women. That is a within-sex comparison against placebo; no formal between-sex safety comparison or interaction test was reported in the reviewed source, so no between-sex safety difference is claimed either way.",
     "source_id": "SRC-PMID-33787831",
     "exact_passage": "Study drug discontinuation and serious adverse events were not more frequent in the dapagliflozin group than in the placebo group in either men or women.",
     "source_locator": "Abstract, Results",
     "source_verified": true,
     "human_verified": false,
     "verifier": null,
-    "retrieved_at": "2026-07-19T06:04:50Z"
+    "retrieved_at": "2026-07-19T06:59:46Z"
   }
 ]

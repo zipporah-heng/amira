@@ -17,7 +17,8 @@ BUILT_UI = REPO / "ui" / "dist"
 
 SKIP_DIRS = {".git", "node_modules", ".venv", "__pycache__", "dist", ".pytest_cache"}
 # This guard file necessarily contains the banned strings as patterns.
-SKIP_FILES = {"test_no_synthetic_data.py"}
+# These files necessarily contain the banned strings as detection patterns.
+SKIP_FILES = {"test_no_synthetic_data.py", "validate.py"}
 
 BANNED = [
     ("example.org placeholder URL", re.compile(r"example\.org", re.I)),

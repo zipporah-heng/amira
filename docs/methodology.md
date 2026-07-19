@@ -1,5 +1,32 @@
 # Methodology: source hierarchy, labeling, benchmark, evaluation
 
+## Reproducing and validating the dataset
+
+**Offline validation (no network required)** — verifies the committed corpus is
+internally consistent, fully source-linked, free of synthetic markers, and that the
+manifest counts match the actual records:
+
+```bash
+python pipeline/validate.py
+```
+
+`python pipeline/ingest.py --offline` runs the same validator.
+
+**Full regeneration (requires network)** — refetches every record from
+ClinicalTrials.gov, PubMed and PMC, and fails loudly if a registry value has drifted
+from the verified expectation:
+
+```bash
+python pipeline/ingest.py          # rebuild dataset/
+python pipeline/build_benchmark.py # rebuild benchmark/
+```
+
+**Commit provenance.** `ingest.py` records the commit that was checked out while it
+ran, which precedes the commit containing the regenerated data. After committing the
+corpus, `python pipeline/stamp_manifest.py` writes the actual HEAD into
+`dataset/manifest.json`, which is then amended in — so `manifest.commit_hash` is the
+SHA of a commit that genuinely contains the corpus it describes.
+
 ## Source hierarchy
 
 When sources disagree, the higher tier wins and the conflict is recorded.

@@ -187,3 +187,60 @@ def test_brand_descriptor_is_consistent():
     # The clinician product headline is preserved.
     ce = (ui / "pages" / "CheckEvidence.tsx").read_text(encoding="utf-8")
     assert "What does the evidence show for women?" in ce
+
+
+# --- Final blocker pass: bounded safety claims + provenance + states ---------- #
+def test_safety_no_difference_requires_between_sex_comparison():
+    """A within-sex vs placebo comparison must never become a between-sex verdict."""
+    for med in ("Dapagliflozin", "Rosuvastatin"):
+        saf = clinical.safety_state(med)
+        if saf["state"] == clinical.SAF_NO_DIFF:
+            drug = [f for f in dataset.findings_for(med, "safety")
+                    if f["scope"].startswith("trial:")]
+            assert any(f.get("comparison_p") is not None or f.get("comparison_test")
+                       for f in drug), f"{med} claims no sex difference with no between-sex test"
+
+
+def test_dapagliflozin_safety_is_bounded():
+    saf = clinical.safety_state("Dapagliflozin")
+    assert saf["state"] == clinical.SAF_REPORTED_NO_COMPARISON
+    assert "no excess versus placebo" in saf["headline"]
+    assert "formal between-sex safety comparison was not reported" in saf["headline"]
+    why = _check(medicine="Dapagliflozin", condition="Heart failure")["banner"]["why_this_result"]
+    assert "A formal between-sex safety comparison was not reported." in why
+    assert "no significant sex-specific difference identified" not in why.lower()
+
+
+def test_dapa_enrollment_provenance_supports_the_numbers():
+    """A-DAPA-002/003 must quote the sentence that actually states enrollment."""
+    for aid, needle in (("A-DAPA-002", "1109"), ("A-DAPA-003", "23.4")):
+        a = next(x for x in dataset.assertions() if x["assertion_id"] == aid)
+        assert needle in a["exact_passage"], f"{aid} passage does not support its value"
+        assert "hazard ratio" not in a["exact_passage"].lower()
+        src = dataset.source_by_id(a["source_id"])
+        assert src["pmid"] == "33787831"
+
+
+def test_manifest_counts_match_actual_corpus():
+    m = dataset.manifest()
+    assert m["counts"]["trials"] == len(dataset.trials())
+    assert m["counts"]["sources"] == len(dataset.sources())
+    assert m["counts"]["assertions"] == len(dataset.assertions())
+    assert m["counts"]["findings"] == len(dataset.findings())
+
+
+def test_not_located_and_not_reported_stay_distinct():
+    bases = {a["value_basis"] for a in dataset.assertions()}
+    assert "not_located" in bases and "not_reported" in bases
+    cards = next(a for a in dataset.assertions()
+                 if a["assertion_id"] == "A-CAR-002")
+    assert cards["value_basis"] == "not_located"
+
+
+def test_research_map_renders_not_located_as_unclear():
+    from pathlib import Path
+    rm = (Path(__file__).resolve().parents[2] / "ui" / "src" / "pages" / "ResearchMap.tsx"
+          ).read_text(encoding="utf-8")
+    assert 'Unclear / not located' in rm
+    assert 'did not locate sufficient evidence' in rm
+    assert '"not_located"' in rm  # state is mapped explicitly, not collapsed

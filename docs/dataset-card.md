@@ -1,8 +1,8 @@
 # Dataset card — AMIRA Open Women's Hormonal Evidence Dataset
 
-- **Version:** 1.0.0 · **Source cutoff:** 2026-07-18
-- **Scope:** rosuvastatin; JUPITER (NCT00239681) and HOPE-3 (NCT00468923)
-- **Size:** 2 trials · 5 primary sources · 16 evidence assertions · 30 benchmark passages
+- **Version:** 2.0.0 · **Source cutoff:** 2026-07-18
+- **Scope:** rosuvastatin (JUPITER NCT00239681, HOPE-3 NCT00468923), atorvastatin (CARDS NCT00327418), dapagliflozin (DAPA-HF NCT03036124)
+- **Size:** 4 Phase 3 RCTs · 6 linked publications · 10 included evidence sources · 31 evidence assertions · 5 sex-specific findings · 30 benchmark passages
 
 ## Purpose
 

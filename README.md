@@ -43,7 +43,7 @@ HR 0.73 (0.63–0.85), **P interaction = 0.67** — plus sex-stratified safety. 
 |---|---|---|
 | **How well studied in women?** | **2 / 5 — Women Analyzed** (derived) | 6,801 women reported |
 | **Did effectiveness differ?** | **Sex-specific analysis reported, statistical comparison unclear** — women HR 0.54 (95% CI 0.37–0.80) vs men HR 0.58 (0.45–0.73), but no formal rosuvastatin-specific interaction test located. *Class-level* heterogeneity-by-sex p=0.33 (CTT) is shown separately and does not drive the drug-specific result | PMID 20176986; PMID 25579834 (class-level) |
-| **Did side effects differ?** | **Insufficient sex-specific safety evidence** — 0 of 2 trials reported adverse events by sex | evidence gap |
+| **Did side effects differ?** | **Insufficient sex-specific safety evidence** — 0 of 2 rosuvastatin trials reported adverse events by sex | evidence gap |
 | **How does the class compare?** | 1 statin has a verified maturity score; 2 represented (atorvastatin's is **Not yet established** — female count not located) | class comparison |
 
 | Fact | Value | Basis |
@@ -52,7 +52,7 @@ HR 0.73 (0.63–0.85), **P interaction = 0.67** — plus sex-stratified safety. 
 | Women with an exact published count | **6,801** (JUPITER) | reported |
 | HOPE-3 women | **46% — no exact count is published** | reported (percentage only) |
 | CARDS women | **not located in retrieved sources** | not_located |
-| Menopausal status / hormone therapy | 0 of 2 trials | not reported |
+| Menopausal status / hormone therapy | 0 of 2 rosuvastatin trials | not reported |
 
 ### Five integrity rules the code enforces
 
@@ -95,7 +95,10 @@ uvicorn main:app --app-dir backend --port 8000
 Open **http://localhost:8000** → redirects to `/amira/check-evidence`.
 
 ```bash
-cd backend && .venv/Scripts/python -m pytest -q    # 28 integrity + build-guard tests
+cd backend && .venv/Scripts/python -m pytest -q    # 78 integrity + build-guard tests
+
+# Offline reproducibility check (no network): validates the committed corpus
+python pipeline/validate.py
 ```
 
 ## API
@@ -130,5 +133,5 @@ generated from the *same* records the API serves.
 
 ## What remains before submission
 
-- [ ] Named human sign-off on all 16 assertions and the 30 benchmark labels
+- [ ] Named human sign-off on all 31 assertions, 5 findings and the 30 benchmark labels
 - [ ] Run the extractor against the frozen held-out split and publish real results

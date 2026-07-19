@@ -11,7 +11,7 @@
 3. **No menopausal or hormonal data exists in this corpus.** No life stage can be
    evidenced, and every life-stage or hormone-therapy selection returns a bounded
    response. Age eligibility is never converted into menopausal status.
-4. **Human verification pending.** All 16 assertions are source-verified by machine
+4. **Human verification pending.** All 31 assertions and 5 findings are source-verified by machine
    against the retrieved primary source; **none** carries named human sign-off.
    `human_verified` is `false` throughout. See `VERIFICATION_WORKSHEET.md`.
 5. **No model evaluation.** `EVALUATION PENDING` is displayed; no accuracy is claimed.

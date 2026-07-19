@@ -1,8 +1,8 @@
 {
   "dataset_version": "2.0.0",
   "source_cutoff": "2026-07-18",
-  "generated_at": "2026-07-19T06:04:50Z",
-  "commit_hash": "404bdaf72e4e2108c5e5b45386819229d5b8c6ee",
+  "generated_at": "2026-07-19T06:59:46Z",
+  "commit_hash": "17b6ae9cd1e865d360e4a29c40a6a65ad1f0eaea",
   "medicine": "Rosuvastatin",
   "condition": "Cardiovascular disease prevention",
   "drug_class": "Statin",
@@ -31,5 +31,6 @@
     "deferred": 2
   },
   "human_verification_status": "pending",
-  "notes": "Evidence maturity level, effectiveness state and safety state are DERIVED at request time and are never stored here."
+  "notes": "Evidence maturity level, effectiveness state and safety state are DERIVED at request time and are never stored here.",
+  "commit_hash_note": "SHA of the commit containing this dataset. Stamped after commit by pipeline/stamp_manifest.py, then amended in."
 }

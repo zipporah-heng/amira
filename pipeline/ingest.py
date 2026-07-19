@@ -161,6 +161,23 @@ def _clean(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 
+def find_sentence(haystack: str, needle_regex: str) -> str | None:
+    """Return the verbatim sentence containing the match.
+
+    Used where an assertion must be supported by the exact sentence that states it
+    (e.g. enrollment counts), rather than a windowed excerpt that can drift onto a
+    neighbouring sentence.
+    """
+    m = re.search(needle_regex, haystack, re.I)
+    if not m:
+        return None
+    start = haystack.rfind(". ", 0, m.start())
+    start = 0 if start == -1 else start + 2
+    end = haystack.find(". ", m.end())
+    end = len(haystack) if end == -1 else end + 1
+    return haystack[start:end].strip()
+
+
 def find_passage(haystack: str, needle_regex: str, window: int = 320) -> str | None:
     """Extract a short exact passage around a match (for citation)."""
     m = re.search(needle_regex, haystack, re.I)
@@ -184,8 +201,8 @@ def find_passage(haystack: str, needle_regex: str, window: int = 320) -> str | N
 def build(offline: bool = False) -> dict:
     retrieved_at = now_iso()
 
-    if offline:
-        raise SystemExit("--offline only validates an existing dataset; run validate.py")
+    if offline:  # pragma: no cover - thin delegation
+        raise AssertionError("offline mode is handled in main() before build() is called")
 
     jup = fetch_ctgov("NCT00239681")
     hope = fetch_ctgov("NCT00468923")
@@ -238,7 +255,9 @@ def build(offline: bool = False) -> dict:
     p_ctt_sex = find_passage(ctt_all, r"proportional reductions.{0,60}major vascular events were similar")
     p_ctt_safety = find_passage(ctt_all, r"No adverse effect on rates of cancer")
     p_cards_n = find_passage(cards_all, r"2838 patients")
-    p_dapa_women = find_passage(butt_all, r"1109 were women")
+    # Enrollment must be supported by the sentence that actually states it, not by a
+    # neighbouring sentence. find_sentence returns the verbatim containing sentence.
+    p_dapa_women = find_sentence(butt_all, r"1109 were women")
     p_dapa_hr = find_passage(butt_all, r"hazard ratios, 0\.73")
     p_dapa_safety = find_passage(butt_all, r"serious adverse events were not more frequent")
 
@@ -596,14 +615,17 @@ def build(offline: bool = False) -> dict:
         F("F-SAF-DAPA-001", "Dapagliflozin", "trial:DAPA-HF", "safety",
           "Serious adverse events and study-drug discontinuation", "SRC-PMID-33787831", p_dapa_safety,
           "Abstract, Results", drug_class="SGLT2 inhibitor",
-          effect_measure="Reported separately by sex",
-          comparison_test="Serious adverse events and study-drug discontinuation reported by sex",
-          comparison_p=None, significance="no_significant_difference",
+          effect_measure="Reported separately by sex (within-sex vs placebo)",
+          # The source compares each sex against PLACEBO. It reports no comparison
+          # BETWEEN women and men, so no between-sex significance may be claimed.
+          comparison_test=None,
+          comparison_p=None, significance="not_tested",
           interpretation="Serious adverse events and study-drug discontinuation were reported "
-                         "separately by sex and were not more frequent with dapagliflozin than placebo "
-                         "in either men or women; the authors concluded dapagliflozin was safe and "
-                         "well-tolerated irrespective of sex. No numeric sex-by-treatment safety "
-                         "interaction p-value was reported in the reviewed source."),
+                         "separately by sex, and were not more frequent with dapagliflozin than "
+                         "placebo in either men or women. That is a within-sex comparison against "
+                         "placebo; no formal between-sex safety comparison or interaction test was "
+                         "reported in the reviewed source, so no between-sex safety difference is "
+                         "claimed either way."),
     ]
 
     # --- screening log -------------------------------------------------------- #
@@ -687,11 +709,17 @@ def build(offline: bool = False) -> dict:
 
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--offline", action="store_true")
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--offline", action="store_true",
+                    help="Validate the committed dataset without any network access.")
     args = ap.parse_args()
 
-    data = build(offline=args.offline)
+    if args.offline:
+        # Delegates to the offline validator so there is one implementation.
+        from validate import main as validate_main
+        raise SystemExit(validate_main())
+
+    data = build(offline=False)
     DATA.mkdir(parents=True, exist_ok=True)
     for name in ("manifest", "trials", "source_documents", "evidence_assertions",
                  "findings", "screening_log"):

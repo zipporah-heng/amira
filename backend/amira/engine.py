@@ -437,11 +437,19 @@ def _why_this_result(medicine, drug_class, mat, eff, saf, totals) -> str:
     else:
         missing.append("sex-specific effectiveness analysis")
 
+    # Safety is stated as its own sentence so the bound on the claim cannot be lost
+    # in a long clause list.
+    safety_sentence = ""
     if saf["n_reporting"] > 0:
-        clause = "safety outcomes were reported separately by sex"
         if saf["state"] == clinical.SAF_NO_DIFF:
-            clause += " with no significant sex-specific difference identified"
-        have.append(clause)
+            safety_sentence = (" Safety outcomes were reported separately by sex, and a formal "
+                               "between-sex comparison found no significant difference.")
+        elif saf["state"] == clinical.SAF_REPORTED_NO_COMPARISON:
+            safety_sentence = (" Safety outcomes were reported separately by sex, with no excess "
+                               "versus placebo reported in either sex. A formal between-sex safety "
+                               "comparison was not reported.")
+        else:
+            safety_sentence = " Safety outcomes were reported separately by sex."
     else:
         missing.append("sex-stratified side-effect analysis")
 
@@ -451,8 +459,10 @@ def _why_this_result(medicine, drug_class, mat, eff, saf, totals) -> str:
     if not trace.get(4):
         missing.append("hormone therapy use")
 
-    sentence = (f"{medicine} reached evidence maturity {mat['display']} ({mat['label']}): "
+    sentence = (f"{medicine} reached Evidence Maturity {mat['level']}/{mat['max_level']} "
+                f"({mat['label']}): "
                 + ", ".join(have[:-1]) + (", and " if len(have) > 1 else "") + have[-1] + ".")
+    sentence += safety_sentence
     if missing:
         joined = (", ".join(missing[:-1]) + (" and " if len(missing) > 1 else "") + missing[-1])
         sentence += f" {joined[0].upper()}{joined[1:]} " + (

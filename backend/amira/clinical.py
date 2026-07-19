@@ -30,6 +30,8 @@ EFF_NOT_REPORTED = "Sex-specific effectiveness not reported"
 SAF_SIGNIFICANT = "Significant sex-specific safety difference identified"
 SAF_TRENDS = "Non-significant sex-specific trends identified"
 SAF_NO_DIFF = "No significant sex-specific difference identified"
+# Reported by sex, but only against placebo within each sex — no between-sex test.
+SAF_REPORTED_NO_COMPARISON = "Reported by sex, no formal between-sex comparison"
 SAF_CONFLICTING = "Conflicting safety findings"
 SAF_INSUFFICIENT = "Insufficient sex-specific safety evidence"
 SAF_NOT_REPORTED = "Sex-specific safety not reported"
@@ -155,9 +157,18 @@ def safety_state(medicine: str) -> dict:
         state = SAF_SIGNIFICANT
     elif "trend_only" in sigs:
         state = SAF_TRENDS
-    elif drug_specific and any(f.get("significance") == "no_significant_difference"
-                               for f in drug_specific):
+    elif drug_specific and any(
+        f.get("significance") == "no_significant_difference"
+        and (f.get("comparison_p") is not None or f.get("comparison_test"))
+        for f in drug_specific
+    ):
+        # Only claim "no significant difference" when a real BETWEEN-SEX comparison exists.
         state = SAF_NO_DIFF
+    elif drug_specific and reporting > 0:
+        # Safety was reported by sex, but the source only compares each sex against
+        # placebo. No between-sex test was reported, so neither difference nor
+        # equivalence may be asserted.
+        state = SAF_REPORTED_NO_COMPARISON
     elif findings:
         # Only class-level or non-clinical-endpoint findings exist: not enough
         # drug-specific, sex-stratified adverse-event evidence to conclude.
@@ -173,6 +184,9 @@ def safety_state(medicine: str) -> dict:
         SAF_SIGNIFICANT: "A statistically significant sex difference in side effects was reported.",
         SAF_TRENDS: "Non-significant sex-specific safety trends were reported.",
         SAF_NO_DIFF: "Side effects were compared by sex and did not differ significantly.",
+        SAF_REPORTED_NO_COMPARISON: (
+            "Safety outcomes were reported separately by sex, with no excess versus placebo "
+            "reported in either sex. A formal between-sex safety comparison was not reported."),
         SAF_CONFLICTING: "Sex-specific safety results conflict across sources.",
         SAF_INSUFFICIENT: "Not enough drug-specific, sex-stratified side-effect evidence to draw a conclusion.",
         SAF_NOT_REPORTED: "Side effects were not analysed separately for women in the reviewed trials.",

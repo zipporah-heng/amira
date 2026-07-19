@@ -29,13 +29,19 @@ export function ResearchMap() {
 
   if (!trials.length) return <p>Loading research map…</p>;
 
+  // Evidence states are kept distinct and are never collapsed:
+  //   present      - reported in the reviewed sources
+  //   unclear      - not_located: AMIRA did not locate sufficient evidence
+  //   missing      - not_reported: a reviewed source was checked and does not report it
   const cell = (t: any, dim: string) => {
     if (dim === "female_enrollment") {
       if (t.female_n !== "" && t.female_n != null) return "present";
       if (t.female_pct !== "" && t.female_pct != null) return "unclear";
       return t.female_n_basis === "not_located" ? "unclear" : "missing";
     }
-    return t[dim] === "yes" ? "present" : "missing";
+    if (t[dim] === "yes") return "present";
+    if (t[dim] === "not_located") return "unclear";
+    return "missing";
   };
 
   // Group by condition -> drug class for readability across classes.
@@ -86,8 +92,14 @@ export function ResearchMap() {
                         const state = cell(t, d.key);
                         return (
                           <td key={d.key}>
-                            <span className={`cell ${state}`}>
-                              {state === "present" ? "● Present" : state === "unclear" ? "◐ Unclear" : "○ Missing"}
+                            <span className={`cell ${state}`} title={
+                              state === "present" ? "Reported in the reviewed sources"
+                                : state === "unclear"
+                                  ? "AMIRA did not locate sufficient evidence in the reviewed sources."
+                                  : "A reviewed source was checked and does not report this."}>
+                              {state === "present" ? "● Present"
+                                : state === "unclear" ? "◐ Unclear / not located"
+                                : "○ Not reported"}
                             </span>
                           </td>
                         );
@@ -100,11 +112,21 @@ export function ResearchMap() {
           </table>
         </div>
 
-        <p style={{ marginTop: 14, fontSize: 12.5, color: "var(--ink-3)", fontStyle: "italic" }}>
-          Coverage is bounded to the reviewed corpus (v{meta.v}, cutoff {meta.cutoff}).
-          "Missing" means not reported in the reviewed sources; "Unclear" means a percentage-only
-          or not-located value. Neither means a medicine does not work.
-        </p>
+        <div style={{ marginTop: 14, fontSize: 12.5, color: "var(--ink-3)", lineHeight: 1.7 }}>
+          <div><strong>● Present</strong> — reported in the reviewed sources.</div>
+          <div>
+            <strong>◐ Unclear / not located</strong> — AMIRA did not locate sufficient evidence in
+            the reviewed sources. This reflects incomplete source coverage, not confirmed absence.
+          </div>
+          <div>
+            <strong>○ Not reported</strong> — a reviewed source was checked and does not report it.
+          </div>
+          <p style={{ marginTop: 8, fontStyle: "italic" }}>
+            Coverage is bounded to the reviewed corpus (v{meta.v}, cutoff {meta.cutoff}). These are
+            distinct evidence states and are never collapsed. None of them means a medicine does
+            not work — that would be a finding of no effect, which AMIRA reports separately.
+          </p>
+        </div>
       </div>
 
       <div className="callout" style={{ marginTop: 22 }}>

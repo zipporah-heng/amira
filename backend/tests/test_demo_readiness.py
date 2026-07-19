@@ -96,8 +96,11 @@ def test_safety_significant_and_trend_separate():
         assert f["significance"] == "significant"
     for f in saf["trend_findings"]:
         assert f["significance"] == "trend_only"
-    # DAPA-HF safety was reported by sex with no significant difference (not a trend, not significant).
-    assert saf["state"] == clinical.SAF_NO_DIFF
+    # DAPA-HF reported safety by sex, but only against placebo WITHIN each sex. No
+    # between-sex comparison was reported, so no between-sex difference or equivalence
+    # may be claimed.
+    assert saf["state"] == clinical.SAF_REPORTED_NO_COMPARISON
+    assert saf["state"] != clinical.SAF_NO_DIFF
 
 
 # 8. Filters map Heart Failure -> SGLT2 inhibitor -> Dapagliflozin.

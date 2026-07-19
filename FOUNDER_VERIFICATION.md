@@ -86,9 +86,9 @@ its detailed section.
    reviewed abstract. "No significant difference" there rests on the authors' reported
    comparison of similar relative risk reductions, plus the class-level CTT heterogeneity
    test (p=0.33). The UI states this explicitly rather than implying a test that wasn't run.
-4. **Nothing is human-verified.** 23 assertions + 3 findings are *source-verified* by
+4. **Nothing is human-verified.** 31 assertions + 5 findings are *source-verified* by
    machine; none has named human sign-off.
-   [`VERIFICATION_WORKSHEET.md`](VERIFICATION_WORKSHEET.md) lists all 26 with direct
+   [`VERIFICATION_WORKSHEET.md`](VERIFICATION_WORKSHEET.md) lists all 36 with direct
    source links.
 
 ## What the filters actually do
@@ -112,5 +112,5 @@ levels and retired demo constants.
 
 ## Remaining gates
 
-- ⬜ Named human sign-off on 23 assertions + 3 findings + 30 benchmark labels
+- ⬜ Named human sign-off on 31 assertions + 5 findings + 30 benchmark labels
 - ⬜ Real evaluation run against the frozen held-out split (currently **EVALUATION PENDING**)
