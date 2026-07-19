@@ -1,0 +1,42 @@
+[
+  {
+    "trial_id": "JUPITER",
+    "nct_id": "NCT00239681",
+    "acronym": "JUPITER",
+    "display_name": "JUPITER",
+    "brief_title": "JUPITER - Crestor 20mg Versus Placebo in Prevention of Cardiovascular (CV) Events",
+    "official_title": "A Randomized, Double-Blind, Placebo Controlled, Multicenter, Phase 3 Study of Rosuvastatin (CRESTOR®) 20 mg in the Prevention of Cardiovascular Events Among Subjects With Low Levels of Low Density Lipoprotein(LDL) Cholesterol & Elevated Levels of C-Reactive Protein",
+    "medicine": "Rosuvastatin",
+    "condition": "Cardiovascular disease prevention",
+    "study_type": "Randomized Controlled Trial",
+    "enrollment_actual": 17802,
+    "enrollment_basis": "reported",
+    "sex_eligibility": "ALL",
+    "minimum_age": "50 Years",
+    "start_date": "2003-02",
+    "completion_date": "2008-09",
+    "has_registry_results": true,
+    "registry_url": "https://clinicaltrials.gov/study/NCT00239681",
+    "primary_source_id": "SRC-CTGOV-NCT00239681"
+  },
+  {
+    "trial_id": "HOPE-3",
+    "nct_id": "NCT00468923",
+    "acronym": "HOPE-3",
+    "display_name": "HOPE-3",
+    "brief_title": "Heart Outcomes Prevention Evaluation-3",
+    "official_title": "Heart Outcomes Prevention Evaluation-3",
+    "medicine": "Rosuvastatin",
+    "condition": "Cardiovascular disease prevention",
+    "study_type": "Randomized Controlled Trial",
+    "enrollment_actual": 12705,
+    "enrollment_basis": "reported",
+    "sex_eligibility": "ALL",
+    "minimum_age": "55 Years",
+    "start_date": "2007-05",
+    "completion_date": "2016-01",
+    "has_registry_results": false,
+    "registry_url": "https://clinicaltrials.gov/study/NCT00468923",
+    "primary_source_id": "SRC-CTGOV-NCT00468923"
+  }
+]

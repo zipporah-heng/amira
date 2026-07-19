@@ -1,135 +1,105 @@
 # AMIRA — Clearer evidence for women's health
 
-> **The question AMIRA answers:** *"Was this medicine actually studied in women like me?"*
+> **The question AMIRA answers:** *"Was this medicine studied in women like me?"*
 
-AMIRA audits medical research evidence to show whether **women were represented** in
-research and whether **sex-specific and hormone-relevant factors** were actually
-analyzed or reported. It surfaces an invisible evidence gap and makes it
-understandable in seconds.
+AMIRA audits published medical research to show whether **women were represented** and
+whether **sex-specific and hormone-relevant factors** were actually analysed or reported.
 
-AMIRA evaluates **evidence completeness**. It does **not** diagnose, prescribe,
-recommend treatment, tell anyone whether a medicine is safe for them, or rank
-medicines as better, safer, or more effective.
-
-> **Clickable mockup:** the primary UI is the four-route clickable prototype
-> (`/amira/check-evidence`, `/amira/research-map`, `/amira/open-benchmark`,
-> `/amira/methodology`) built around the **Open Women's Hormonal Evidence Dataset and
-> Benchmark**, with a 1–5 Evidence Maturity Model and downloadable sample files. All its
-> numbers are **DEMO DATA** derived from one fixture (`ui/src/data/amira_demo_evidence.json`).
-> See [FOUNDER_VERIFICATION_MOCKUP.md](FOUNDER_VERIFICATION_MOCKUP.md). Regenerate the
-> fixture + sample package with `python scripts/generate_demo_data.py`. The backend,
-> schema, and pipeline below are the real infrastructure underneath.
-
-Current focus: **cardiovascular disease**, through the lens of **perimenopause and
-postmenopause**.
+AMIRA measures **evidence completeness**. It does **not** diagnose, prescribe, recommend
+treatment, tell anyone whether a medicine is safe for them, or rank medicines.
 
 ---
 
-## The one thing to remember
+## Everything shown is real
 
-> **High female representation does not automatically mean complete women-specific or
-> hormone-aware evidence.** AMIRA is built to make that difference visible.
+There is **no synthetic evidence** in this repository. Every number the UI shows is
+computed from a normalized dataset built by [`pipeline/ingest.py`](pipeline/ingest.py)
+from live **ClinicalTrials.gov**, **PubMed** and **PubMed Central** records, and every
+assertion carries an exact source passage and a resolvable URL.
 
-The hero example — **atorvastatin for cardiovascular disease** — shows it: women *were*
-included and efficacy *was* analyzed by sex, yet sex-specific safety, menopausal
-status, and hormonal context were never reported. That is a **LIMITED** evidence-
-completeness result, fully source-linked.
+**Frozen corpus v1.0.0** (source cutoff 2026-07-18): rosuvastatin —
+**JUPITER** ([NCT00239681](https://clinicaltrials.gov/study/NCT00239681)) and
+**HOPE-3** ([NCT00468923](https://clinicaltrials.gov/study/NCT00468923)).
+
+| Fact | Value | Basis |
+|---|---|---|
+| Participants across the corpus | 30,507 | reported |
+| Women with an exact published count | **6,801** (JUPITER) | reported |
+| HOPE-3 women | **46% — no exact count is published** | reported (percentage only) |
+| Sex-specific outcomes | 1 of 2 trials | reported |
+| Menopausal status | 0 of 2 trials | not reported |
+| Hormone therapy use | 0 of 2 trials | not reported |
+| **Derived evidence level** | **2 of 5 — Women Analyzed** | derived at request time |
+
+### Three integrity rules the code enforces
+
+1. **Reported ≠ derived.** A published count and a number AMIRA computed are never
+   silently summed. Mixed figures are labelled `mixed_reported_and_derived`.
+2. **Age is never used to infer menopause.** JUPITER enrolled women ≥60 and HOPE-3 ≥65;
+   neither advances the maturity level. Level 3 requires an explicit menopausal-status
+   report.
+3. **Nothing unverified is marked verified.** All 16 assertions are *source-verified*
+   (machine-checked against the retrieved source); **none** has named human sign-off yet,
+   so `human_verified` is `false` throughout. See
+   [`VERIFICATION_WORKSHEET.md`](VERIFICATION_WORKSHEET.md).
 
 ---
 
 ## Quick start
 
-### Backend + built UI (one process, one URL)
-
 ```bash
-# 1. Backend
-cd backend
-python -m venv .venv
-.venv/Scripts/python -m pip install -r requirements.txt   # (source .venv/bin/activate on macOS/Linux)
+# 1. Build the dataset from live sources (requires network)
+python pipeline/ingest.py
+python pipeline/build_benchmark.py
 
-# 2. UI (build once; FastAPI serves it)
-cd ../ui
-npm ci && npm run build
+# 2. Backend
+cd backend && python -m venv .venv
+.venv/Scripts/python -m pip install -r requirements.txt && cd ..
 
-# 3. Run (serves API + UI on http://localhost:8000)
-cd ..
+# 3. UI
+cd ui && npm ci && npm run build && cd ..
+
+# 4. Run (API + UI on one URL)
 uvicorn main:app --app-dir backend --port 8000
 ```
 
-Open **http://localhost:8000**, click **Run the hero example**.
-
-### Dev mode (hot reload)
+Open **http://localhost:8000** → redirects to `/amira/check-evidence`.
 
 ```bash
-# terminal 1
-uvicorn main:app --app-dir backend --port 8000
-# terminal 2
-cd ui && npm run dev     # http://localhost:5173, proxies /api to :8000
+cd backend && .venv/Scripts/python -m pytest -q    # 28 integrity + build-guard tests
 ```
 
-### Tests
+## API
 
-```bash
-cd backend && .venv/Scripts/python -m pytest -q      # 51 tests
-python ../eval/run_eval.py --write                   # reproducible benchmark eval
-```
+`POST /api/check-evidence` — body: `condition`, `medicine`, `life_stage`,
+`hormone_therapy`. Every response carries `dataset_version`, `source_cutoff`,
+`commit_hash`, `generated_at` and resolvable source links.
 
----
+Changing **life stage** or **hormone therapy** changes the returned evidence context;
+because no trial in the corpus reports either, specific selections return a **bounded
+response** naming exactly what is missing. Unsupported medicines return
+`medicine_not_in_corpus` rather than a guess.
 
-## What's in the box (reusable open-science assets)
+Other endpoints: `/api/trials`, `/api/evidence-assertions`, `/api/screening-log`,
+`/api/benchmark`, `/api/manifest`, and downloads under `/api/download/*.csv|.jsonl`
+generated from the *same* records the API serves.
 
-| Asset | Path | What it is |
-|---|---|---|
-| **Evidence schema (v1.0)** | `backend/amira/schema.py`, `GET /api/schema` | Versioned, enum-constrained, fail-closed data model |
-| **Classification config** | `backend/amira/config/classification_rules.json` | Evidence-completeness tiers T1–T5 as data, not code |
-| **Extraction pipeline** | `backend/amira/extraction/` | Structured, abstention-first extraction + citation validation |
-| **Ingestion** | `backend/amira/ingestion/` | ClinicalTrials.gov API v2 fetch + normalize |
-| **Pilot benchmark** | `benchmark/pilot_benchmark.jsonl` | 30 human-labeled examples (20 dev / 10 held-out) |
-| **Evaluation runner** | `eval/run_eval.py` | Field accuracy, macro-F1, numeric, citation, abstention |
-| **Verified fixtures** | `fixtures/` | Source-linked, human-verified demo evidence |
+## Benchmark
 
----
-
-## Architecture at a glance
-
-```
-Source ingestion (ClinicalTrials.gov v2, labels, articles)
-   → normalize → chunk
-   → structured extraction (OpenAI, abstention-first)
-   → schema validation (fail closed)
-   → citation validation (affirmative claims must cite an in-passage span)
-   → confidence assignment → human-verification flag
-   → evidence-completeness classification (config-driven)
-   → dashboard
-```
-
-The hero demo is **fixtures-first**: verified, human-checked evidence is served
-deterministically. Live AI output never replaces a hero fixture unless it passes
-schema validation, citation validation, a confidence threshold, and human
-verification.
-
-See [`docs/architecture.md`](docs/architecture.md) for detail.
-
-## Safety: two states that are never confused
-
-- **No evidence found** — a search ran and returned nothing relevant. An evidence gap.
-- **Evidence of no effect** — a study explicitly tested an outcome and reported a null
-  or negative result.
-
-These are separate backend states with separate UI messages, enforced in code and in
-tests. See [`docs/safety-and-limitations.md`](docs/safety-and-limitations.md).
+30 verbatim passages from the five corpus sources — 18 development / 6 validation /
+6 frozen held-out test. Labels are rule-drafted and marked
+`pending_human_review`. **No evaluation has been run**, so the UI displays
+**EVALUATION PENDING** and no accuracy figure is claimed.
 
 ## Documentation
 
-- [architecture.md](docs/architecture.md)
-- [evidence-schema.md](docs/evidence-schema.md)
-- [classification-methodology.md](docs/classification-methodology.md)
-- [benchmark-methodology.md](docs/benchmark-methodology.md)
-- [data-sources.md](docs/data-sources.md)
-- [safety-and-limitations.md](docs/safety-and-limitations.md)
-- [benchmark/README.md](benchmark/README.md)
+- [Inclusion / exclusion protocol](docs/inclusion-exclusion-protocol.md) (+ [screening log](dataset/screening_log.json))
+- [Dataset card](docs/dataset-card.md) · [Data dictionary](docs/data-dictionary.md)
+- [Methodology](docs/methodology.md) — source hierarchy, maturity model, labeling, benchmark, evaluation
+- [Limitations and licensing](docs/limitations-and-licensing.md)
+- [Verification worksheet](VERIFICATION_WORKSHEET.md) · [Founder verification](FOUNDER_VERIFICATION.md)
 
-## What AMIRA does not do
+## What remains before submission
 
-Diagnosis · treatment recommendations · drug rankings · "best medicine for you" · dose
-advice · a database of every medicine · a research search engine · a foundation model.
+- [ ] Named human sign-off on all 16 assertions and the 30 benchmark labels
+- [ ] Run the extractor against the frozen held-out split and publish real results

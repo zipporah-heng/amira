@@ -1,34 +1,42 @@
 import { Link } from "react-router-dom";
-import { fixture } from "../fixture";
-import { DemoBadge } from "./DemoBadge";
+import type { EvidenceResponse } from "../api";
 
-const LEVELS = ["Low", "Moderate", "High"];
-
-export function ConfidencePanel() {
-  const { level, rationale } = fixture.meta.confidence;
-  const filled = LEVELS.indexOf(level) + 1;
+/** Verification status. AMIRA reports what has actually been verified, and by whom. */
+export function ConfidencePanel({ report }: { report: EvidenceResponse }) {
+  const all = report.trials.flatMap((t) => t.assertions);
+  const sourceVerified = all.filter((a) => a.source_verified).length;
+  const humanVerified = all.filter((a) => a.human_verified).length;
+  const pending = all.length - humanVerified;
 
   return (
     <div className="rail-card">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-        <h3 className="rail-title" style={{ margin: 0 }}>How confident are we?</h3>
-        <DemoBadge />
-      </div>
+      <h3 className="rail-title">How verified is this?</h3>
       <p style={{ fontSize: 12.5, color: "var(--ink-3)", marginTop: 8 }}>
-        Source confidence for this evidence:
+        Traceability of the displayed evidence:
       </p>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8 }}>
-        <span style={{ fontSize: 22, fontWeight: 750, color: "var(--green)" }}>{level}</span>
-        <div className="conf-meter">
-          {LEVELS.map((_, i) => (
-            <span key={i} className={i < filled ? "on" : ""} />
-          ))}
-        </div>
-      </div>
-      <p style={{ fontSize: 13, marginTop: 10 }}>{rationale}</p>
-      <Link to="/amira/methodology" className="rail-link">
-        Learn about confidence scores →
-      </Link>
+
+      <ul className="rail-list" style={{ marginTop: 10 }}>
+        <li>
+          <span className="ic ok">✓</span>
+          <span>{sourceVerified} of {all.length} assertions matched against the retrieved primary source.</span>
+        </li>
+        <li>
+          <span className="ic ok">✓</span>
+          <span>Every assertion carries an exact passage and a resolvable source URL.</span>
+        </li>
+        <li>
+          <span className="ic x">✕</span>
+          <span>
+            {humanVerified} of {all.length} assertions have named human sign-off
+            {pending > 0 ? ` — ${pending} pending review.` : "."}
+          </span>
+        </li>
+      </ul>
+
+      <p style={{ fontSize: 12, marginTop: 10, color: "var(--ink-2)" }}>
+        Model evaluation: <strong>{report.evaluation_status || "EVALUATION PENDING"}</strong>
+      </p>
+      <Link to="/amira/methodology" className="rail-link">How AMIRA verifies →</Link>
     </div>
   );
 }

@@ -1,0 +1,20 @@
+{
+  "dataset_version": "1.0.0",
+  "source_cutoff": "2026-07-18",
+  "generated_at": "2026-07-19T00:40:21Z",
+  "commit_hash": "407c9a51e71085182d41919a9e6f4424c87bdfd5",
+  "medicine": "Rosuvastatin",
+  "condition": "Cardiovascular disease prevention",
+  "corpus": [
+    "NCT00239681",
+    "NCT00468923"
+  ],
+  "counts": {
+    "trials": 2,
+    "sources": 5,
+    "assertions": 16,
+    "screening_records": 9
+  },
+  "human_verification_status": "pending",
+  "notes": "Evidence maturity level is DERIVED at request time and is never stored here."
+}

@@ -1,0 +1,81 @@
+# Methodology: source hierarchy, labeling, benchmark, evaluation
+
+## Source hierarchy
+
+When sources disagree, the higher tier wins and the conflict is recorded.
+
+1. **Trial registry results** (ClinicalTrials.gov posted results) — structured,
+   sponsor-reported participant data. Used for JUPITER's sex breakdown.
+2. **Trial registry protocol record** — enrolment, eligibility, design.
+3. **Peer-reviewed primary publication** of the trial.
+4. **Peer-reviewed secondary analysis** of the trial (e.g. the JUPITER sex-specific
+   analysis, PMID 20176986).
+5. **Open-access full text** for facts absent from the above (e.g. HOPE-3's reported
+   46% women, PMC8370761).
+
+A value is only ever `reported` if it appears verbatim in one of these. Anything AMIRA
+computes is `derived`. Anything absent is `not_reported` — never inferred.
+
+## Evidence maturity model (derived, never stored)
+
+| Level | Name | Requirement |
+|---|---|---|
+| 1 | Women Counted | Female enrolment reported (count or percentage) |
+| 2 | Women Analyzed | Sex-specific efficacy **or** safety outcomes reported |
+| 3 | Life Stage Aware | Menopausal status / life stage reported |
+| 4 | Hormone Aware | Hormone therapy use reported |
+| 5 | Precision Women's Evidence | Sex-specific outcomes stratified by **both** life stage and hormonal context |
+
+Levels are **cumulative** — the awarded level is the highest *N* for which every level
+1..*N* is satisfied. The level is computed at request time by
+`backend/amira/maturity.py` and is never persisted.
+
+**Hard rule:** age is never used to infer menopausal status. Only an explicit
+menopausal-status report can satisfy level 3. JUPITER enrolled women aged ≥60 and HOPE-3
+women aged ≥65 (or 60–65 with two risk factors); neither fact advances the level.
+
+**Current derivation for rosuvastatin:** L1 ✓ (6,801 women reported) · L2 ✓ (PMID
+20176986 sex-specific analysis) · L3 ✗ · L4 ✗ → **Level 2, Women Analyzed**.
+
+## Two states AMIRA never conflates
+
+- **No evidence found** — a search ran and returned nothing relevant in the reviewed
+  corpus. An evidence gap.
+- **Evidence of no effect** — a study explicitly tested an outcome and reported a null
+  or negative result. A finding.
+
+## Labeling guide (benchmark)
+
+Each passage is labelled from its own text only:
+
+- **yes** — the passage explicitly reports the factor.
+- **not_reported** — the passage is silent. This is the correct answer for abstention
+  and is the most common label.
+- Numeric fields are labelled only when the number appears in the passage.
+- Never infer a biological fact from silence; never infer menopause from age.
+
+Labels in v1.0.0 are **rule-drafted from the retrieved passage**
+(`label_provenance: rule_drafted_from_retrieved_passage`) and carry
+`annotation_status: pending_human_review` with `human_verifier: null`.
+
+## Benchmark methodology
+
+30 verbatim passages retrieved from the five corpus sources, spread across all of them,
+de-duplicated, and ordered by a stable content hash so splits are reproducible:
+**18 development · 6 validation · 6 frozen held-out test**.
+
+Each item carries: `benchmark_id`, `source_id`, `nct_id`, `pmid`, `pmcid`,
+`source_url`, `exact_passage`, `gold_label`, `split`, `annotation_status`,
+`human_verifier`, `retrieved_at`.
+
+## Evaluation methodology
+
+No evaluation has been run. The product displays **EVALUATION PENDING** and publishes no
+accuracy figures.
+
+When an evaluation is published it must identify, in the results file:
+`model`, `prompt_version`, `dataset_version`, `source_cutoff`, `test_split`,
+`commit_hash`, plus per-field accuracy, macro-F1, citation-support accuracy and
+abstention accuracy. Results are only valid once benchmark gold labels carry named
+human sign-off; running the extractor against rule-drafted labels would measure
+agreement with a rule, not with ground truth.

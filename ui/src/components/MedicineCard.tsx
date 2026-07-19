@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
-import { fixture } from "../fixture";
-import { DemoBadge } from "./DemoBadge";
+import type { EvidenceResponse } from "../api";
+import { DatasetStamp } from "./DemoBadge";
 
-export function MedicineCard() {
-  const m = fixture.meta;
+export function MedicineCard({ report }: { report: EvidenceResponse }) {
+  const m = report.maturity!;
   return (
     <div className="card med-card">
       <div className="med-left">
@@ -15,31 +15,39 @@ export function MedicineCard() {
           </svg>
         </div>
         <div>
-          <h2 className="med-name">
-            {m.medicine} <span className="med-brand">({m.brand})</span>
-          </h2>
+          <h2 className="med-name">{report.query.medicine}</h2>
           <div className="med-facts">
-            <div><span className="mf-k">Drug class:</span> {m.drug_class}</div>
-            <div><span className="mf-k">Used for:</span> {m.used_for}</div>
+            <div><span className="mf-k">Drug class:</span> Statin (HMG-CoA reductase inhibitor)</div>
+            <div><span className="mf-k">Evidence corpus:</span> {report.trials.map((t) => t.display_name).join(", ")}</div>
           </div>
         </div>
       </div>
 
       <div className="med-level">
         <div className="ml-head">
-          AMIRA Evidence Level <span className="info" title="An evidence-maturity model, not a treatment recommendation.">ⓘ</span>
+          AMIRA Evidence Level{" "}
+          <span className="info" title={m.derivation_note}>ⓘ</span>
         </div>
-        <div className="ml-num"><b>{m.evidence_level}</b> <span>of 5</span></div>
-        <div className="ml-name">{m.evidence_level_label}</div>
+        <div className="ml-num"><b>{m.level}</b> <span>of {m.max_level}</span></div>
+        <div className="ml-name">{m.label}</div>
       </div>
 
       <div className="med-means">
         <div className="mm-title">What this means</div>
-        <p>{m.what_this_means}</p>
+        <p>{m.description}</p>
+        <p style={{ fontSize: 11.5, color: "var(--ink-3)" }}>
+          Derived from {report.trials.length} trial(s) in the reviewed corpus — not stored in the data.
+        </p>
         <Link to="/amira/methodology" className="rail-link">See levels explained →</Link>
       </div>
 
-      <div className="med-badge"><DemoBadge /></div>
+      <div className="med-badge">
+        <DatasetStamp
+          version={report.dataset_version}
+          cutoff={report.source_cutoff}
+          commit={report.commit_hash}
+        />
+      </div>
     </div>
   );
 }

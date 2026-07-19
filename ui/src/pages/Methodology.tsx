@@ -1,5 +1,14 @@
 import { MethodologyFlow } from "../components/MethodologyFlow";
-import { fixture } from "../fixture";
+
+/** Definitions of the maturity ladder. The AWARDED level is never defined here —
+ *  it is derived from evidence by the API at request time. */
+const MATURITY_MODEL = [
+  { level: 1, name: "Women Counted", description: "Female enrollment is reported (count or percentage)." },
+  { level: 2, name: "Women Analyzed", description: "Sex-specific efficacy or safety outcomes are reported." },
+  { level: 3, name: "Life Stage Aware", description: "Menopausal status or life stage is reported. Age is never used to infer it." },
+  { level: 4, name: "Hormone Aware", description: "Hormone therapy use and hormonal context are reported." },
+  { level: 5, name: "Precision Women's Evidence", description: "Sex-specific outcomes stratified by life stage and hormonal context." },
+];
 
 export function Methodology() {
   return (
@@ -19,7 +28,7 @@ export function Methodology() {
         evidence-maturity model only — it does not imply a personalized treatment recommendation.
       </p>
       <div className="ladder" style={{ marginTop: 14 }}>
-        {fixture.evidence_maturity_model.map((m) => (
+        {MATURITY_MODEL.map((m) => (
           <div className="rung" key={m.level} style={{ minWidth: 150 }}>
             <div className="rn">Level {m.level}</div>
             <div className="rt">{m.name}</div>

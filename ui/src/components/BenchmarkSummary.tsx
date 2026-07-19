@@ -1,15 +1,15 @@
 import { Link } from "react-router-dom";
-import { fixture } from "../fixture";
-import { AssetBadge, DemoBadge } from "./DemoBadge";
+import type { EvidenceResponse } from "../api";
+import { AssetBadge } from "./DemoBadge";
 
-export function BenchmarkSummary() {
-  const d = fixture.dataset_summary;
+export function BenchmarkSummary({ report }: { report: EvidenceResponse }) {
+  const assertions = report.trials.flatMap((t) => t.assertions).length;
   const items = [
-    { icon: "🗄️", num: String(d.structured_studies), lab: "structured studies", note: "processed" },
-    { icon: "📄", num: String(d.evidence_passages), lab: "evidence passages", note: "human-labeled" },
-    { icon: "🎯", num: d.extraction_accuracy, lab: "extraction accuracy", note: "evaluation" },
-    { icon: "🧬", num: String(d.hormonal_evidence_dimensions), lab: "hormonal dimensions", note: "standardized schema" },
-    { icon: "🔓", num: d.license, lab: "open license", note: "reuse terms" },
+    { icon: "🗄️", num: String(report.trials.length), lab: "trials ingested" },
+    { icon: "📄", num: String(assertions), lab: "evidence assertions" },
+    { icon: "🔗", num: String(report.sources.length), lab: "primary sources" },
+    { icon: "🎯", num: report.evaluation_status || "EVALUATION PENDING", lab: "model evaluation" },
+    { icon: "🔓", num: "Open", lab: "registry data public domain" },
   ];
 
   return (
@@ -17,14 +17,13 @@ export function BenchmarkSummary() {
       <div className="asset-head">
         <h2 className="asset-title">The AMIRA Open Women's Hormonal Evidence Benchmark</h2>
         <AssetBadge label="Our reusable asset" />
-        <DemoBadge />
       </div>
       <div className="asset-grid">
         {items.map((it) => (
           <div className="asset-item" key={it.lab}>
             <span className="asset-ic">{it.icon}</span>
             <div>
-              <div className="asset-num">{it.num}</div>
+              <div className="asset-num" style={{ fontSize: it.num.length > 6 ? 13 : 22 }}>{it.num}</div>
               <div className="asset-lab">{it.lab}</div>
             </div>
           </div>
@@ -32,15 +31,15 @@ export function BenchmarkSummary() {
         <div className="asset-copy">
           <p>
             AMIRA turns fragmented research into a standardized, machine-readable evidence
-            foundation so researchers worldwide can build better studies and better care for
-            women.
+            foundation so researchers can build better studies and better care for women.
           </p>
           <Link to="/amira/open-benchmark" className="rail-link">Explore the Benchmark →</Link>
         </div>
       </div>
       <p className="disclaimer" style={{ marginTop: 12 }}>
-        Demo scope: values reflect the current prototype dataset. Extraction accuracy is pending
-        evaluation and the license is to be determined — no benchmark scores are claimed yet.
+        Dataset v{report.dataset_version} · source cutoff {report.source_cutoff} ·
+        commit {report.commit_hash.slice(0, 7)}. Every figure is reproducible from the
+        published dataset.
       </p>
     </div>
   );

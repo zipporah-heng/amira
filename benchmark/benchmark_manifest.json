@@ -1,0 +1,17 @@
+{
+  "benchmark_version": "1.0.0",
+  "source_cutoff": "2026-07-18",
+  "generated_at": "2026-07-19T00:51:08Z",
+  "total": 30,
+  "development": 18,
+  "validation": 6,
+  "held_out": 6,
+  "test_split_frozen": true,
+  "corpus": [
+    "NCT00239681",
+    "NCT00468923"
+  ],
+  "annotation_status": "pending_human_review",
+  "human_verified_items": 0,
+  "note": "All passages are verbatim text retrieved from ClinicalTrials.gov, PubMed or PubMed Central. Gold labels are rule-drafted and require named human review before any evaluation result may be published."
+}

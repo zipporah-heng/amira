@@ -1,0 +1,72 @@
+[
+  {
+    "source_id": "SRC-CTGOV-NCT00239681",
+    "source_type": "trial_registry_record",
+    "title": "JUPITER - Crestor 20mg Versus Placebo in Prevention of Cardiovascular (CV) Events",
+    "publisher": "ClinicalTrials.gov",
+    "year": 2003,
+    "nct_id": "NCT00239681",
+    "pmid": null,
+    "pmcid": null,
+    "url": "https://clinicaltrials.gov/study/NCT00239681",
+    "api_url": "https://clinicaltrials.gov/api/v2/studies/NCT00239681",
+    "retrieved_at": "2026-07-19T00:40:21Z",
+    "license_note": "ClinicalTrials.gov records are U.S. Government public-domain data."
+  },
+  {
+    "source_id": "SRC-CTGOV-NCT00468923",
+    "source_type": "trial_registry_record",
+    "title": "Heart Outcomes Prevention Evaluation-3",
+    "publisher": "ClinicalTrials.gov",
+    "year": 2007,
+    "nct_id": "NCT00468923",
+    "pmid": null,
+    "pmcid": null,
+    "url": "https://clinicaltrials.gov/study/NCT00468923",
+    "api_url": "https://clinicaltrials.gov/api/v2/studies/NCT00468923",
+    "retrieved_at": "2026-07-19T00:40:21Z",
+    "license_note": "ClinicalTrials.gov records are U.S. Government public-domain data."
+  },
+  {
+    "source_id": "SRC-PMID-20176986",
+    "source_type": "journal_article",
+    "title": "Statins for the primary prevention of cardiovascular events in women with elevated high-sensitivity C-reactive protein or dyslipidemia: results from the Justification for the Use of Statins in Prevention: An Intervention Trial Evaluating Rosuvastatin (JUPITER) and meta-analysis of women from primary prevention trials.",
+    "publisher": "Circulation",
+    "year": 2010,
+    "nct_id": "NCT00239681",
+    "pmid": "20176986",
+    "pmcid": null,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/20176986/",
+    "api_url": null,
+    "retrieved_at": "2026-07-19T00:40:21Z",
+    "license_note": "Abstract text (c) publisher; short excerpts quoted for citation."
+  },
+  {
+    "source_id": "SRC-PMID-27040132",
+    "source_type": "journal_article",
+    "title": "Cholesterol Lowering in Intermediate-Risk Persons without Cardiovascular Disease.",
+    "publisher": "The New England journal of medicine",
+    "year": 2016,
+    "nct_id": "NCT00468923",
+    "pmid": "27040132",
+    "pmcid": null,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/27040132/",
+    "api_url": null,
+    "retrieved_at": "2026-07-19T00:40:21Z",
+    "license_note": "Abstract text (c) publisher; short excerpts quoted for citation."
+  },
+  {
+    "source_id": "SRC-PMC8370761",
+    "source_type": "journal_article",
+    "title": "Lowering cholesterol, blood pressure, or both to prevent cardiovascular events: results of 8.7 years of follow-up of Heart Outcomes Prevention Evaluation-3 (HOPE-3)",
+    "publisher": "European Heart Journal",
+    "year": 2021,
+    "nct_id": "NCT00468923",
+    "pmid": "33963372",
+    "pmcid": "PMC8370761",
+    "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8370761/",
+    "api_url": null,
+    "retrieved_at": "2026-07-19T00:40:21Z",
+    "license_note": "Open access via PubMed Central; short excerpts quoted for citation."
+  }
+]

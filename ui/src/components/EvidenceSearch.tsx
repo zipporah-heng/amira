@@ -5,18 +5,9 @@ export interface Filters {
   hormoneTherapy: string;
 }
 
-function Field({
-  label,
-  icon,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  icon: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: string[];
+function Field({ label, icon, value, onChange, options }: {
+  label: string; icon: string; value: string;
+  onChange: (v: string) => void; options: string[];
 }) {
   return (
     <div className="field">
@@ -24,47 +15,31 @@ function Field({
       <div className="field-wrap">
         <span className="field-icon" aria-hidden>{icon}</span>
         <select value={value} onChange={(e) => onChange(e.target.value)} aria-label={label}>
-          {options.map((o) => (
-            <option key={o}>{o}</option>
-          ))}
+          {options.map((o) => <option key={o}>{o}</option>)}
         </select>
       </div>
     </div>
   );
 }
 
-export function EvidenceSearch({
-  filters,
-  setFilters,
-  onCheck,
-}: {
-  filters: Filters;
-  setFilters: (f: Filters) => void;
-  onCheck: () => void;
+export function EvidenceSearch({ filters, setFilters, onCheck }: {
+  filters: Filters; setFilters: (f: Filters) => void; onCheck: () => void;
 }) {
   return (
     <div className="card filter-card">
       <div className="filter-row">
-        <Field
-          label="Condition" icon="❤" value={filters.condition}
+        <Field label="Condition" icon="❤" value={filters.condition}
           onChange={(v) => setFilters({ ...filters, condition: v })}
-          options={["Heart Disease"]}
-        />
-        <Field
-          label="Medicine" icon="💊" value={filters.medicine}
+          options={["Cardiovascular disease prevention"]} />
+        <Field label="Medicine" icon="💊" value={filters.medicine}
           onChange={(v) => setFilters({ ...filters, medicine: v })}
-          options={["Atorvastatin (Lipitor)", "Rosuvastatin (Crestor)", "Pravastatin (Pravachol)"]}
-        />
-        <Field
-          label="Life Stage" icon="♀" value={filters.lifeStage}
+          options={["Rosuvastatin", "Atorvastatin"]} />
+        <Field label="Life Stage" icon="♀" value={filters.lifeStage}
           onChange={(v) => setFilters({ ...filters, lifeStage: v })}
-          options={["Premenopause", "Perimenopause", "Postmenopause", "Not specified"]}
-        />
-        <Field
-          label="Hormone Therapy" icon="🧴" value={filters.hormoneTherapy}
+          options={["Premenopause", "Perimenopause", "Postmenopause", "Not specified"]} />
+        <Field label="Hormone Therapy" icon="🧴" value={filters.hormoneTherapy}
           onChange={(v) => setFilters({ ...filters, hormoneTherapy: v })}
-          options={["Any", "Yes", "No", "Not specified"]}
-        />
+          options={["Any", "Yes", "No", "Not specified"]} />
         <button className="cta check-btn" onClick={onCheck}>Check Evidence</button>
       </div>
       <div className="safety-line" style={{ marginTop: 14 }}>

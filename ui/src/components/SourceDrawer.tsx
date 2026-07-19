@@ -1,16 +1,7 @@
-import type { Study } from "../types";
-import { DemoBadge } from "./DemoBadge";
+import type { TrialRow } from "../api";
+import { BasisBadge, HumanReviewBadge, SourceVerifiedBadge } from "./DemoBadge";
 
-function Row({ k, v }: { k: string; v: React.ReactNode }) {
-  return (
-    <div>
-      <div className="k">{k}</div>
-      <div className="v">{v}</div>
-    </div>
-  );
-}
-
-export function SourceDrawer({ study, onClose }: { study: Study; onClose: () => void }) {
+export function SourceDrawer({ trial, onClose }: { trial: TrialRow; onClose: () => void }) {
   return (
     <>
       <div className="drawer-scrim" onClick={onClose} />
@@ -18,44 +9,57 @@ export function SourceDrawer({ study, onClose }: { study: Study; onClose: () => 
         <div className="dr-head">
           <div>
             <div className="section-title">Study source</div>
-            <h2 style={{ fontSize: 18, marginTop: 6, maxWidth: 420 }}>{study.title}</h2>
+            <h2 style={{ fontSize: 18, marginTop: 6, maxWidth: 420 }}>{trial.display_name}</h2>
+            <a href={trial.registry_url} target="_blank" rel="noopener noreferrer"
+               style={{ fontSize: 13 }}>{trial.nct_id} on ClinicalTrials.gov ↗</a>
           </div>
           <button className="close" onClick={onClose} aria-label="Close">×</button>
         </div>
+
         <div className="dr-body">
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <DemoBadge label="Evidence status: Demo data" />
-            <span className="badge demo"><span className="dot" /> Human verified: No</span>
-          </div>
-
           <div className="dr-meta">
-            <Row k="Study ID" v={study.study_id} />
-            <Row k="Source type" v={study.study_type} />
-            <Row k="Publication year" v={study.year} />
-            <Row k="Study design" v={study.study_type} />
-            <Row k="Total participants" v={study.total_n.toLocaleString()} />
-            <Row k="Female participants" v={study.female_n.toLocaleString()} />
-            <Row k="Female %" v={`${study.female_pct}%`} />
-            <Row k="Sex-specific outcomes" v={study.sex_specific_efficacy_reported.replace("_", " ")} />
-            <Row k="Menopause" v={study.menopause_reported.replace("_", " ")} />
-            <Row k="Hormone therapy" v={study.hormone_therapy_reported.replace("_", " ")} />
-            <Row k="Confidence" v={`${Math.round(study.ai_confidence * 100)}% (demo)`} />
-            <Row k="Human verified" v="No" />
+            <div><div className="k">Total participants</div><div className="v">{trial.total_enrollment.toLocaleString()}</div></div>
+            <div><div className="k">Women (N)</div><div className="v">{trial.female_n != null ? trial.female_n.toLocaleString() : "Not reported"}</div></div>
+            <div><div className="k">% Women</div><div className="v">{trial.female_pct != null ? `${trial.female_pct}%` : "—"}</div></div>
+            <div><div className="k">Minimum age</div><div className="v">{trial.minimum_age || "—"}</div></div>
+            <div><div className="k">Study type</div><div className="v">{trial.study_type}</div></div>
+            <div><div className="k">Year</div><div className="v">{trial.year ?? "—"}</div></div>
           </div>
 
-          <div className="passage">"{study.relevant_evidence_passage}"</div>
+          <h3 style={{ fontSize: 14, marginTop: 22 }}>
+            Evidence assertions ({trial.assertions.length})
+          </h3>
+          <p style={{ fontSize: 12.5, marginTop: 4 }}>
+            Every displayed value traces to an exact passage in a retrievable source.
+          </p>
 
-          <div style={{ marginTop: 16 }}>
-            <div className="k" style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".05em", color: "var(--ink-3)", fontWeight: 650 }}>
-              Source URL
+          {trial.assertions.map((a) => (
+            <div className="src-item" key={a.assertion_id} style={{ marginTop: 14 }}>
+              <div className="st">
+                {a.dimension.replace(/_/g, " ")}: <strong>{String(a.value ?? "not reported")}</strong>
+              </div>
+              <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+                <BasisBadge basis={a.value_basis} />
+                {a.source_verified && <SourceVerifiedBadge />}
+                <HumanReviewBadge verified={a.human_verified} />
+              </div>
+              <div className="src-meta" style={{ marginTop: 8 }}>
+                <span>{a.source.title}</span>
+                {a.source.publisher && <span>{a.source.publisher}</span>}
+                {a.source.year && <span>{a.source.year}</span>}
+                {a.source.pmid && <span>PMID {a.source.pmid}</span>}
+                {a.source.pmcid && <span>{a.source.pmcid}</span>}
+                {a.source_locator && <span>{a.source_locator}</span>}
+              </div>
+              <div className="passage">"{a.exact_passage}"</div>
+              {a.notes && <div className="rationale">{a.notes}</div>}
+              <div style={{ marginTop: 10 }}>
+                <a href={a.source.url} target="_blank" rel="noopener noreferrer">
+                  Open source ↗
+                </a>
+              </div>
             </div>
-            <a href={study.source_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13.5 }}>
-              {study.source_url}
-            </a>
-            <p style={{ marginTop: 6, fontSize: 12, color: "var(--ink-3)", fontStyle: "italic" }}>
-              Demo source pointer — no live document is attached in this prototype.
-            </p>
-          </div>
+          ))}
         </div>
       </aside>
     </>
