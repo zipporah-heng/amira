@@ -70,7 +70,7 @@ button { font-family: var(--font); cursor: pointer; }
 .brand { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 4px 8px 18px; }
 /* Approved AMIRA logo (transparent PNG). Renders on the translucent sidebar and
    on white; artwork is used unmodified. */
-.brand-logo { width: 150px; max-width: 100%; height: auto; display: block; }
+.brand-logo { width: 190px; max-width: 100%; height: auto; display: block; }
 .brand .tag { font-size: 11px; color: var(--ink-3); margin-top: 1px; letter-spacing: .01em; }
 .navitem {
   text-align: left; background: transparent; border: none; padding: 10px 12px;
@@ -144,13 +144,13 @@ button { font-family: var(--font); cursor: pointer; }
 .rung.on .rt { color: var(--lav-700); }
 
 /* Metric cards */
-.metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-top: 14px; }
-.metric-card { border: 1px solid var(--border); border-radius: 14px; padding: 18px; background: var(--surface); box-shadow: var(--shadow); }
-.metric-card .mc-title { font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); font-weight: 650; }
-.metric-card .mc-num { font-size: 30px; font-weight: 750; color: var(--ink); margin-top: 8px; line-height: 1; letter-spacing: -0.02em; }
+.metrics { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-top: 14px; }
+.metric-card { border: 1px solid var(--border); border-radius: 13px; padding: 13px 14px; background: var(--surface); box-shadow: var(--shadow); }
+.metric-card .mc-title { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-3); font-weight: 650; line-height: 1.25; }
+.metric-card .mc-num { font-size: 23px; font-weight: 750; color: var(--ink); margin-top: 5px; line-height: 1; letter-spacing: -0.02em; }
 .metric-card .mc-num.zero { color: var(--red); }
-.metric-card .mc-sub { font-size: 12px; color: var(--ink-3); margin-top: 8px; line-height: 1.4; }
-.metric-card .badge { margin-top: 12px; }
+.metric-card .mc-sub { font-size: 11px; color: var(--ink-3); margin-top: 5px; line-height: 1.35; }
+.metric-card .badge { margin-top: 10px; }
 
 /* At a glance bars */
 .glance { display: flex; flex-direction: column; gap: 11px; margin-top: 14px; }
@@ -292,8 +292,8 @@ table.matrix td { text-align: center; }
 .med-badge { position: absolute; top: 16px; right: 18px; }
 
 /* Metric cards with icons */
-.metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 18px; }
-.mc-icon { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; font-size: 17px; margin-bottom: 10px; }
+.metrics { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-top: 18px; }
+.mc-icon { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; font-size: 15px; margin-bottom: 7px; }
 
 /* Right rail cards */
 .rail-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); padding: 18px; }
@@ -352,8 +352,11 @@ table.matrix td { text-align: center; }
   .ce-grid { grid-template-columns: 1fr; }
   .ce-right { position: static; flex-direction: column; }
 }
+@media (max-width: 1180px) {
+  .metrics { grid-template-columns: repeat(3, 1fr); }
+}
 @media (max-width: 980px) {
-  .metrics { grid-template-columns: repeat(2, 1fr); }
+  .metrics { grid-template-columns: repeat(3, 1fr); }
   .filters { grid-template-columns: 1fr 1fr; }
   .filter-row { grid-template-columns: 1fr 1fr; }
   .check-btn { grid-column: 1 / -1; }

@@ -116,21 +116,21 @@ export function CheckEvidence() {
               sub={t.women_pct_of_participants != null
                 ? `reported · ${t.women_pct_of_participants}% of ${t.participants_total.toLocaleString()} participants`
                 : `reported in ${t.trials_with_reported_female_count.length} of ${t.trials} trials`} />
-            {report.dimensions.map((d) => {
-              const meta = CARD_META[d.dimension] || { icon: "•", tint: "#eee" };
-              const secondary = d.dimension === "pregnancy_evidence_reported";
-              return (
-                <EvidenceMetricCard key={d.dimension}
-                  icon={meta.icon} tint={meta.tint}
-                  title={d.title}
-                  value={secondary && d.n_reporting === 0 ? "Not assessed" : d.display}
-                  sub={secondary
-                    ? "in the reviewed Phase 3 corpus — see additional clinical resources"
-                    : `of ${d.n_trials} trial${d.n_trials === 1 ? "" : "s"} — ${d.subtitle}`}
-                  zero={d.n_reporting === 0 && !secondary}
-                  muted={secondary} />
-              );
-            })}
+            {/* Pregnancy is not a core maturity dimension: it stays in the detailed
+                evidence sections and Additional Clinical Resources, not this row. */}
+            {report.dimensions
+              .filter((d) => d.dimension !== "pregnancy_evidence_reported")
+              .map((d) => {
+                const meta = CARD_META[d.dimension] || { icon: "•", tint: "#eee" };
+                return (
+                  <EvidenceMetricCard key={d.dimension}
+                    icon={meta.icon} tint={meta.tint}
+                    title={d.title}
+                    value={d.display}
+                    sub={`of ${d.n_trials} trial${d.n_trials === 1 ? "" : "s"} — ${d.subtitle}`}
+                    zero={d.n_reporting === 0} />
+                );
+              })}
           </div>
 
           {t.count_basis_warning && (
