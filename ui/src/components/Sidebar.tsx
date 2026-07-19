@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import amiraLogo from "../assets/amira-logo.png";
 
 const NAV: { to?: string; label: string; icon: string }[] = [
   { label: "Home", icon: "🏠" },
@@ -14,11 +15,8 @@ export function Sidebar() {
   return (
     <nav className="nav">
       <div className="brand">
-        <div className="mark">✦</div>
-        <div>
-          <div className="name">AMIRA</div>
-          <div className="tag">Evidence Intelligence Platform</div>
-        </div>
+        <img src={amiraLogo} alt="AMIRA" className="brand-logo" width={150} />
+        <div className="tag">Evidence Intelligence Platform</div>
       </div>
 
       {NAV.map((n) =>
