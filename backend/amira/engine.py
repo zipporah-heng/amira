@@ -31,12 +31,14 @@ LIFE_STAGES = {
 }
 HORMONE_THERAPY = {"yes", "no", "any", "not_specified"}
 
-# Dimensions surfaced as the UI's evidence cards.
+# Dimensions surfaced as the UI's summary evidence cards (below the hero).
 CARD_DIMENSIONS = [
     ("sex_specific_efficacy_reported", "Sex-specific outcomes",
-     "studies reported results separately for women"),
+     "trials reported sex-specific effectiveness outcomes"),
+    ("sex_specific_safety_reported", "Sex-specific safety",
+     "trials reported adverse events separately by sex"),
     ("menopause_status_reported", "Menopause status",
-     "studies reported menopausal status"),
+     "trials reported menopausal status"),
     ("hormone_therapy_reported", "Hormone therapy",
      "studies reported hormone therapy use"),
     ("pregnancy_evidence_reported", "Pregnancy",

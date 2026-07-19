@@ -23,7 +23,7 @@
     "source_verified": true,
     "human_verified": false,
     "verifier": null,
-    "retrieved_at": "2026-07-19T05:17:21Z"
+    "retrieved_at": "2026-07-19T06:04:50Z"
   },
   {
     "finding_id": "F-EFF-CLASS-001",
@@ -49,7 +49,7 @@
     "source_verified": true,
     "human_verified": false,
     "verifier": null,
-    "retrieved_at": "2026-07-19T05:17:21Z"
+    "retrieved_at": "2026-07-19T06:04:50Z"
   },
   {
     "finding_id": "F-SAF-CLASS-001",
@@ -75,6 +75,58 @@
     "source_verified": true,
     "human_verified": false,
     "verifier": null,
-    "retrieved_at": "2026-07-19T05:17:21Z"
+    "retrieved_at": "2026-07-19T06:04:50Z"
+  },
+  {
+    "finding_id": "F-EFF-DAPA-001",
+    "medicine": "Dapagliflozin",
+    "drug_class": "SGLT2 inhibitor",
+    "scope": "trial:DAPA-HF",
+    "finding_type": "efficacy",
+    "endpoint": "Worsening heart failure event or cardiovascular death",
+    "female_estimate": "HR 0.79",
+    "male_estimate": "HR 0.73",
+    "effect_measure": "Hazard ratio",
+    "female_ci": "95% CI 0.59-1.06",
+    "male_ci": "95% CI 0.63-0.85",
+    "comparison_test": "Sex-by-treatment interaction (Cox model)",
+    "comparison_p": "0.67",
+    "significance": "no_significant_difference",
+    "female_rate": null,
+    "male_rate": null,
+    "interpretation": "A prespecified DAPA-HF analysis reported that dapagliflozin reduced the primary outcome to a similar extent in women (HR 0.79, 95% CI 0.59-1.06) and men (HR 0.73, 95% CI 0.63-0.85), with a formal sex-by-treatment interaction p=0.67. This is a drug-specific comparison, so 'no significant sex difference' is supported for dapagliflozin.",
+    "source_id": "SRC-PMID-33787831",
+    "exact_passage": "a similar extent in both men and women (hazard ratios, 0.73 [95% CI, 0.63-0.85] and 0.79 [95% CI, 0.59-1.06], respectively; P for interaction&#x2009;=&#x2009;.67). Consistent benefits were observed for the components of the primary outcome and all-cause mortality.",
+    "source_locator": "Abstract, Results",
+    "source_verified": true,
+    "human_verified": false,
+    "verifier": null,
+    "retrieved_at": "2026-07-19T06:04:50Z"
+  },
+  {
+    "finding_id": "F-SAF-DAPA-001",
+    "medicine": "Dapagliflozin",
+    "drug_class": "SGLT2 inhibitor",
+    "scope": "trial:DAPA-HF",
+    "finding_type": "safety",
+    "endpoint": "Serious adverse events and study-drug discontinuation",
+    "female_estimate": null,
+    "male_estimate": null,
+    "effect_measure": "Reported separately by sex",
+    "female_ci": null,
+    "male_ci": null,
+    "comparison_test": "Serious adverse events and study-drug discontinuation reported by sex",
+    "comparison_p": null,
+    "significance": "no_significant_difference",
+    "female_rate": null,
+    "male_rate": null,
+    "interpretation": "Serious adverse events and study-drug discontinuation were reported separately by sex and were not more frequent with dapagliflozin than placebo in either men or women; the authors concluded dapagliflozin was safe and well-tolerated irrespective of sex. No numeric sex-by-treatment safety interaction p-value was reported in the reviewed source.",
+    "source_id": "SRC-PMID-33787831",
+    "exact_passage": "Study drug discontinuation and serious adverse events were not more frequent in the dapagliflozin group than in the placebo group in either men or women.",
+    "source_locator": "Abstract, Results",
+    "source_verified": true,
+    "human_verified": false,
+    "verifier": null,
+    "retrieved_at": "2026-07-19T06:04:50Z"
   }
 ]

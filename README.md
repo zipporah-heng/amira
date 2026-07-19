@@ -22,13 +22,20 @@ computed from a normalized dataset built by [`pipeline/ingest.py`](pipeline/inge
 from live **ClinicalTrials.gov**, **PubMed** and **PubMed Central** records, and every
 assertion carries an exact source passage and a resolvable URL.
 
-**Frozen corpus v2.0.0** (source cutoff 2026-07-18) — statin class:
+**Frozen corpus v2.0.0** (source cutoff 2026-07-18):
 
-| Medicine | Trials | Sources |
-|---|---|---|
-| Rosuvastatin | JUPITER ([NCT00239681](https://clinicaltrials.gov/study/NCT00239681)), HOPE-3 ([NCT00468923](https://clinicaltrials.gov/study/NCT00468923)) | + Mora 2010 sex-specific analysis (PMID 20176986) |
-| Atorvastatin | CARDS ([NCT00327418](https://clinicaltrials.gov/study/NCT00327418)) | PMID 15325833 |
-| *Class-level* | 27 statin trials | CTT sex-specific meta-analysis (PMID 25579834) |
+| Condition | Class | Medicine | Trials | Sources |
+|---|---|---|---|---|
+| CV prevention | Statin | Rosuvastatin | JUPITER ([NCT00239681](https://clinicaltrials.gov/study/NCT00239681)), HOPE-3 ([NCT00468923](https://clinicaltrials.gov/study/NCT00468923)) | + Mora 2010 (PMID 20176986) |
+| CV prevention | Statin | Atorvastatin | CARDS ([NCT00327418](https://clinicaltrials.gov/study/NCT00327418)) | PMID 15325833 |
+| CV prevention | Statin | *Class-level* | 27 statin trials | CTT (PMID 25579834) |
+| Heart failure | SGLT2 inhibitor | Dapagliflozin | DAPA-HF ([NCT03036124](https://clinicaltrials.gov/study/NCT03036124)) | Butt 2021 sex analysis (PMID 33787831 / PMC8014207) |
+
+**Two contrasting real cases.** Rosuvastatin shows women counted + analysed but *no formal
+drug-specific interaction test*. **Dapagliflozin** shows the stronger case: a prespecified
+DAPA-HF sex analysis with a **real interaction test** — women HR 0.79 (95% CI 0.59–1.06) vs men
+HR 0.73 (0.63–0.85), **P interaction = 0.67** — plus sex-stratified safety. AMIRA distinguishes
+*evidence that exists* from *evidence that is missing*, rather than always returning "insufficient".
 
 ### The four questions, answered from real data
 

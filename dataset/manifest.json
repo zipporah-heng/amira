@@ -1,32 +1,34 @@
 {
   "dataset_version": "2.0.0",
   "source_cutoff": "2026-07-18",
-  "generated_at": "2026-07-19T05:17:21Z",
-  "commit_hash": "f82ae178e64bae26be1df2928710ccd1c543d0f7",
+  "generated_at": "2026-07-19T06:04:50Z",
+  "commit_hash": "404bdaf72e4e2108c5e5b45386819229d5b8c6ee",
   "medicine": "Rosuvastatin",
   "condition": "Cardiovascular disease prevention",
   "drug_class": "Statin",
   "corpus": [
     "NCT00239681",
     "NCT00468923",
-    "NCT00327418"
+    "NCT00327418",
+    "NCT03036124"
   ],
   "medicines": [
     "Atorvastatin",
+    "Dapagliflozin",
     "Rosuvastatin"
   ],
   "counts": {
-    "trials": 3,
-    "sources": 8,
-    "assertions": 23,
-    "findings": 3,
-    "screening_records": 12
+    "trials": 4,
+    "sources": 10,
+    "assertions": 31,
+    "findings": 5,
+    "screening_records": 15
   },
   "screening_summary": {
-    "identified": 12,
-    "included": 8,
+    "identified": 15,
+    "included": 10,
     "excluded": 3,
-    "deferred": 1
+    "deferred": 2
   },
   "human_verification_status": "pending",
   "notes": "Evidence maturity level, effectiveness state and safety state are DERIVED at request time and are never stored here."

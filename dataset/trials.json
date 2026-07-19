@@ -70,5 +70,29 @@
     "has_registry_results": false,
     "registry_url": "https://clinicaltrials.gov/study/NCT00327418",
     "primary_source_id": "SRC-CTGOV-NCT00327418"
+  },
+  {
+    "trial_id": "DAPA-HF",
+    "nct_id": "NCT03036124",
+    "acronym": "DAPA-HF",
+    "display_name": "DAPA-HF",
+    "brief_title": "Study to Evaluate the Effect of Dapagliflozin on the Incidence of Worsening Heart Failure or Cardiovascular Death in Patients With Chronic Heart Failure",
+    "official_title": "Study to Evaluate the Effect of Dapagliflozin on the Incidence of Worsening Heart Failure or Cardiovascular Death in Patients With Chronic Heart Failure With Reduced Ejection Fraction",
+    "medicine": "Dapagliflozin",
+    "drug_class": "SGLT2 inhibitor",
+    "indication": "Heart failure with reduced ejection fraction",
+    "condition": "Heart failure",
+    "study_type": "Randomized Controlled Trial",
+    "study_phase": "Phase 3",
+    "primary_endpoint": "Composite of worsening heart failure (hospitalization or urgent HF visit) or cardiovascular death",
+    "enrollment_actual": 4744,
+    "enrollment_basis": "reported",
+    "sex_eligibility": "ALL",
+    "minimum_age": "18 Years",
+    "start_date": "2017-02-08",
+    "completion_date": "2019-07-17",
+    "has_registry_results": true,
+    "registry_url": "https://clinicaltrials.gov/study/NCT03036124",
+    "primary_source_id": "SRC-CTGOV-NCT03036124"
   }
 ]

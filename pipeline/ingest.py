@@ -55,6 +55,7 @@ EXPECTED = {
     "NCT00239681": {"enrollment": 17802, "female": 6801, "male": 11001, "has_results": True},
     "NCT00468923": {"enrollment": 12705, "has_results": False},
     "NCT00327418": {"enrollment": 2800, "has_results": False},  # CARDS (atorvastatin)
+    "NCT03036124": {"enrollment": 4744, "female": 1109, "male": 3635, "has_results": True},  # DAPA-HF
 }
 
 
@@ -189,14 +190,18 @@ def build(offline: bool = False) -> dict:
     jup = fetch_ctgov("NCT00239681")
     hope = fetch_ctgov("NCT00468923")
     cards = fetch_ctgov("NCT00327418")  # CARDS (atorvastatin)
+    dapa = fetch_ctgov("NCT03036124")   # DAPA-HF (dapagliflozin)
 
     jup_p = jup["protocolSection"]
     hope_p = hope["protocolSection"]
     cards_p = cards["protocolSection"]
+    dapa_p = dapa["protocolSection"]
     jup_enroll = jup_p["designModule"]["enrollmentInfo"]["count"]
     hope_enroll = hope_p["designModule"]["enrollmentInfo"]["count"]
     cards_enroll = cards_p["designModule"]["enrollmentInfo"]["count"]
+    dapa_enroll = dapa_p["designModule"]["enrollmentInfo"]["count"]
     jup_female = ctgov_female_count(jup)
+    dapa_female = ctgov_female_count(dapa)
 
     # --- drift guard: fail loudly rather than serve changed numbers ---------- #
     e = EXPECTED["NCT00239681"]
@@ -205,6 +210,9 @@ def build(offline: bool = False) -> dict:
     assert hope_enroll == EXPECTED["NCT00468923"]["enrollment"], "HOPE-3 enrollment drift"
     assert bool(hope.get("hasResults")) is False, "HOPE-3 now has registry results; re-verify corpus"
     assert cards_enroll == EXPECTED["NCT00327418"]["enrollment"], "CARDS enrollment drift"
+    de = EXPECTED["NCT03036124"]
+    assert dapa_enroll == de["enrollment"], f"DAPA-HF enrollment drift: {dapa_enroll} != {de['enrollment']}"
+    assert dapa_female == de["female"], f"DAPA-HF female count drift: {dapa_female} != {de['female']}"
 
     # --- publications -------------------------------------------------------- #
     mora = fetch_pubmed_abstract("20176986")       # JUPITER sex-specific analysis
@@ -212,11 +220,13 @@ def build(offline: bool = False) -> dict:
     hope_fu_text = fetch_pmc_text("PMC8370761")     # HOPE-3 8.7y follow-up (open access)
     ctt = fetch_pubmed_abstract("25579834")        # CTT class-level sex-specific meta-analysis
     cards_pub = fetch_pubmed_abstract("15325833")  # CARDS main report (Lancet 2004)
+    butt = fetch_pubmed_abstract("33787831")       # DAPA-HF prespecified sex analysis (JAMA Cardiol 2021)
 
     mora_all = " ".join(mora["sections"].values())
     hope_lipid_all = " ".join(hope_lipid["sections"].values())
     ctt_all = " ".join(ctt["sections"].values())
     cards_all = " ".join(cards_pub["sections"].values())
+    butt_all = " ".join(butt["sections"].values())
 
     p_jup_women = find_passage(mora_all, r"6801 women")
     p_jup_sexspec = find_passage(mora_all, r"sex-specific outcomes")
@@ -228,11 +238,15 @@ def build(offline: bool = False) -> dict:
     p_ctt_sex = find_passage(ctt_all, r"proportional reductions.{0,60}major vascular events were similar")
     p_ctt_safety = find_passage(ctt_all, r"No adverse effect on rates of cancer")
     p_cards_n = find_passage(cards_all, r"2838 patients")
+    p_dapa_women = find_passage(butt_all, r"1109 were women")
+    p_dapa_hr = find_passage(butt_all, r"hazard ratios, 0\.73")
+    p_dapa_safety = find_passage(butt_all, r"serious adverse events were not more frequent")
 
     for name, val in [("JUPITER women", p_jup_women), ("JUPITER sex-specific", p_jup_sexspec),
                       ("JUPITER HR", p_jup_hr), ("HOPE-3 N", p_hope_n),
                       ("HOPE-3 % women", p_hope_pct), ("CTT sex analysis", p_ctt_sex),
-                      ("CARDS N", p_cards_n)]:
+                      ("CARDS N", p_cards_n), ("DAPA-HF women", p_dapa_women),
+                      ("DAPA-HF HR", p_dapa_hr), ("DAPA-HF safety", p_dapa_safety)]:
         if not val:
             raise SystemExit(f"Required passage not found in live source: {name}")
 
@@ -295,6 +309,21 @@ def build(offline: bool = False) -> dict:
          "url": "https://pubmed.ncbi.nlm.nih.gov/15325833/",
          "api_url": None, "retrieved_at": retrieved_at,
          "license_note": "Abstract text (c) publisher; short excerpts quoted for citation."},
+        {"source_id": "SRC-CTGOV-NCT03036124", "source_type": "trial_registry_record",
+         "title": _clean(dapa_p["identificationModule"]["briefTitle"]),
+         "publisher": "ClinicalTrials.gov", "year": 2017,
+         "nct_id": "NCT03036124", "pmid": None, "pmcid": None,
+         "url": "https://clinicaltrials.gov/study/NCT03036124",
+         "api_url": CTGOV.format(nct="NCT03036124"),
+         "retrieved_at": retrieved_at,
+         "license_note": "ClinicalTrials.gov records are U.S. Government public-domain data."},
+        {"source_id": "SRC-PMID-33787831", "source_type": "journal_article",
+         "title": butt["title"], "publisher": butt["journal"], "year": butt["year"],
+         "nct_id": "NCT03036124", "pmid": "33787831", "pmcid": "PMC8014207",
+         "url": "https://pubmed.ncbi.nlm.nih.gov/33787831/",
+         "api_url": None, "retrieved_at": retrieved_at,
+         "license_note": "Prespecified sex-specific analysis of DAPA-HF. Abstract (c) publisher; "
+                         "open access via PMC8014207; short excerpts quoted for citation."},
     ]
 
     # --- trials -------------------------------------------------------------- #
@@ -351,6 +380,24 @@ def build(offline: bool = False) -> dict:
          "has_registry_results": False,
          "registry_url": "https://clinicaltrials.gov/study/NCT00327418",
          "primary_source_id": "SRC-CTGOV-NCT00327418"},
+        {"trial_id": "DAPA-HF", "nct_id": "NCT03036124",
+         "acronym": "DAPA-HF", "display_name": "DAPA-HF",
+         "brief_title": _clean(dapa_p["identificationModule"]["briefTitle"]),
+         "official_title": _clean(dapa_p["identificationModule"].get("officialTitle") or ""),
+         "medicine": "Dapagliflozin", "drug_class": "SGLT2 inhibitor",
+         "indication": "Heart failure with reduced ejection fraction",
+         "condition": "Heart failure",
+         "study_type": "Randomized Controlled Trial", "study_phase": "Phase 3",
+         "primary_endpoint": "Composite of worsening heart failure (hospitalization or urgent HF "
+                             "visit) or cardiovascular death",
+         "enrollment_actual": dapa_enroll, "enrollment_basis": "reported",
+         "sex_eligibility": dapa_p["eligibilityModule"].get("sex"),
+         "minimum_age": dapa_p["eligibilityModule"].get("minimumAge"),
+         "start_date": dapa_p["statusModule"].get("startDateStruct", {}).get("date"),
+         "completion_date": dapa_p["statusModule"].get("completionDateStruct", {}).get("date"),
+         "has_registry_results": True,
+         "registry_url": "https://clinicaltrials.gov/study/NCT03036124",
+         "primary_source_id": "SRC-CTGOV-NCT03036124"},
     ]
 
     # --- evidence assertions -------------------------------------------------- #
@@ -450,6 +497,34 @@ def build(offline: bool = False) -> dict:
           "SRC-CTGOV-NCT00327418",
           "Registry record reports no pregnancy-specific evidence for this population.",
           "Registry record review"),
+        # ---- DAPA-HF (dapagliflozin, heart failure) ----
+        A("A-DAPA-001", "DAPA-HF", "total_enrollment", dapa_enroll, "reported",
+          "SRC-CTGOV-NCT03036124",
+          f"Enrollment: {dapa_enroll} participants (ACTUAL).", "Design module, enrollmentInfo"),
+        A("A-DAPA-002", "DAPA-HF", "female_enrollment_count", 1109, "reported",
+          "SRC-PMID-33787831", p_dapa_women, "Abstract, Results",
+          "Corroborated by posted registry results (Sex: Female, Total = 1109) at SRC-CTGOV-NCT03036124."),
+        A("A-DAPA-003", "DAPA-HF", "female_enrollment_pct", 23.4, "reported",
+          "SRC-PMID-33787831", p_dapa_women, "Abstract, Results",
+          "Stated as 23.4% in the source."),
+        A("A-DAPA-004", "DAPA-HF", "sex_specific_efficacy_reported", "yes", "reported",
+          "SRC-PMID-33787831", p_dapa_hr, "Abstract, Results",
+          "Prespecified sex-specific efficacy analysis with a formal sex-by-treatment interaction test."),
+        A("A-DAPA-005", "DAPA-HF", "sex_specific_safety_reported", "yes", "reported",
+          "SRC-PMID-33787831", p_dapa_safety, "Abstract, Results",
+          "Serious adverse events and study-drug discontinuation were reported separately by sex."),
+        A("A-DAPA-006", "DAPA-HF", "menopause_status_reported", "not_reported", "not_reported",
+          "SRC-PMID-33787831", p_dapa_women, "Abstract",
+          "The sex-specific analysis reports biological sex only; menopausal status is not reported. "
+          "Enrolment minimum age is 18; age is NOT used to infer menopausal status."),
+        A("A-DAPA-007", "DAPA-HF", "hormone_therapy_reported", "not_reported", "not_reported",
+          "SRC-CTGOV-NCT03036124",
+          "Registry record and reviewed publication contain no menopausal hormone therapy measure.",
+          "Registry record review"),
+        A("A-DAPA-008", "DAPA-HF", "pregnancy_evidence_reported", "not_reported", "not_reported",
+          "SRC-CTGOV-NCT03036124",
+          "Registry record reports no pregnancy-specific evidence for this population.",
+          "Registry record review"),
     ]
 
     # --- structured sex-specific findings (effect estimates) ------------------ #
@@ -505,6 +580,30 @@ def build(offline: bool = False) -> dict:
                          "non-cardiovascular mortality for either sex. No rosuvastatin-specific "
                          "sex-stratified adverse-event breakdown (e.g. muscle symptoms) was located "
                          "in the reviewed sources."),
+        # ---- DAPA-HF: a drug-specific sex analysis WITH a formal interaction test ----
+        F("F-EFF-DAPA-001", "Dapagliflozin", "trial:DAPA-HF", "efficacy",
+          "Worsening heart failure event or cardiovascular death", "SRC-PMID-33787831", p_dapa_hr,
+          "Abstract, Results", drug_class="SGLT2 inhibitor",
+          female_estimate="HR 0.79", male_estimate="HR 0.73", effect_measure="Hazard ratio",
+          female_ci="95% CI 0.59-1.06", male_ci="95% CI 0.63-0.85",
+          comparison_test="Sex-by-treatment interaction (Cox model)", comparison_p="0.67",
+          significance="no_significant_difference",
+          interpretation="A prespecified DAPA-HF analysis reported that dapagliflozin reduced the "
+                         "primary outcome to a similar extent in women (HR 0.79, 95% CI 0.59-1.06) and "
+                         "men (HR 0.73, 95% CI 0.63-0.85), with a formal sex-by-treatment interaction "
+                         "p=0.67. This is a drug-specific comparison, so 'no significant sex difference' "
+                         "is supported for dapagliflozin."),
+        F("F-SAF-DAPA-001", "Dapagliflozin", "trial:DAPA-HF", "safety",
+          "Serious adverse events and study-drug discontinuation", "SRC-PMID-33787831", p_dapa_safety,
+          "Abstract, Results", drug_class="SGLT2 inhibitor",
+          effect_measure="Reported separately by sex",
+          comparison_test="Serious adverse events and study-drug discontinuation reported by sex",
+          comparison_p=None, significance="no_significant_difference",
+          interpretation="Serious adverse events and study-drug discontinuation were reported "
+                         "separately by sex and were not more frequent with dapagliflozin than placebo "
+                         "in either men or women; the authors concluded dapagliflozin was safe and "
+                         "well-tolerated irrespective of sex. No numeric sex-by-treatment safety "
+                         "interaction p-value was reported in the reviewed source."),
     ]
 
     # --- screening log -------------------------------------------------------- #
@@ -541,6 +640,17 @@ def build(offline: bool = False) -> dict:
                    "for the drug-class comparison.", "screened_at": retrieved_at},
         {"candidate": "PMID 15325833", "identifier_type": "pmid", "decision": "include",
          "reason": "Primary report of CARDS (Lancet 2004).", "screened_at": retrieved_at},
+        {"candidate": "NCT03036124 (DAPA-HF)", "identifier_type": "nct", "decision": "include",
+         "reason": "Phase 3 dapagliflozin RCT in HFrEF; registry results posted with sex breakdown.",
+         "screened_at": retrieved_at},
+        {"candidate": "PMID 33787831 (PMC8014207)", "identifier_type": "pmid", "decision": "include",
+         "reason": "Prespecified DAPA-HF sex-specific efficacy and safety analysis with a formal "
+                   "sex-by-treatment interaction test (JAMA Cardiology 2021).",
+         "screened_at": retrieved_at},
+        {"candidate": "PMID 36342789", "identifier_type": "pmid", "decision": "defer",
+         "reason": "Pooled DAPA-HF + DELIVER sex-differences analysis; combines two trial populations. "
+                   "Deferred to avoid participant double-counting until pooled-vs-single scope is modelled.",
+         "screened_at": retrieved_at},
         {"candidate": "Pravastatin trials (e.g. WOSCOPS, PROSPER)", "identifier_type": "medicine",
          "decision": "defer",
          "reason": "Not yet ingested and verified; excluded from the class comparison until real "
@@ -556,7 +666,7 @@ def build(offline: bool = False) -> dict:
         "medicine": MEDICINE,
         "condition": CONDITION,
         "drug_class": DRUG_CLASS,
-        "corpus": ["NCT00239681", "NCT00468923", "NCT00327418"],
+        "corpus": ["NCT00239681", "NCT00468923", "NCT00327418", "NCT03036124"],
         "medicines": sorted({t["medicine"] for t in trials}),
         "counts": {"trials": len(trials), "sources": len(sources),
                    "assertions": len(assertions), "findings": len(findings),

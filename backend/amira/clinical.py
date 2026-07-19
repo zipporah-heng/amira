@@ -233,17 +233,21 @@ def class_comparison(drug_class: str) -> dict:
     rows.sort(key=lambda r: (not r["maturity_scorable"], -r["maturity_level"], r["medicine"]))
 
     scored = [r for r in rows if r["maturity_scorable"]]
+    cls = drug_class.lower()
+    cls_plural = cls + "s"
     if len(scored) >= 2:
         ranking = {
             "rankable": True,
-            "summary": f"Evidence maturity rank shown for {len(scored)} of {len(meds)} reviewed statins.",
+            "summary": f"Evidence maturity rank shown for {len(scored)} of {len(meds)} reviewed {cls_plural}.",
             "basis": "Based on women-specific evidence maturity, not clinical effectiveness.",
         }
     else:
+        med_word = cls if len(scored) == 1 else cls_plural
+        rep_word = cls if len(meds) == 1 else cls_plural
         ranking = {
             "rankable": False,
-            "summary": (f"{len(scored)} statin currently has a verified Evidence Maturity score; "
-                        f"{len(meds)} statins currently represented in AMIRA."),
+            "summary": (f"{len(scored)} {med_word} currently has a verified Evidence Maturity score; "
+                        f"{len(meds)} {rep_word} currently represented in AMIRA."),
             "basis": ("Medicines without enough verified evidence to establish a maturity level are "
                       "not ranked."),
         }

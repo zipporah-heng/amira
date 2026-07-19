@@ -14,7 +14,8 @@ from typing import List
 from . import dataset
 
 TRIAL_COLUMNS = [
-    "trial_id", "nct_id", "display_name", "medicine", "condition", "study_type",
+    "trial_id", "nct_id", "display_name", "medicine", "drug_class", "condition",
+    "study_phase", "study_type",
     "total_enrollment", "total_enrollment_basis",
     "female_n", "female_n_basis", "female_pct", "female_pct_basis",
     "sex_specific_efficacy_reported", "sex_specific_safety_reported",
@@ -44,7 +45,9 @@ def trial_rows() -> List[dict]:
             "nct_id": t["nct_id"],
             "display_name": t["display_name"],
             "medicine": t["medicine"],
+            "drug_class": t.get("drug_class"),
             "condition": t["condition"],
+            "study_phase": t.get("study_phase"),
             "study_type": t["study_type"],
             "total_enrollment": total if t_basis != "absent" else t["enrollment_actual"],
             "total_enrollment_basis": t_basis,

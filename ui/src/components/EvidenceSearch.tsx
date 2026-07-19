@@ -6,9 +6,14 @@ export interface Filters {
   hormoneTherapy: string;
 }
 
-export interface DrugClassCatalog {
+export interface ClassEntry {
   drug_class: string;
   medicines: string[];
+}
+
+export interface ConditionEntry {
+  condition: string;
+  drug_classes: ClassEntry[];
 }
 
 /** The five agreed clinical life stages (+ an explicit default). Labels map to
@@ -43,15 +48,24 @@ const opt = (xs: string[]) => xs.map((x) => ({ label: x, value: x }));
 
 export function EvidenceSearch({ filters, setFilters, onCheck, catalog }: {
   filters: Filters; setFilters: (f: Filters) => void; onCheck: () => void;
-  catalog: DrugClassCatalog[];
+  catalog: ConditionEntry[];
 }) {
-  const classes = catalog.map((c) => c.drug_class);
+  const conditions = catalog.map((c) => c.condition);
+  const classesForCondition =
+    catalog.find((c) => c.condition === filters.condition)?.drug_classes || [];
+  const classNames = classesForCondition.map((c) => c.drug_class);
   const medicinesForClass =
-    catalog.find((c) => c.drug_class === filters.drugClass)?.medicines || [];
+    classesForCondition.find((c) => c.drug_class === filters.drugClass)?.medicines || [];
 
+  // Cascade: changing condition resets class + medicine to that condition's first valid pair.
+  const onConditionChange = (condition: string) => {
+    const classes = catalog.find((c) => c.condition === condition)?.drug_classes || [];
+    const cls = classes[0]?.drug_class || "";
+    const medicine = classes[0]?.medicines[0] || "";
+    setFilters({ ...filters, condition, drugClass: cls, medicine });
+  };
   const onClassChange = (drugClass: string) => {
-    const meds = catalog.find((c) => c.drug_class === drugClass)?.medicines || [];
-    // Keep the current medicine if it belongs to the new class, else pick the first.
+    const meds = classesForCondition.find((c) => c.drug_class === drugClass)?.medicines || [];
     const medicine = meds.includes(filters.medicine) ? filters.medicine : (meds[0] || "");
     setFilters({ ...filters, drugClass, medicine });
   };
@@ -60,11 +74,11 @@ export function EvidenceSearch({ filters, setFilters, onCheck, catalog }: {
     <div className="card filter-card">
       <div className="filter-row">
         <Field label="Condition" icon="❤" value={filters.condition}
-          onChange={(v) => setFilters({ ...filters, condition: v })}
-          options={opt(["Cardiovascular disease prevention"])} />
+          onChange={onConditionChange}
+          options={opt(conditions.length ? conditions : [filters.condition])} />
         <Field label="Drug Class" icon="🧬" value={filters.drugClass}
           onChange={onClassChange}
-          options={opt(classes.length ? classes : [filters.drugClass])} />
+          options={opt(classNames.length ? classNames : [filters.drugClass])} />
         <Field label="Medicine" icon="💊" value={filters.medicine}
           onChange={(v) => setFilters({ ...filters, medicine: v })}
           options={opt(medicinesForClass.length ? medicinesForClass : [filters.medicine])} />

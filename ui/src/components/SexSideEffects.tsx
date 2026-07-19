@@ -7,7 +7,15 @@ function SafetyFinding({ f, highlight }: { f: Finding; highlight: "sig" | "trend
         <span className="sf-event">{f.endpoint}</span>
         {highlight === "sig" && <span className="sf-tag sig">Significant difference</span>}
         {highlight === "trend" && <span className="sf-tag trend">Trend only · not statistically significant</span>}
-        {highlight === "neutral" && <span className="sf-tag neutral">{f.scope.startsWith("class:") ? "Class-level" : "Context"}</span>}
+        {highlight === "neutral" && (
+          <span className="sf-tag neutral">
+            {f.scope.startsWith("class:")
+              ? "Class-level"
+              : f.significance === "no_significant_difference"
+                ? "Reported by sex · no significant difference"
+                : "Context"}
+          </span>
+        )}
       </div>
       {(f.female_rate || f.male_rate) && (
         <div className="sf-rates">

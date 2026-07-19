@@ -68,19 +68,31 @@ def get_manifest():
 
 @app.get("/api/catalog")
 def get_catalog():
-    """Verified drug classes and their medicines, for the upfront selectors.
+    """Condition -> drug class -> verified medicines, for the upfront selectors.
 
-    Only medicines with completed evidence ingestion appear here.
+    Only medicines with completed, integrity-checked evidence ingestion appear here.
     """
-    classes: dict = {}
+    # condition -> class -> set(medicines)
+    tree: dict = {}
+    flat: dict = {}
     for t in dataset.trials():
+        cond = t.get("condition") or "Unspecified"
         cls = t.get("drug_class") or "Unclassified"
-        classes.setdefault(cls, set()).add(t["medicine"])
+        tree.setdefault(cond, {}).setdefault(cls, set()).add(t["medicine"])
+        flat.setdefault(cls, set()).add(t["medicine"])
     return {
         **_envelope(),
+        "conditions": [
+            {"condition": cond,
+             "drug_classes": [
+                 {"drug_class": cls, "medicines": sorted(meds)}
+                 for cls, meds in sorted(classes.items())
+             ]}
+            for cond, classes in sorted(tree.items())
+        ],
+        # Flat class list kept for backward compatibility.
         "drug_classes": [
-            {"drug_class": c, "medicines": sorted(meds)}
-            for c, meds in sorted(classes.items())
+            {"drug_class": c, "medicines": sorted(meds)} for c, meds in sorted(flat.items())
         ],
     }
 

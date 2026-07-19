@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { checkEvidence, type EvidenceResponse, type TrialRow } from "../api";
-import { EvidenceSearch, type Filters, type DrugClassCatalog } from "../components/EvidenceSearch";
+import { EvidenceSearch, type Filters, type ConditionEntry } from "../components/EvidenceSearch";
 import { TopBanner } from "../components/TopBanner";
 import { EvidenceMetricCard } from "../components/EvidenceMetricCard";
 import { WhoWasStudied } from "../components/WhoWasStudied";
@@ -16,6 +16,15 @@ import { ScreeningPanel } from "../components/ScreeningPanel";
 import { BenchmarkSummary } from "../components/BenchmarkSummary";
 import { AdditionalResources } from "../components/AdditionalResources";
 import { DatasetStamp } from "../components/DemoBadge";
+
+// Icon + tint per summary-card dimension.
+const CARD_META: Record<string, { icon: string; tint: string }> = {
+  sex_specific_efficacy_reported: { icon: "🎯", tint: "#e9f6f1" },
+  sex_specific_safety_reported: { icon: "💊", tint: "#fdf1e5" },
+  menopause_status_reported: { icon: "📅", tint: "#efe9fb" },
+  hormone_therapy_reported: { icon: "💧", tint: "#e9f1fb" },
+  pregnancy_evidence_reported: { icon: "🤰", tint: "#f4f4f6" },
+};
 
 const DEFAULTS: Filters = {
   condition: "Cardiovascular disease prevention",
@@ -38,7 +47,7 @@ export function CheckEvidence() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [active, setActive] = useState<TrialRow | null>(null);
-  const [catalog, setCatalog] = useState<DrugClassCatalog[]>([]);
+  const [catalog, setCatalog] = useState<ConditionEntry[]>([]);
 
   const run = async (f: Filters) => {
     setLoading(true); setError(null);
@@ -50,7 +59,7 @@ export function CheckEvidence() {
   useEffect(() => {
     fetch("/api/catalog")
       .then((r) => r.json())
-      .then((d) => setCatalog(d.drug_classes || []))
+      .then((d) => setCatalog(d.conditions || []))
       .catch(() => setCatalog([]));
     run(DEFAULTS);
   }, []);
@@ -97,24 +106,31 @@ export function CheckEvidence() {
           {/* 1. TOP SUMMARY BANNER */}
           <TopBanner banner={report.banner} onJump={jump} />
 
-          {/* 2. KEY EVIDENCE NUMBERS */}
+          {/* 2. SUMMARY EVIDENCE CARDS — quick snapshot, all from real records */}
           <div className="metrics" style={{ marginTop: 22 }}>
             <EvidenceMetricCard icon="🗂️" tint="#efe9fb" title="Studies included"
               value={String(report.trials.length)}
               sub={`Phase 3 RCT${report.trials.length === 1 ? "" : "s"} for ${report.query.medicine}`} />
-            <EvidenceMetricCard icon="👥" tint="#e9f1fb" title="Women (reported)"
+            <EvidenceMetricCard icon="👥" tint="#e9f1fb" title="Women studied"
               value={t.women_reported_count.toLocaleString()}
-              sub={`exact count in ${t.trials_with_reported_female_count.length} of ${t.trials} trials`} />
-            <EvidenceMetricCard icon="♀" tint="#fbe9ee" title="Female %"
-              value={t.women_pct_of_participants != null ? `${t.women_pct_of_participants}%` : "—"}
-              sub={`${t.women_pct_basis} across ${t.participants_total.toLocaleString()} participants`} />
-            {report.evidence_gaps?.filter((g) => g.dimension.startsWith("sex_specific")).map((g) => (
-              <EvidenceMetricCard key={g.dimension}
-                icon={g.dimension.includes("safety") ? "💊" : "🎯"}
-                tint={g.dimension.includes("safety") ? "#fdf1e5" : "#e9f6f1"}
-                title={g.label} value={`${g.n_reporting} / ${g.n_trials}`} sub="analysed by sex"
-                zero={g.n_reporting === 0} />
-            ))}
+              sub={t.women_pct_of_participants != null
+                ? `reported · ${t.women_pct_of_participants}% of ${t.participants_total.toLocaleString()} participants`
+                : `reported in ${t.trials_with_reported_female_count.length} of ${t.trials} trials`} />
+            {report.dimensions.map((d) => {
+              const meta = CARD_META[d.dimension] || { icon: "•", tint: "#eee" };
+              const secondary = d.dimension === "pregnancy_evidence_reported";
+              return (
+                <EvidenceMetricCard key={d.dimension}
+                  icon={meta.icon} tint={meta.tint}
+                  title={d.title}
+                  value={secondary && d.n_reporting === 0 ? "Not assessed" : d.display}
+                  sub={secondary
+                    ? "in the reviewed Phase 3 corpus — see additional clinical resources"
+                    : `of ${d.n_trials} trial${d.n_trials === 1 ? "" : "s"} — ${d.subtitle}`}
+                  zero={d.n_reporting === 0 && !secondary}
+                  muted={secondary} />
+              );
+            })}
           </div>
 
           {t.count_basis_warning && (
