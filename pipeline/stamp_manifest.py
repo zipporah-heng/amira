@@ -46,7 +46,10 @@ def main() -> int:
     )
     MANIFEST.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"manifest commit_hash: {previous[:12] or '(unset)'} -> {head[:12]}")
-    print("Now run: git add dataset/manifest.json && git commit --amend --no-edit")
+    print("Now run: git add dataset/manifest.json && "
+          "git commit -m 'Stamp dataset manifest provenance'")
+    print("(Use a follow-up commit, not --amend: amending would change the SHA "
+          "just stamped.)")
     return 0
 
 
