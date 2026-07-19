@@ -1,0 +1,69 @@
+import type { EffectivenessState, Finding } from "../api";
+
+function FindingCard({ f }: { f: Finding }) {
+  const classLevel = f.scope.startsWith("class:");
+  return (
+    <div className="finding-card">
+      <div className="fc-head">
+        <span className="fc-endpoint">{f.endpoint}</span>
+        <span className={`fc-scope ${classLevel ? "class" : "trial"}`}>
+          {classLevel ? "Class-level" : f.scope.replace("trial:", "")}
+        </span>
+      </div>
+      {(f.female_estimate || f.male_estimate) && (
+        <div className="fc-estimates">
+          <div className="est"><span className="est-k">Women</span>
+            <span className="est-v">{f.female_estimate || "—"}</span>
+            <span className="est-ci">{f.female_ci}</span></div>
+          <div className="est"><span className="est-k">Men</span>
+            <span className="est-v">{f.male_estimate || "—"}</span>
+            <span className="est-ci">{f.male_ci}</span></div>
+        </div>
+      )}
+      <div className="fc-test">
+        {f.comparison_p != null ? (
+          <span className="test-badge ok">Sex comparison p = {f.comparison_p}</span>
+        ) : (
+          <span className="test-badge neutral">No formal interaction p reported</span>
+        )}
+        {f.comparison_test && <span className="test-note">{f.comparison_test}</span>}
+      </div>
+      <p className="fc-interp">{f.interpretation}</p>
+      <blockquote className="passage">"{f.exact_passage}"</blockquote>
+      <div className="fc-src">
+        <a href={f.source.url} target="_blank" rel="noopener noreferrer">
+          {f.source.pmid ? `PMID ${f.source.pmid}` : f.source.nct_id} — {f.source.title.slice(0, 60)}… ↗
+        </a>
+        <span className="hv">{f.human_verified ? "Human verified" : "Human review pending"}</span>
+      </div>
+    </div>
+  );
+}
+
+export function SexEffectiveness({ data }: { data: EffectivenessState }) {
+  return (
+    <section id="effectiveness" className="card hero-section">
+      <div className="hero-head">
+        <div>
+          <div className="section-title">Sex-specific effectiveness</div>
+          <h2 className="hero-state">{data.state}</h2>
+          <p className="hero-headline">{data.headline}</p>
+        </div>
+        <div className="hero-count">
+          {data.n_reporting} of {data.n_trials}
+          <span>included trials reported a sex-specific effectiveness analysis</span>
+        </div>
+      </div>
+
+      {data.findings.length > 0 ? (
+        <div className="findings-grid">
+          {data.findings.map((f) => <FindingCard key={f.finding_id} f={f} />)}
+        </div>
+      ) : (
+        <p className="muted">No sex-specific effectiveness finding was located in the reviewed sources.</p>
+      )}
+
+      <p className="disclaimer">{data.caveat}</p>
+    </section>
+  );
+}

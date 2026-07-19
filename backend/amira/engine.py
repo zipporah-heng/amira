@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional
 
-from . import dataset, maturity
+from . import clinical, dataset, maturity
 
 LIFE_STAGES = {"premenopause", "perimenopause", "postmenopause", "not_specified"}
 HORMONE_THERAPY = {"yes", "no", "any", "not_specified"}
@@ -298,6 +298,13 @@ def check_evidence(condition: str, medicine: str,
         return envelope
 
     trial_ids = [t["trial_id"] for t in matched]
+    drug_class = matched[0].get("drug_class") or "Statin"
+    indication = matched[0].get("indication")
+
+    mat = maturity.evaluate(trial_ids)
+    effectiveness = clinical.effectiveness_state(medicine)
+    safety = clinical.safety_state(medicine)
+    comparison = clinical.class_comparison(drug_class)
 
     trial_rows = []
     for t in matched:
@@ -326,16 +333,96 @@ def check_evidence(condition: str, medicine: str,
             row[dim] = v if b != "absent" else "not_reported"
         trial_rows.append(row)
 
+    totals = aggregate_participants(trial_ids)
+    why = _why_this_result(medicine, drug_class, mat, effectiveness, safety, totals)
+
     return {
         **envelope,
         "supported": True,
         "bounded_response": None,
-        "maturity": maturity.evaluate(trial_ids),
-        "totals": aggregate_participants(trial_ids),
+        "medicine_profile": {
+            "medicine": medicine, "drug_class": drug_class, "indication": indication,
+            "trials": [t["display_name"] for t in matched],
+        },
+        "banner": {
+            "medicine": medicine,
+            "drug_class": drug_class,
+            "indication": indication,
+            "maturity": {"level": mat["level"], "max_level": mat["max_level"], "label": mat["label"]},
+            "effectiveness": {"state": effectiveness["state"], "headline": effectiveness["headline"]},
+            "safety": {"state": safety["state"], "headline": safety["headline"]},
+            "class_comparison": {
+                "drug_class": drug_class,
+                "verified_count": comparison["verified_count"],
+                "this_rank": _rank_of(medicine, comparison),
+                "summary": _class_summary(medicine, comparison),
+            },
+            "why_this_result": why,
+        },
+        "maturity": mat,
+        "effectiveness": effectiveness,
+        "safety": safety,
+        "class_comparison": comparison,
+        "who_was_studied": clinical.who_was_studied(trial_ids),
+        "totals": totals,
         "dimensions": dimension_summary(trial_ids),
+        "evidence_gaps": evidence_gaps(trial_ids, effectiveness, safety),
         "trials": trial_rows,
         "life_stage_context": life_stage_context(life_stage, trial_ids),
         "hormone_therapy_context": hormone_therapy_context(hormone_therapy, trial_ids),
         "sources": dataset.sources(),
         "evaluation_status": "EVALUATION PENDING",
     }
+
+
+def _rank_of(medicine: str, comparison: dict) -> str:
+    rows = comparison["rows"]
+    for i, r in enumerate(rows, 1):
+        if r["medicine"].lower() == medicine.lower():
+            return f"{i} of {len(rows)} by evidence maturity"
+    return ""
+
+
+def _class_summary(medicine: str, comparison: dict) -> str:
+    n = comparison["verified_count"]
+    cls = comparison["drug_class"].lower()
+    if n <= 1:
+        return f"{n} of {n} {cls}s currently verified in AMIRA."
+    return f"{n} {cls}s verified in AMIRA; compared by evidence maturity."
+
+
+def _why_this_result(medicine, drug_class, mat, eff, saf, totals) -> str:
+    women = totals["women_reported_count"]
+    return (
+        f"{medicine} reached evidence maturity {mat['level']}/5 ({mat['label']}): "
+        f"{women:,} women have a reported count and a sex-specific effectiveness analysis exists, "
+        f"but menopausal status and hormone therapy were not reported and no drug-specific "
+        f"sex-stratified side-effect analysis was located."
+    )
+
+
+def evidence_gaps(trial_ids: List[str], effectiveness: dict, safety: dict) -> List[dict]:
+    """Measurable gap statements with exact counts."""
+    gaps = []
+    for dim, label in [
+        ("menopause_status_reported", "Menopause status"),
+        ("hormone_therapy_reported", "Hormone therapy"),
+        ("pregnancy_evidence_reported", "Pregnancy-specific evidence"),
+    ]:
+        reporting = sum(1 for t in trial_ids if dataset.assertion_value(t, dim)[0] == "yes")
+        gaps.append({
+            "dimension": dim, "label": label,
+            "n_reporting": reporting, "n_trials": len(trial_ids),
+            "statement": f"Not reported in {len(trial_ids) - reporting} of {len(trial_ids)} included trials.",
+        })
+    gaps.append({
+        "dimension": "sex_specific_effectiveness", "label": "Sex-specific effectiveness",
+        "n_reporting": effectiveness["n_reporting"], "n_trials": effectiveness["n_trials"],
+        "statement": f"Analysed in {effectiveness['n_reporting']} of {effectiveness['n_trials']} included trials.",
+    })
+    gaps.append({
+        "dimension": "sex_specific_safety", "label": "Sex-specific safety",
+        "n_reporting": safety["n_reporting"], "n_trials": safety["n_trials"],
+        "statement": f"Analysed in {safety['n_reporting']} of {safety['n_trials']} included trials.",
+    })
+    return gaps

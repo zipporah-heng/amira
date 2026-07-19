@@ -7,6 +7,7 @@ import { ResearchMap } from "./pages/ResearchMap";
 import { OpenBenchmark } from "./pages/OpenBenchmark";
 import { Methodology } from "./pages/Methodology";
 import "./theme.css";
+import "./clinical.css";
 
 const withShell = (el: React.ReactNode) => <AmiraShell>{el}</AmiraShell>;
 

@@ -153,16 +153,32 @@ def test_unsupported_medicine_returns_bounded_response():
 
 
 def test_ui_api_and_downloads_agree_numerically():
+    """The download is the full dataset; the API filters by medicine. The
+    medicine-matched subset of the download must equal the API exactly."""
     api = _check()
-    csv_text = client.get("/api/download/trials.csv").text
-    lines = [l for l in csv_text.strip().splitlines()[1:] if l]
-    assert len(lines) == len(api["trials"])
+    medicine = api["query"]["medicine"]
 
-    rows = exports.trial_rows()
-    csv_women = sum(r["female_n"] for r in rows if isinstance(r["female_n"], int))
+    csv_text = client.get("/api/download/trials.csv").text
+    import csv as _csv
+    import io as _io
+    csv_rows = list(_csv.DictReader(_io.StringIO(csv_text)))
+    # Download covers every ingested trial, including other medicines in the class.
+    assert len(csv_rows) == len(dataset.trials())
+
+    subset = [r for r in csv_rows if r["medicine"].lower() == medicine.lower()]
+    assert len(subset) == len(api["trials"])
+
+    csv_women = sum(int(r["female_n"]) for r in subset if r["female_n"])
     assert csv_women == api["totals"]["women_reported_count"]
-    csv_total = sum(r["total_enrollment"] for r in rows)
+    csv_total = sum(int(r["total_enrollment"]) for r in subset)
     assert csv_total == api["totals"]["participants_total"]
+
+    # Per-trial parity between the API rows and the exported rows.
+    by_id = {r["trial_id"]: r for r in subset}
+    for t in api["trials"]:
+        row = by_id[t["trial_id"]]
+        assert int(row["total_enrollment"]) == t["total_enrollment"]
+        assert row["nct_id"] == t["nct_id"]
 
 
 def test_benchmark_is_real_and_not_human_verified_yet():

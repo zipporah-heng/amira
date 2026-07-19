@@ -81,6 +81,32 @@ def evaluate(trial_ids: List[str]) -> Dict:
         else:
             break  # cumulative: stop at the first unmet level
 
+    # Dimensions whose assertions explain each level's pass/fail.
+    level_dims = {
+        1: ("female_enrollment_count", "female_enrollment_pct"),
+        2: ("sex_specific_efficacy_reported", "sex_specific_safety_reported"),
+        3: ("menopause_status_reported",),
+        4: ("hormone_therapy_reported",),
+    }
+
+    def _evidence(n: int) -> list:
+        ev = []
+        for tid in trial_ids:
+            for dim in level_dims.get(n, ()):
+                _, basis, a = dataset.assertion_value(tid, dim)
+                if a is None:
+                    continue
+                s = dataset.source_by_id(a["source_id"])
+                ev.append({
+                    "trial_id": tid, "dimension": dim,
+                    "value": a["value"], "value_basis": basis,
+                    "passage": a["exact_passage"], "source_url": s["url"],
+                    "source_id": s["source_id"],
+                    "pmid": s.get("pmid"), "nct_id": s.get("nct_id"),
+                    "assertion_id": a["assertion_id"],
+                })
+        return ev
+
     trace = []
     for n in (1, 2, 3, 4, 5):
         trace.append({
@@ -89,6 +115,7 @@ def evaluate(trial_ids: List[str]) -> Dict:
             "satisfied": bool(checks[n]),
             "awarded": n <= level,
             "requirement": LEVEL_DESCRIPTIONS[n],
+            "evidence": _evidence(n),
         })
 
     return {

@@ -84,7 +84,10 @@ export interface Maturity {
   max_level: number;
   derived: boolean;
   derivation_note: string;
-  rule_trace: { level: number; label: string; satisfied: boolean; awarded: boolean; requirement: string }[];
+  rule_trace: {
+    level: number; label: string; satisfied: boolean; awarded: boolean; requirement: string;
+    evidence?: { trial_id: string; dimension: string; value: unknown; value_basis: string; passage: string; source_url: string; pmid?: string | null; nct_id?: string | null }[];
+  }[];
 }
 
 export interface ContextBlock {
@@ -96,7 +99,119 @@ export interface ContextBlock {
   age_eligibility_facts?: { trial_id: string; minimum_age: string | null; sex_eligibility: string | null; registry_url: string }[];
 }
 
+export interface Finding {
+  finding_id: string;
+  scope: string;
+  finding_type: "efficacy" | "safety";
+  endpoint: string;
+  female_estimate: string | null;
+  male_estimate: string | null;
+  effect_measure: string | null;
+  female_ci: string | null;
+  male_ci: string | null;
+  female_rate: string | null;
+  male_rate: string | null;
+  comparison_test: string | null;
+  comparison_p: string | null;
+  significance: "significant" | "no_significant_difference" | "trend_only" | "not_tested";
+  interpretation: string;
+  exact_passage: string;
+  source_locator: string | null;
+  source_verified: boolean;
+  human_verified: boolean;
+  source: SourceLink;
+}
+
+export interface EffectivenessState {
+  dimension: string;
+  state: string;
+  headline: string;
+  n_reporting: number;
+  n_trials: number;
+  caveat: string;
+  findings: Finding[];
+  derived: boolean;
+}
+
+export interface SafetyState {
+  dimension: string;
+  state: string;
+  headline: string;
+  n_reporting: number;
+  n_trials: number;
+  caveat: string;
+  significant_findings: Finding[];
+  trend_findings: Finding[];
+  other_findings: Finding[];
+  derived: boolean;
+}
+
+export interface ClassRow {
+  medicine: string;
+  drug_class: string;
+  maturity_level: number;
+  maturity_label: string;
+  effectiveness_state: string;
+  safety_state: string;
+  key_gap: string;
+  n_trials: number;
+}
+
+export interface ClassComparison {
+  drug_class: string;
+  verified_count: number;
+  verified_medicines: string[];
+  sort: string;
+  rows: ClassRow[];
+  note: string;
+  class_level_findings: Finding[];
+}
+
+export interface WhoRow {
+  trial_id: string;
+  display_name: string;
+  nct_id: string;
+  medicine: string;
+  study_phase: string | null;
+  total_participants: number;
+  female_n: number | null;
+  female_n_basis: string;
+  female_pct: number | null;
+  female_pct_basis: string;
+  minimum_age: string | null;
+  sex_eligibility: string | null;
+  primary_endpoint: string | null;
+  indication: string | null;
+  registry_url: string;
+  age_note: string;
+}
+
+export interface Banner {
+  medicine: string;
+  drug_class: string;
+  indication: string | null;
+  maturity: { level: number; max_level: number; label: string };
+  effectiveness: { state: string; headline: string };
+  safety: { state: string; headline: string };
+  class_comparison: { drug_class: string; verified_count: number; this_rank: string; summary: string };
+  why_this_result: string;
+}
+
+export interface EvidenceGap {
+  dimension: string;
+  label: string;
+  n_reporting: number;
+  n_trials: number;
+  statement: string;
+}
+
 export interface EvidenceResponse {
+  banner?: Banner;
+  effectiveness?: EffectivenessState;
+  safety?: SafetyState;
+  class_comparison?: ClassComparison;
+  who_was_studied?: WhoRow[];
+  evidence_gaps?: EvidenceGap[];
   dataset_version: string;
   source_cutoff: string;
   commit_hash: string;

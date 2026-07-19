@@ -37,6 +37,49 @@ women aged ≥65 (or 60–65 with two risk factors); neither fact advances the l
 **Current derivation for rosuvastatin:** L1 ✓ (6,801 women reported) · L2 ✓ (PMID
 20176986 sex-specific analysis) · L3 ✗ · L4 ✗ → **Level 2, Women Analyzed**.
 
+## Sex-specific effectiveness states
+
+| State | Meaning |
+|---|---|
+| Significant sex difference identified | A sex comparison was performed and found a difference |
+| No statistically significant sex difference identified | **Requires an actual sex-specific comparison in a source** |
+| Conflicting sex-specific results | Sources disagree |
+| Insufficient sex-specific evidence | Not enough reliable sex-specific data to conclude |
+| Sex-specific effectiveness not reported | A reviewed source shows it was not analysed by sex |
+
+**Insufficient does not mean ineffective in women.** Equality is never inferred from
+"both sexes benefited", from one subgroup being significant and another not, or from a
+difference simply not being mentioned. A finding may only carry `significance` when it
+records a reported statistical comparison — enforced by
+`test_significance_is_never_inferred_without_a_reported_test`.
+
+## Sex-specific safety states
+
+Significant · Non-significant trends · No significant difference · Conflicting ·
+Insufficient · Not reported.
+
+Both statistically significant differences **and** non-significant trends are shown,
+because a trend can still be clinically relevant when choosing between medicines.
+Significant findings are visually highlighted; trends are shown in a neutral style and
+explicitly labelled *"Trend only. Not statistically significant."* Sex-specific side
+effects are never inferred from pooled adverse-event data.
+
+## Drug-class comparison rules
+
+Evidence maturity is comparable across medicines in the same class. Sex-specific
+effectiveness and safety are shown side by side only for the same class and a
+sufficiently similar indication. Default sort: evidence maturity, highest first.
+
+AMIRA distinguishes two statements that are **not** the same:
+
+- *"Drug A has stronger women-specific evidence"* — a claim about the evidence.
+- *"Drug A demonstrated greater effectiveness"* — a clinical claim requiring valid
+  comparative evidence on compatible endpoints.
+
+AMIRA only ever makes the first. `test_class_comparison_makes_no_direct_efficacy_claim`
+fails the build if superiority language appears. Only medicines with completed, verified
+ingestion appear in the comparison.
+
 ## Two states AMIRA never conflates
 
 - **No evidence found** — a search ran and returned nothing relevant in the reviewed

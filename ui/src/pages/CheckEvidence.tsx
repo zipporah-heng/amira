@@ -1,15 +1,21 @@
 import { useEffect, useState } from "react";
 import { checkEvidence, type EvidenceResponse, type TrialRow } from "../api";
 import { EvidenceSearch, type Filters } from "../components/EvidenceSearch";
-import { MedicineCard } from "../components/MedicineCard";
+import { TopBanner } from "../components/TopBanner";
 import { EvidenceMetricCard } from "../components/EvidenceMetricCard";
-import { EvidenceGlanceDonut } from "../components/EvidenceGlanceDonut";
+import { WhoWasStudied } from "../components/WhoWasStudied";
+import { MaturityBreakdown } from "../components/MaturityBreakdown";
+import { SexEffectiveness } from "../components/SexEffectiveness";
+import { SexSideEffects } from "../components/SexSideEffects";
 import { FindingsPanel } from "../components/FindingsPanel";
-import { MissingEvidencePanel } from "../components/MissingEvidencePanel";
-import { ConfidencePanel } from "../components/ConfidencePanel";
+import { GapsPanel } from "../components/GapsPanel";
+import { ClassComparison } from "../components/ClassComparison";
 import { StudyTable } from "../components/StudyTable";
 import { SourceDrawer } from "../components/SourceDrawer";
+import { ScreeningPanel } from "../components/ScreeningPanel";
 import { BenchmarkSummary } from "../components/BenchmarkSummary";
+import { AdditionalResources } from "../components/AdditionalResources";
+import { DatasetStamp } from "../components/DemoBadge";
 
 const DEFAULTS: Filters = {
   condition: "Cardiovascular disease prevention",
@@ -33,19 +39,17 @@ export function CheckEvidence() {
   const [active, setActive] = useState<TrialRow | null>(null);
 
   const run = async (f: Filters) => {
-    setLoading(true);
-    setError(null);
-    try {
-      setReport(await checkEvidence(toApi(f)));
-    } catch (e: any) {
-      setError(e.message || "Could not reach the evidence API");
-      setReport(null);
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true); setError(null);
+    try { setReport(await checkEvidence(toApi(f))); }
+    catch (e: any) { setError(e.message || "Could not reach the evidence API"); setReport(null); }
+    finally { setLoading(false); }
   };
 
   useEffect(() => { run(DEFAULTS); }, []);
+
+  const jump = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const t = report?.totals;
 
@@ -53,8 +57,11 @@ export function CheckEvidence() {
     <div>
       <div className="page-head">
         <div>
-          <h1 className="page-q">Was this medicine studied in women like me?</h1>
-          <p className="page-sub">See the evidence behind your questions.</p>
+          <h1 className="page-q">What does the evidence show for women?</h1>
+          <p className="page-sub">
+            See how well the medicine was studied in women, whether effectiveness or side effects
+            differed by sex, and how the evidence compares with similar drugs.
+          </p>
         </div>
         <button className="share-btn" onClick={() => navigator.clipboard?.writeText(window.location.href)}>
           ⌁ Share
@@ -66,8 +73,7 @@ export function CheckEvidence() {
       {loading && <p style={{ marginTop: 22 }}>Loading evidence…</p>}
       {error && (
         <div className="callout" style={{ marginTop: 22 }}>
-          {error}. The evidence API must be running — start it with
-          <code> uvicorn main:app --app-dir backend</code>.
+          {error}. The evidence API must be running (<code>uvicorn main:app --app-dir backend</code>).
         </div>
       )}
 
@@ -78,67 +84,89 @@ export function CheckEvidence() {
         </div>
       )}
 
-      {report && report.supported && t && (
+      {report && report.supported && report.banner && t && (
         <>
-          <div className="ce-grid">
-            <div className="ce-center">
-              <MedicineCard report={report} />
+          {/* 1. TOP SUMMARY BANNER */}
+          <TopBanner banner={report.banner} onJump={jump} />
 
-              <div className="metrics">
-                <EvidenceMetricCard
-                  icon="👥" tint="#efe9fb" title="Women studied"
-                  value={t.women_reported_count.toLocaleString()}
-                  sub={`exact reported count in ${t.trials_with_reported_female_count.length} of ${t.trials} trials`}
-                />
-                {report.dimensions.map((d) => (
-                  <EvidenceMetricCard
-                    key={d.dimension}
-                    icon={d.dimension.includes("menopause") ? "📅"
-                      : d.dimension.includes("hormone") ? "💧"
-                      : d.dimension.includes("pregnancy") ? "🤰" : "♀"}
-                    tint={d.dimension.includes("menopause") ? "#fdf1e5"
-                      : d.dimension.includes("hormone") ? "#fbe9ee"
-                      : d.dimension.includes("pregnancy") ? "#e9f6f1" : "#e9f1fb"}
-                    title={d.title}
-                    value={d.display}
-                    sub={d.subtitle}
-                    zero={d.n_reporting === 0}
-                  />
-                ))}
-              </div>
-
-              {t.count_basis_warning && (
-                <div className="callout" style={{ marginTop: 18 }}>
-                  <strong>Count basis:</strong> {t.count_basis_warning} Combined estimate:{" "}
-                  {t.women_estimated_total.toLocaleString()} women ({t.women_estimated_basis.replace(/_/g, " ")}).
-                </div>
-              )}
-
-              {report.life_stage_context && !report.life_stage_context.supported && (
-                <div className="callout" style={{ marginTop: 14 }}>
-                  <strong>Life stage — {report.life_stage_context.selected.replace(/_/g, " ")}:</strong>{" "}
-                  {report.life_stage_context.message}
-                </div>
-              )}
-              {report.hormone_therapy_context && !report.hormone_therapy_context.supported && (
-                <div className="callout" style={{ marginTop: 14 }}>
-                  <strong>Hormone therapy — {report.hormone_therapy_context.selected}:</strong>{" "}
-                  {report.hormone_therapy_context.message}
-                </div>
-              )}
-
-              <StudyTable trials={report.trials} onOpen={setActive} />
-            </div>
-
-            <aside className="ce-right">
-              <EvidenceGlanceDonut report={report} />
-              <FindingsPanel report={report} />
-              <MissingEvidencePanel report={report} />
-              <ConfidencePanel report={report} />
-            </aside>
+          {/* 2. KEY EVIDENCE NUMBERS */}
+          <div className="metrics" style={{ marginTop: 22 }}>
+            <EvidenceMetricCard icon="🗂️" tint="#efe9fb" title="Studies included"
+              value={String(report.trials.length)} sub="Phase 3 RCTs in the reviewed corpus" />
+            <EvidenceMetricCard icon="👥" tint="#e9f1fb" title="Women (reported)"
+              value={t.women_reported_count.toLocaleString()}
+              sub={`exact count in ${t.trials_with_reported_female_count.length} of ${t.trials} trials`} />
+            <EvidenceMetricCard icon="♀" tint="#fbe9ee" title="Female %"
+              value={t.women_pct_of_participants != null ? `${t.women_pct_of_participants}%` : "—"}
+              sub={`${t.women_pct_basis} across ${t.participants_total.toLocaleString()} participants`} />
+            {report.evidence_gaps?.filter((g) => g.dimension.startsWith("sex_specific")).map((g) => (
+              <EvidenceMetricCard key={g.dimension}
+                icon={g.dimension.includes("safety") ? "💊" : "🎯"}
+                tint={g.dimension.includes("safety") ? "#fdf1e5" : "#e9f6f1"}
+                title={g.label} value={`${g.n_reporting} / ${g.n_trials}`} sub="analysed by sex"
+                zero={g.n_reporting === 0} />
+            ))}
           </div>
 
+          {t.count_basis_warning && (
+            <div className="callout" style={{ marginTop: 16 }}>
+              <strong>Count basis:</strong> {t.count_basis_warning} Combined estimate:{" "}
+              {t.women_estimated_total.toLocaleString()} women ({t.women_estimated_basis.replace(/_/g, " ")}).
+            </div>
+          )}
+
+          {/* 3. WHO WAS STUDIED */}
+          {report.who_was_studied && <div style={{ marginTop: 22 }}><WhoWasStudied rows={report.who_was_studied} /></div>}
+
+          {/* 4. EVIDENCE MATURITY BREAKDOWN */}
+          {report.maturity && <div style={{ marginTop: 22 }}><MaturityBreakdown maturity={report.maturity} /></div>}
+
+          {/* 5 & 6. HERO OUTPUTS */}
+          {report.effectiveness && <div style={{ marginTop: 22 }}><SexEffectiveness data={report.effectiveness} /></div>}
+          {report.safety && <div style={{ marginTop: 22 }}><SexSideEffects data={report.safety} /></div>}
+
+          {/* 7 & 8. FOUND / MISSING */}
+          <div className="two-col" style={{ marginTop: 22 }}>
+            <FindingsPanel report={report} />
+            {report.evidence_gaps && <GapsPanel gaps={report.evidence_gaps} report={report} />}
+          </div>
+
+          {/* 9. CLASS COMPARISON */}
+          {report.class_comparison && (
+            <div style={{ marginTop: 22 }}>
+              <ClassComparison data={report.class_comparison} current={report.banner.medicine} />
+            </div>
+          )}
+
+          {/* Context callouts (life stage / hormone therapy filters) */}
+          {report.life_stage_context && !report.life_stage_context.supported && (
+            <div className="callout" style={{ marginTop: 18 }}>
+              <strong>Life stage — {report.life_stage_context.selected.replace(/_/g, " ")}:</strong>{" "}
+              {report.life_stage_context.message}
+            </div>
+          )}
+          {report.hormone_therapy_context && !report.hormone_therapy_context.supported && (
+            <div className="callout" style={{ marginTop: 14 }}>
+              <strong>Hormone therapy — {report.hormone_therapy_context.selected}:</strong>{" "}
+              {report.hormone_therapy_context.message}
+            </div>
+          )}
+
+          {/* 10. STUDIES AND SOURCES */}
+          <StudyTable trials={report.trials} onOpen={setActive} />
+
+          {/* 11. HOW STUDIES WERE SELECTED */}
+          <div style={{ marginTop: 22 }}><ScreeningPanel /></div>
+
+          {/* 12. OPEN DATASET AND BENCHMARK */}
           <BenchmarkSummary report={report} />
+
+          {/* 13. ADDITIONAL CLINICAL RESOURCES */}
+          <div style={{ marginTop: 22 }}><AdditionalResources /></div>
+
+          <div style={{ marginTop: 18, display: "flex", justifyContent: "flex-end" }}>
+            <DatasetStamp version={report.dataset_version} cutoff={report.source_cutoff} commit={report.commit_hash} />
+          </div>
         </>
       )}
 

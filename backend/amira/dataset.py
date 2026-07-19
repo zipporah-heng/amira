@@ -49,6 +49,7 @@ def load() -> Dict[str, Any]:
         "trials": _read("trials"),
         "source_documents": _read("source_documents"),
         "evidence_assertions": _read("evidence_assertions"),
+        "findings": _read("findings"),
         "screening_log": _read("screening_log"),
     }
     _validate(data)
@@ -70,7 +71,7 @@ def _validate(data: Dict[str, Any]) -> None:
             raise DatasetError(f"assertion {a['assertion_id']} references unknown trial")
         if a["source_id"] not in sources:
             raise DatasetError(f"assertion {a['assertion_id']} references unknown source")
-        if a["value_basis"] not in ("reported", "derived", "not_reported"):
+        if a["value_basis"] not in ("reported", "derived", "not_reported", "not_located"):
             raise DatasetError(f"assertion {a['assertion_id']} has invalid value_basis")
         # An assertion must never claim human verification without a named verifier.
         if a.get("human_verified") and not a.get("verifier"):
@@ -96,6 +97,18 @@ def sources() -> List[dict]:
 
 def assertions() -> List[dict]:
     return load()["evidence_assertions"]
+
+
+def findings() -> List[dict]:
+    return load()["findings"]
+
+
+def findings_for(medicine: str, finding_type: str) -> List[dict]:
+    return [
+        f for f in findings()
+        if f["medicine"].strip().lower() == medicine.strip().lower()
+        and f["finding_type"] == finding_type
+    ]
 
 
 def source_by_id(source_id: str) -> dict:

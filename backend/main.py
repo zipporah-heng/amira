@@ -84,6 +84,17 @@ def get_assertions():
     return {**_envelope(), "assertions": exports.assertion_rows()}
 
 
+@app.get("/api/findings")
+def get_findings():
+    return {**_envelope(), "findings": exports.finding_rows()}
+
+
+@app.get("/api/class-comparison")
+def get_class_comparison(drug_class: str = "Statin"):
+    from amira import clinical
+    return {**_envelope(), **clinical.class_comparison(drug_class)}
+
+
 @app.get("/api/screening-log")
 def get_screening_log():
     return {**_envelope(), "screening_log": dataset.load()["screening_log"]}
@@ -115,6 +126,17 @@ def dl_assertions_csv():
 @app.get("/api/download/evidence_assertions.jsonl")
 def dl_assertions_jsonl():
     return _attach(exports.assertions_jsonl(), "amira_evidence_assertions.jsonl",
+                   "application/x-ndjson")
+
+
+@app.get("/api/download/findings.csv")
+def dl_findings_csv():
+    return _attach(exports.findings_csv(), "amira_sex_specific_findings.csv", "text/csv")
+
+
+@app.get("/api/download/findings.jsonl")
+def dl_findings_jsonl():
+    return _attach(exports.findings_jsonl(), "amira_sex_specific_findings.jsonl",
                    "application/x-ndjson")
 
 

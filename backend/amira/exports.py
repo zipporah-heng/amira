@@ -122,3 +122,32 @@ def assertions_csv() -> str:
 
 def assertions_jsonl() -> str:
     return _jsonl(assertion_rows())
+
+
+FINDING_COLUMNS = [
+    "finding_id", "medicine", "drug_class", "scope", "finding_type", "endpoint",
+    "female_estimate", "male_estimate", "effect_measure", "female_ci", "male_ci",
+    "female_rate", "male_rate", "comparison_test", "comparison_p", "significance",
+    "interpretation", "source_id", "source_url", "exact_passage", "source_locator",
+    "source_verified", "human_verified", "verifier",
+]
+
+
+def finding_rows() -> List[dict]:
+    rows = []
+    for f in dataset.findings():
+        s = dataset.source_by_id(f["source_id"])
+        rows.append({
+            **{k: f.get(k, "") if f.get(k) is not None else "" for k in FINDING_COLUMNS
+               if k not in ("source_url",)},
+            "source_url": s["url"],
+        })
+    return rows
+
+
+def findings_csv() -> str:
+    return _csv(finding_rows(), FINDING_COLUMNS)
+
+
+def findings_jsonl() -> str:
+    return _jsonl(finding_rows())

@@ -1,6 +1,9 @@
 # AMIRA — Clearer evidence for women's health
 
-> **The question AMIRA answers:** *"Was this medicine studied in women like me?"*
+> **The question AMIRA answers:** *"What does the evidence show for women?"*
+>
+> How well was this medicine studied in women, did effectiveness or side effects differ by sex,
+> and how does the evidence compare with similar drugs?
 
 AMIRA audits published medical research to show whether **women were represented** and
 whether **sex-specific and hormone-relevant factors** were actually analysed or reported.
@@ -17,30 +20,47 @@ computed from a normalized dataset built by [`pipeline/ingest.py`](pipeline/inge
 from live **ClinicalTrials.gov**, **PubMed** and **PubMed Central** records, and every
 assertion carries an exact source passage and a resolvable URL.
 
-**Frozen corpus v1.0.0** (source cutoff 2026-07-18): rosuvastatin —
-**JUPITER** ([NCT00239681](https://clinicaltrials.gov/study/NCT00239681)) and
-**HOPE-3** ([NCT00468923](https://clinicaltrials.gov/study/NCT00468923)).
+**Frozen corpus v2.0.0** (source cutoff 2026-07-18) — statin class:
+
+| Medicine | Trials | Sources |
+|---|---|---|
+| Rosuvastatin | JUPITER ([NCT00239681](https://clinicaltrials.gov/study/NCT00239681)), HOPE-3 ([NCT00468923](https://clinicaltrials.gov/study/NCT00468923)) | + Mora 2010 sex-specific analysis (PMID 20176986) |
+| Atorvastatin | CARDS ([NCT00327418](https://clinicaltrials.gov/study/NCT00327418)) | PMID 15325833 |
+| *Class-level* | 27 statin trials | CTT sex-specific meta-analysis (PMID 25579834) |
+
+### The four questions, answered from real data
+
+| Question | Rosuvastatin answer | Source |
+|---|---|---|
+| **How well studied in women?** | **2 / 5 — Women Analyzed** (derived) | 6,801 women reported |
+| **Did effectiveness differ?** | **No statistically significant sex difference** — women HR 0.54 (95% CI 0.37–0.80) vs men HR 0.58 (0.45–0.73); class-level heterogeneity-by-sex **p=0.33** | PMID 20176986, PMID 25579834 |
+| **Did side effects differ?** | **Insufficient sex-specific safety evidence** — 0 of 2 trials reported adverse events by sex | evidence gap |
+| **How does the class compare?** | 1 of 2 verified statins by evidence maturity | class comparison |
 
 | Fact | Value | Basis |
 |---|---|---|
-| Participants across the corpus | 30,507 | reported |
+| Participants (rosuvastatin corpus) | 30,507 | reported |
 | Women with an exact published count | **6,801** (JUPITER) | reported |
 | HOPE-3 women | **46% — no exact count is published** | reported (percentage only) |
-| Sex-specific outcomes | 1 of 2 trials | reported |
-| Menopausal status | 0 of 2 trials | not reported |
-| Hormone therapy use | 0 of 2 trials | not reported |
-| **Derived evidence level** | **2 of 5 — Women Analyzed** | derived at request time |
+| CARDS women | **not located in retrieved sources** | not_located |
+| Menopausal status / hormone therapy | 0 of 2 trials | not reported |
 
-### Three integrity rules the code enforces
+### Five integrity rules the code enforces
 
 1. **Reported ≠ derived.** A published count and a number AMIRA computed are never
    silently summed. Mixed figures are labelled `mixed_reported_and_derived`.
-2. **Age is never used to infer menopause.** JUPITER enrolled women ≥60 and HOPE-3 ≥65;
-   neither advances the maturity level. Level 3 requires an explicit menopausal-status
-   report.
-3. **Nothing unverified is marked verified.** All 16 assertions are *source-verified*
-   (machine-checked against the retrieved source); **none** has named human sign-off yet,
-   so `human_verified` is `false` throughout. See
+2. **Age is never used to infer menopause.** JUPITER enrolled women ≥60, HOPE-3 ≥65,
+   CARDS ≥40; none advances the maturity level. Level 3 requires an explicit
+   menopausal-status report.
+3. **Significance is never inferred.** A finding may only claim "significant" or "no
+   significant difference" when it records an actual reported statistical comparison.
+   Absence of a comparison yields *insufficient*, never *no difference*.
+4. **Evidence strength ≠ effectiveness.** The class comparison ranks how well each
+   medicine was *studied* in women. It never claims one drug outperforms another; a build
+   test fails on superiority language.
+5. **Nothing unverified is marked verified.** All assertions and findings are
+   *source-verified* (machine-checked against the retrieved source); **none** has named
+   human sign-off, so `human_verified` is `false` throughout. See
    [`VERIFICATION_WORKSHEET.md`](VERIFICATION_WORKSHEET.md).
 
 ---
