@@ -3,15 +3,28 @@
 *Count women. Study women. Care for women.*
 
 > **The question AMIRA answers:** *"What does the evidence show for women?"*
->
-> How well was this medicine studied in women, did effectiveness or side effects differ by sex,
-> and how does the evidence compare with similar drugs?
 
-AMIRA audits published medical research to show whether **women were represented** and
-whether **sex-specific and hormone-relevant factors** were actually analysed or reported.
+### Counted is not the same as studied
+
+A trial can enrol thousands of women and still never analyse whether the medicine worked
+differently in them. Women get counted; they don't always get studied. That gap is
+invisible in a normal drug label — AMIRA makes it visible and measurable.
+
+For any medicine, AMIRA shows:
+
+- **how well it was studied in women** — a 1-to-5 Evidence Maturity level
+- **whether effectiveness was analysed by sex** — and whether a real statistical test backs it
+- **whether safety was analysed by sex**
+- **what important evidence is missing** — menopause status, hormone therapy, and more
+- **where every number came from** — each claim links to the trial registry or publication
 
 AMIRA measures **evidence completeness**. It does **not** diagnose, prescribe, recommend
-treatment, tell anyone whether a medicine is safe for them, or rank medicines.
+treatment, tell anyone whether a medicine is safe for them, or rank medicines by how well
+they work.
+
+*Try it: **[amira-d8l6.onrender.com](https://amira-d8l6.onrender.com/amira/check-evidence)***
+
+---
 
 ---
 
@@ -30,6 +43,11 @@ assertion carries an exact source passage and a resolvable URL.
 | CV prevention | Statin | Atorvastatin | CARDS ([NCT00327418](https://clinicaltrials.gov/study/NCT00327418)) | PMID 15325833 |
 | CV prevention | Statin | *Class-level* | 27 statin trials | CTT (PMID 25579834) |
 | Heart failure | SGLT2 inhibitor | Dapagliflozin | DAPA-HF ([NCT03036124](https://clinicaltrials.gov/study/NCT03036124)) | Butt 2021 sex analysis (PMID 33787831 / PMC8014207) |
+
+**Corpus at a glance:** 4 Phase 3 RCT records · 6 linked publications · 10 included
+evidence sources · 31 evidence assertions · 5 sex-specific findings · 15 screening
+decisions · 30 benchmark passages (18 development / 6 validation / 6 frozen held-out
+test). Reproduce these counts with `python pipeline/validate.py`.
 
 **Two contrasting real cases.** Rosuvastatin shows women counted + analysed but *no formal
 drug-specific interaction test*. **Dapagliflozin** shows the stronger case: a prespecified
@@ -129,9 +147,16 @@ generated from the *same* records the API serves.
 - [Dataset card](docs/dataset-card.md) · [Data dictionary](docs/data-dictionary.md)
 - [Methodology](docs/methodology.md) — source hierarchy, maturity model, labeling, benchmark, evaluation
 - [Limitations and licensing](docs/limitations-and-licensing.md)
-- [Verification worksheet](VERIFICATION_WORKSHEET.md) · [Founder verification](FOUNDER_VERIFICATION.md)
+- [Verification worksheet](VERIFICATION_WORKSHEET.md) — every assertion and finding with its source link
 
-## What remains before submission
+## Scientific status
 
-- [ ] Named human sign-off on all 31 assertions, 5 findings and the 30 benchmark labels
-- [ ] Run the extractor against the frozen held-out split and publish real results
+AMIRA reports its own limits as plainly as its results:
+
+- **Every assertion and finding is source-verified** — machine-checked against the
+  retrieved primary source, each with an exact passage and a resolvable URL.
+- **Named human sign-off is still outstanding**, so `human_verified` is `false`
+  throughout the dataset. Nothing is presented as human-verified.
+- **Benchmark labels are rule-drafted** and marked `pending_human_review`.
+- **No model evaluation has been run**, so the product displays **EVALUATION PENDING**
+  and claims **no accuracy figure**.

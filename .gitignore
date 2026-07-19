@@ -13,3 +13,6 @@ ui/vite.config.js
 ui/vite.config.d.ts
 ui/*.tsbuildinfo
 ui/**/*.tsbuildinfo
+
+# Local editor/agent tooling (not part of the product)
+.claude/
