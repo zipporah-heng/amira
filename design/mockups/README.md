@@ -18,6 +18,10 @@ Uses digoxin as the stress test. Five ordinary questions replace research shorth
 
 Combines plain-language interpretation with clinical depth on one scrollable page. The first row answers trust, applicability, maturity, and the headline finding. Lower sections add the clinical snapshot, maturity journey, known-versus-unknown evidence, decision support, population coverage, timeline, research need, provenance, open infrastructure, and another evidence path. All displayed counts come from the current AMIRA Digoxin records or the current corpus manifest; unsupported 100-point scores, patient-match percentages, benchmark accuracy claims, and score forecasts are intentionally excluded.
 
+## Concept E — Explainable score, representation, comparison, sources
+
+Reorders the result screen around the requested decision journey: selectors, selected medicine, a provisional explainable AMIRA Evidence Readiness Score, plain-language representation cards, comparison with similar medicines, and the studies behind the result. Existing detailed modules continue below. All 100-point values and study labels in this concept are explicitly marked as illustrative layout data and must be replaced by calculated, source-linked records before release.
+
 ## Shared rules
 
 - Answer the human question before showing the database structure.
