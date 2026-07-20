@@ -10,6 +10,10 @@ Leads with one plain-language answer, separates what is known from what is missi
 
 Turns AMIRA’s core insight into the interface: counted → analyzed → compared → safety → hormonal context. The plain-language conclusion remains dominant while the source-linked technical trace is visible below it.
 
+## Concept C — One screen for a family member and a clinician
+
+Uses digoxin as the stress test. Five ordinary questions replace research shorthand, while a `Clinical details` control exposes the statistics and exact passages. Real-world prescription volume is explicitly separated from trial enrolment because AMIRA does not currently contain prescribing-utilization data.
+
 ## Shared rules
 
 - Answer the human question before showing the database structure.
