@@ -14,6 +14,10 @@ Turns AMIRA’s core insight into the interface: counted → analyzed → compar
 
 Uses digoxin as the stress test. Five ordinary questions replace research shorthand, while a `Clinical details` control exposes the statistics and exact passages. Real-world prescription volume is explicitly separated from trial enrolment because AMIRA does not currently contain prescribing-utilization data.
 
+## Concept D — Full one-page evidence intelligence result
+
+Combines plain-language interpretation with clinical depth on one scrollable page. The first row answers trust, applicability, maturity, and the headline finding. Lower sections add the clinical snapshot, maturity journey, known-versus-unknown evidence, decision support, population coverage, timeline, research need, provenance, open infrastructure, and another evidence path. All displayed counts come from the current AMIRA Digoxin records or the current corpus manifest; unsupported 100-point scores, patient-match percentages, benchmark accuracy claims, and score forecasts are intentionally excluded.
+
 ## Shared rules
 
 - Answer the human question before showing the database structure.
