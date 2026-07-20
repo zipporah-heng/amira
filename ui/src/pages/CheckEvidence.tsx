@@ -10,6 +10,7 @@ import { SexSideEffects } from "../components/SexSideEffects";
 import { FindingsPanel } from "../components/FindingsPanel";
 import { GapsPanel } from "../components/GapsPanel";
 import { ClassComparison } from "../components/ClassComparison";
+import { DirectComparison } from "../components/DirectComparison";
 import { StudyTable } from "../components/StudyTable";
 import { SourceDrawer } from "../components/SourceDrawer";
 import { ScreeningPanel } from "../components/ScreeningPanel";
@@ -104,13 +105,33 @@ export function CheckEvidence() {
       {report && report.supported && report.banner && t && (
         <>
           {/* 1. TOP SUMMARY BANNER */}
-          <TopBanner banner={report.banner} onJump={jump} />
+          <TopBanner
+            banner={report.banner}
+            totals={t}
+            lifeStage={report.life_stage_context}
+            hormoneTherapy={report.hormone_therapy_context}
+            onJump={jump}
+          />
 
-          {/* 2. SUMMARY EVIDENCE CARDS — quick snapshot, all from real records */}
+          {/* 2. DIRECT STUDY COMPARISON: shown when a primary study compared treatment arms */}
+          {report.direct_comparisons?.map((comparison) => (
+            <div key={comparison.comparison_id} style={{ marginTop: 22 }}>
+              <DirectComparison data={comparison} />
+            </div>
+          ))}
+
+          {/* 3. CLASS COMPARISON: high on the page for the five-second answer */}
+          {report.class_comparison && (
+            <div style={{ marginTop: 22 }}>
+              <ClassComparison data={report.class_comparison} current={report.banner.medicine} />
+            </div>
+          )}
+
+          {/* 4. DETAILED COVERAGE SNAPSHOT: all values come from reviewed records */}
           <div className="metrics" style={{ marginTop: 22 }}>
             <EvidenceMetricCard icon="🗂️" tint="#efe9fb" title="Studies included"
               value={String(report.trials.length)}
-              sub={`Phase 3 RCT${report.trials.length === 1 ? "" : "s"} for ${report.query.medicine}`} />
+              sub={`reviewed randomized stud${report.trials.length === 1 ? "y" : "ies"} for ${report.query.medicine}`} />
             <EvidenceMetricCard icon="👥" tint="#e9f1fb" title="Women studied"
               value={t.women_reported_count.toLocaleString()}
               sub={t.women_pct_of_participants != null
@@ -135,47 +156,27 @@ export function CheckEvidence() {
 
           {t.count_basis_warning && (
             <div className="callout" style={{ marginTop: 16 }}>
-              <strong>Count basis:</strong> {t.count_basis_warning} Combined estimate:{" "}
+              <strong>Count basis:</strong> {t.count_basis_warning}{" "}
+              {t.women_estimated_basis === "incomplete" ? "Known subtotal" : "Combined estimate"}:{" "}
               {t.women_estimated_total.toLocaleString()} women ({t.women_estimated_basis.replace(/_/g, " ")}).
             </div>
           )}
 
-          {/* 3. WHO WAS STUDIED */}
+          {/* 4. WHO WAS STUDIED */}
           {report.who_was_studied && <div style={{ marginTop: 22 }}><WhoWasStudied rows={report.who_was_studied} /></div>}
 
-          {/* 4. EVIDENCE MATURITY BREAKDOWN */}
+          {/* 5. EVIDENCE MATURITY BREAKDOWN */}
           {report.maturity && <div style={{ marginTop: 22 }}><MaturityBreakdown maturity={report.maturity} /></div>}
 
-          {/* 5 & 6. HERO OUTPUTS */}
+          {/* 6 & 7. HERO OUTPUTS */}
           {report.effectiveness && <div style={{ marginTop: 22 }}><SexEffectiveness data={report.effectiveness} /></div>}
           {report.safety && <div style={{ marginTop: 22 }}><SexSideEffects data={report.safety} /></div>}
 
-          {/* 7 & 8. FOUND / MISSING */}
+          {/* 8 & 9. FOUND / MISSING */}
           <div className="two-col" style={{ marginTop: 22 }}>
             <FindingsPanel report={report} />
             {report.evidence_gaps && <GapsPanel gaps={report.evidence_gaps} report={report} />}
           </div>
-
-          {/* 9. CLASS COMPARISON */}
-          {report.class_comparison && (
-            <div style={{ marginTop: 22 }}>
-              <ClassComparison data={report.class_comparison} current={report.banner.medicine} />
-            </div>
-          )}
-
-          {/* Context callouts (life stage / hormone therapy filters) */}
-          {report.life_stage_context && !report.life_stage_context.supported && (
-            <div className="callout" style={{ marginTop: 18 }}>
-              <strong>Life stage — {report.life_stage_context.selected.replace(/_/g, " ")}:</strong>{" "}
-              {report.life_stage_context.message}
-            </div>
-          )}
-          {report.hormone_therapy_context && !report.hormone_therapy_context.supported && (
-            <div className="callout" style={{ marginTop: 14 }}>
-              <strong>Hormone therapy — {report.hormone_therapy_context.selected}:</strong>{" "}
-              {report.hormone_therapy_context.message}
-            </div>
-          )}
 
           {/* 10. STUDIES AND SOURCES */}
           <StudyTable trials={report.trials} onOpen={setActive} />

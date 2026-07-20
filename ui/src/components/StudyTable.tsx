@@ -32,7 +32,7 @@ export function StudyTable({
             {trials.map((t) => (
               <tr key={t.trial_id} onClick={() => onOpen(t)}>
                 <td className="td-name">{t.display_name}</td>
-                <td>{t.nct_id}</td>
+                <td>{t.nct_id || "Not registered"}</td>
                 <td>{t.year ?? "—"}</td>
                 <td>
                   {t.female_n != null ? t.female_n.toLocaleString() : (
@@ -54,7 +54,7 @@ export function StudyTable({
                 <td>
                   <a href={t.registry_url} target="_blank" rel="noopener noreferrer"
                      onClick={(e) => e.stopPropagation()} className="src-link">
-                    ClinicalTrials.gov ↗
+                    {t.source_label || (t.nct_id ? "ClinicalTrials.gov" : "Primary publication")} ↗
                   </a>
                 </td>
               </tr>

@@ -29,7 +29,7 @@ export interface AssertionView {
 export interface TrialRow {
   trial_id: string;
   display_name: string;
-  nct_id: string;
+  nct_id: string | null;
   year: number | null;
   study_type: string;
   total_enrollment: number;
@@ -38,6 +38,7 @@ export interface TrialRow {
   female_pct: number | null;
   female_pct_basis: string;
   registry_url: string;
+  source_label?: string;
   minimum_age?: string | null;
   assertions: AssertionView[];
   sex_specific_efficacy_reported: string;
@@ -66,6 +67,7 @@ export interface Totals {
   women_reported_basis: string;
   trials_with_reported_female_count: string[];
   trials_with_percentage_only: string[];
+  trials_without_female_count_or_percentage?: string[];
   women_estimated_total: number;
   women_estimated_basis: string;
   women_estimate_components: {
@@ -100,6 +102,8 @@ export interface ContextBlock {
   supported: boolean;
   message: string;
   inference_policy?: string;
+  trials_reporting_menopausal_status?: string[];
+  trials_reporting_hormone_therapy?: string[];
   age_eligibility_facts?: { trial_id: string; minimum_age: string | null; sex_eligibility: string | null; registry_url: string }[];
 }
 
@@ -107,6 +111,8 @@ export interface Finding {
   finding_id: string;
   scope: string;
   finding_type: "efficacy" | "safety";
+  population_scope?: "women_and_men" | "women_only_life_stage";
+  reporting_scope?: "women_and_men_separate" | "women_only_narrative";
   endpoint: string;
   female_estimate: string | null;
   male_estimate: string | null;
@@ -181,7 +187,7 @@ export interface ClassComparison {
 export interface WhoRow {
   trial_id: string;
   display_name: string;
-  nct_id: string;
+  nct_id: string | null;
   medicine: string;
   study_phase: string | null;
   total_participants: number;
@@ -194,6 +200,7 @@ export interface WhoRow {
   primary_endpoint: string | null;
   indication: string | null;
   registry_url: string;
+  source_label?: string;
   age_note: string;
 }
 
@@ -216,12 +223,46 @@ export interface EvidenceGap {
   statement: string;
 }
 
+export interface DirectComparisonOutcome {
+  outcome_type: "effectiveness" | "safety";
+  endpoint: string;
+  medicine_value: string;
+  comparator_value: string;
+  comparison_test: string;
+  comparison_p: string;
+  interpretation: string;
+}
+
+export interface DirectComparison {
+  comparison_id: string;
+  trial_id: string;
+  medicine: string;
+  comparator: string;
+  medicine_regimen: string;
+  comparator_regimen: string;
+  population: string;
+  duration: string;
+  headline: string;
+  clinical_boundary: string;
+  regimen_note: string;
+  limitations: string[];
+  outcomes: DirectComparisonOutcome[];
+  exact_passage: string;
+  source_locator: string;
+  source_verified: boolean;
+  human_verified: boolean;
+  source: SourceLink;
+}
+
 export interface StudySelection {
   candidate_records_screened: number;
   evidence_sources_included: number;
   records_excluded: number;
   records_deferred: number;
   unique_phase3_rcts_identified: number;
+  trial_registry_records_included: number;
+  randomized_studies_in_corpus: number;
+  randomized_studies_for_selected_medicine: number;
   publications_included: number;
   rcts_for_selected_medicine: number;
   publications_for_selected_medicine: number;
@@ -235,6 +276,7 @@ export interface EvidenceResponse {
   effectiveness?: EffectivenessState;
   safety?: SafetyState;
   class_comparison?: ClassComparison;
+  direct_comparisons?: DirectComparison[];
   who_was_studied?: WhoRow[];
   evidence_gaps?: EvidenceGap[];
   dataset_version: string;

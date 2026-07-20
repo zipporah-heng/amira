@@ -1,0 +1,52 @@
+[
+  {
+    "comparison_id": "CMP-HAYOZ-001",
+    "trial_id": "HAYOZ-2012",
+    "medicine": "Valsartan",
+    "comparator": "Amlodipine",
+    "medicine_regimen": "Valsartan-based regimen",
+    "comparator_regimen": "Amlodipine-based regimen",
+    "population": "Postmenopausal women with hypertension",
+    "duration": "38 weeks",
+    "headline": "Both regimens reached similar blood pressure targets. Side effects differed.",
+    "clinical_boundary": "This is evidence from one study, not a prescribing recommendation. It does not establish that either medicine is better for every patient.",
+    "regimen_note": "Participants received valsartan or amlodipine, with hydrochlorothiazide added from week 12 when target blood pressure was not reached. This is therefore a comparison of treatment regimens, not pure monotherapy.",
+    "limitations": [
+      "Single-center study with 125 randomized participants",
+      "Hydrochlorothiazide use differed between groups",
+      "Novartis provided financial support and several authors were employees",
+      "The study does not establish that either regimen is better for every patient"
+    ],
+    "outcomes": [
+      {
+        "outcome_type": "effectiveness",
+        "endpoint": "Reached target office blood pressure",
+        "medicine_value": "71.7%",
+        "comparator_value": "71.4%",
+        "comparison_test": "Between-regimen comparison at study end",
+        "comparison_p": "Not significant",
+        "interpretation": "Target blood pressure attainment was nearly identical.",
+        "exact_passage": "At the end of the study, the overall percentage of the patients reaching target office BP (<140/90 mm Hg) was identical in both groups (71.7% vs 71.4%; P=not significant).",
+        "source_locator": "Results, patient disposition"
+      },
+      {
+        "outcome_type": "safety",
+        "endpoint": "Peripheral edema",
+        "medicine_value": "14.3%",
+        "comparator_value": "77.4%",
+        "comparison_test": "Between-regimen adverse-event comparison",
+        "comparison_p": "P < 0.001",
+        "interpretation": "Peripheral edema was reported more often with the amlodipine-based regimen in this study.",
+        "exact_passage": "rted AE was peripheral edema, affecting 77.4% and 14.3% patients in the amlodipine and valsartan treatment groups, respectively.",
+        "source_locator": "Safety Results"
+      }
+    ],
+    "source_id": "SRC-PMC8108841",
+    "exact_passage": "Overall, 125 postmenopausal hypertensive women (age, 61.4 &#xb1; 6 years; systolic blood pressure/diastolic blood pressure [SBP/DBP], 158 &#xb1; 11/92 &#xb1; 9 mm Hg) were randomized to valsartan 320 mg &#xb1; hydrochlorothiazide (HCTZ) (n = 63) or amlodipine 10 mg &#xb1; HCTZ (n = 62).",
+    "source_locator": "Abstract and full-text results",
+    "source_verified": true,
+    "human_verified": false,
+    "verifier": null,
+    "retrieved_at": "2026-07-20T18:42:00Z"
+  }
+]

@@ -110,7 +110,11 @@ def test_age_never_infers_life_stage():
     assert ctx["status"] == "not_established_in_corpus"
     assert "age is not used to infer" in ctx["message"].lower()
     for t in dataset.trials():
-        assert dataset.assertion_value(t["trial_id"], "menopause_status_reported")[0] != "yes"
+        value, _basis, assertion = dataset.assertion_value(
+            t["trial_id"], "menopause_status_reported"
+        )
+        if value == "yes":
+            assert "postmenopausal" in assertion["exact_passage"].lower()
 
 
 # 10. Existing suites still pass — covered by running the whole suite; here we assert

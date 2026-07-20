@@ -3,6 +3,10 @@ services:
     name: amira
     runtime: python
     plan: free
+    # A PR titled with [render preview] gets its own isolated onrender.com URL.
+    # Manual mode keeps previews opt-in and leaves the production service alone.
+    previews:
+      generation: manual
     # Build the React UI, then install the Python backend. Node is available on
     # Render's Python runtime image for the UI build step.
     buildCommand: >-

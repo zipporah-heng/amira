@@ -18,7 +18,7 @@ REPO = Path(__file__).resolve().parents[2]
 # Dataset integrity
 # --------------------------------------------------------------------------- #
 def test_nct_deduplication():
-    ncts = [t["nct_id"] for t in dataset.trials()]
+    ncts = [t["nct_id"] for t in dataset.trials() if t.get("nct_id")]
     assert len(ncts) == len(set(ncts))
     assert all(re.fullmatch(r"NCT\d{8}", n) for n in ncts)
 
@@ -45,7 +45,8 @@ def test_maturity_level_is_never_stored_in_source_data():
 
 
 def test_source_urls_are_real_registries_or_literature():
-    allowed = ("clinicaltrials.gov", "pubmed.ncbi.nlm.nih.gov", "ncbi.nlm.nih.gov")
+    allowed = ("clinicaltrials.gov", "pubmed.ncbi.nlm.nih.gov", "ncbi.nlm.nih.gov",
+               "nature.com")
     for s in dataset.sources():
         assert any(d in s["url"] for d in allowed), s["url"]
 
@@ -57,7 +58,12 @@ def test_count_basis_compatibility_never_mixes_silently():
     totals = engine.aggregate_participants([t["trial_id"] for t in dataset.trials()])
     if totals["trials_with_percentage_only"]:
         # A mixed figure must be labelled as such and must not claim to be reported.
-        assert totals["women_estimated_basis"] == "mixed_reported_and_derived"
+        expected_basis = (
+            "incomplete"
+            if totals["trials_without_female_count_or_percentage"]
+            else "mixed_reported_and_derived"
+        )
+        assert totals["women_estimated_basis"] == expected_basis
         assert totals["count_basis_warning"]
     # The reported subtotal only ever sums genuinely reported counts.
     reported = 0
@@ -102,12 +108,13 @@ def test_maturity_is_derived_and_cumulative():
 
 
 def test_no_age_to_menopause_inference():
-    """Trials enrol by age only; menopause must NOT be inferred from that."""
+    """An affirmative life-stage claim must come from explicit source language."""
     for t in dataset.trials():
-        v, basis, _ = dataset.assertion_value(t["trial_id"], "menopause_status_reported")
-        assert v != "yes", "menopausal status reported without a source"
-    m = maturity.evaluate([t["trial_id"] for t in dataset.trials()])
-    assert m["level"] < 3, "Life Stage Aware awarded without a menopausal-status report"
+        v, _basis, assertion = dataset.assertion_value(t["trial_id"], "menopause_status_reported")
+        if v == "yes":
+            assert "postmenopausal" in assertion["exact_passage"].lower()
+    legacy = [t["trial_id"] for t in dataset.trials() if t["medicine"] == "Rosuvastatin"]
+    assert maturity.evaluate(legacy)["level"] < 3
 
 
 # --------------------------------------------------------------------------- #

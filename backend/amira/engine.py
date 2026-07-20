@@ -9,11 +9,9 @@ claims to be reported when part of it was derived.
 
 Life stage / hormone therapy
 ----------------------------
-Selections are applied against what the corpus actually reports. Because the
-frozen corpus reports neither menopausal status nor hormone therapy use, any
-specific selection returns a bounded response naming exactly what is missing.
-Age eligibility is surfaced as a fact but is NEVER converted into a menopausal
-status claim.
+Selections are applied against what each medicine's reviewed evidence actually
+reports. Age eligibility is surfaced as a fact but is NEVER converted into a
+menopausal-status claim.
 """
 
 from __future__ import annotations
@@ -93,6 +91,7 @@ def aggregate_participants(trial_ids: List[str]) -> dict:
     women_reported = 0
     trials_with_reported_count: List[str] = []
     trials_with_pct_only: List[str] = []
+    trials_without_women_data: List[str] = []
     estimated_extra = 0
     estimate_components: List[dict] = []
 
@@ -119,14 +118,37 @@ def aggregate_participants(trial_ids: List[str]) -> dict:
                 "derived_count": est,
                 "note": "Derived by AMIRA from a reported percentage; no exact count is published.",
             })
+        else:
+            trials_without_women_data.append(tid)
 
     women_estimated_total = women_reported + estimated_extra
-    basis = "reported" if not trials_with_pct_only else "mixed_reported_and_derived"
+    if trials_without_women_data:
+        basis = "incomplete"
+    elif trials_with_pct_only:
+        basis = "mixed_reported_and_derived"
+    else:
+        basis = "reported"
 
     women_pct_of_participants = (
         round(women_estimated_total / participants_total * 100, 1)
-        if participants_total else None
+        if participants_total and not trials_without_women_data else None
     )
+
+    if trials_without_women_data:
+        count_warning = (
+            "Women-count coverage is incomplete: an exact count or percentage is available for "
+            f"{len(trial_ids) - len(trials_without_women_data)} of {len(trial_ids)} trials. "
+            "AMIRA reports the known subtotal and does not calculate a combined percentage."
+        )
+    elif trials_with_pct_only:
+        count_warning = (
+            "An exact female participant count is published for "
+            f"{len(trials_with_reported_count)} of {len(trial_ids)} trials. "
+            "The remaining trial(s) report only a percentage, so the combined figure is "
+            "part reported and part derived and is labelled accordingly."
+        )
+    else:
+        count_warning = None
 
     return {
         "trials": len(trial_ids),
@@ -136,17 +158,16 @@ def aggregate_participants(trial_ids: List[str]) -> dict:
         "women_reported_basis": "reported",
         "trials_with_reported_female_count": trials_with_reported_count,
         "trials_with_percentage_only": trials_with_pct_only,
+        "trials_without_female_count_or_percentage": trials_without_women_data,
         "women_estimated_total": women_estimated_total,
         "women_estimated_basis": basis,
         "women_estimate_components": estimate_components,
         "women_pct_of_participants": women_pct_of_participants,
-        "women_pct_basis": "derived",
-        "count_basis_warning": (
-            "An exact female participant count is published for "
-            f"{len(trials_with_reported_count)} of {len(trial_ids)} trials. "
-            "The remaining trial(s) report only a percentage, so the combined figure is "
-            "part reported and part derived and is labelled accordingly."
-        ) if trials_with_pct_only else None,
+        "women_pct_basis": (
+            "not_calculated_incomplete_coverage"
+            if trials_without_women_data else "derived"
+        ),
+        "count_basis_warning": count_warning,
     }
 
 
@@ -178,12 +199,22 @@ def dimension_summary(trial_ids: List[str]) -> List[dict]:
 def life_stage_context(life_stage: str, trial_ids: List[str]) -> dict:
     """Life stage genuinely changes the returned context.
 
-    No trial in the frozen corpus reports menopausal status, so no life stage can
-    be evidenced. Age eligibility is reported as a fact, explicitly not as a
-    menopause claim.
+    Age eligibility is reported as a fact, explicitly not as a menopause claim.
+    Only an affirmative source assertion can support a selected life stage.
     """
-    reporting = [t for t in trial_ids
-                 if dataset.assertion_value(t, "menopause_status_reported")[0] == dataset.AFFIRMATIVE]
+    all_reporting = [
+        t for t in trial_ids
+        if dataset.assertion_value(t, "menopause_status_reported")[0] == dataset.AFFIRMATIVE
+    ]
+    if life_stage == "not_specified":
+        reporting = all_reporting
+    else:
+        reporting = [
+            tid for tid in all_reporting
+            if life_stage in next(
+                t for t in dataset.trials() if t["trial_id"] == tid
+            ).get("reported_life_stages", [])
+        ]
 
     age_facts = []
     for tid in trial_ids:
@@ -197,12 +228,23 @@ def life_stage_context(life_stage: str, trial_ids: List[str]) -> dict:
 
     supported = bool(reporting) or life_stage == "not_specified"
     if life_stage == "not_specified":
-        message = ("No life stage filter applied. Menopausal status is not reported by any "
-                   "trial in the reviewed corpus.")
+        message = (
+            f"No life stage filter applied. {len(reporting)} reviewed trial(s) explicitly "
+            "report menopausal status."
+            if reporting else
+            "No life stage filter applied. Menopausal status is not reported by any "
+            "trial in the reviewed evidence."
+        )
         status = "no_filter_applied"
     elif reporting:
         message = f"{len(reporting)} trial(s) report menopausal status."
         status = "supported"
+    elif all_reporting:
+        message = (
+            "The reviewed evidence reports a different life stage, not the selected life stage. "
+            "Age is not used to infer menopausal status."
+        )
+        status = "life_stage_not_represented"
     else:
         message = (
             f"No trial in the reviewed corpus reports menopausal status, so AMIRA cannot "
@@ -224,18 +266,49 @@ def life_stage_context(life_stage: str, trial_ids: List[str]) -> dict:
 
 
 def hormone_therapy_context(hormone_therapy: str, trial_ids: List[str]) -> dict:
-    reporting = [t for t in trial_ids
-                 if dataset.assertion_value(t, "hormone_therapy_reported")[0] == dataset.AFFIRMATIVE]
+    all_reporting = [
+        t for t in trial_ids
+        if dataset.assertion_value(t, "hormone_therapy_reported")[0] == dataset.AFFIRMATIVE
+    ]
+
+    def _matches(tid: str) -> bool:
+        trial = next(t for t in dataset.trials() if t["trial_id"] == tid)
+        population = trial.get("hormone_therapy_population")
+        if hormone_therapy == "yes":
+            return population == "using"
+        if hormone_therapy == "no":
+            return population in ("not_using", "excluded_current_or_prior")
+        return True
+
+    reporting = all_reporting if hormone_therapy in ("any", "not_specified") else [
+        tid for tid in all_reporting if _matches(tid)
+    ]
 
     if hormone_therapy in ("any", "not_specified"):
         status = "no_filter_applied"
-        message = ("No hormone therapy filter applied. Hormone therapy use is not reported "
-                   "by any trial in the reviewed corpus.")
+        message = (
+            f"No hormone therapy filter applied. {len(reporting)} reviewed trial(s) explicitly "
+            "report hormone therapy criteria or use."
+            if reporting else
+            "No hormone therapy filter applied. Hormone therapy use is not reported "
+            "by any trial in the reviewed evidence."
+        )
         supported = True
     elif reporting:
         status = "supported"
-        message = f"{len(reporting)} trial(s) report hormone therapy use."
+        message = (
+            f"{len(reporting)} trial(s) explicitly represent people who are "
+            f"{'using' if hormone_therapy == 'yes' else 'not using'} menopausal hormone therapy."
+        )
         supported = True
+    elif all_reporting:
+        status = "hormone_therapy_population_not_represented"
+        message = (
+            "Hormone therapy was explicitly reported, but the selected population was not "
+            "represented. In the reviewed postmenopausal study, current or prior hormone "
+            "replacement therapy was an exclusion criterion."
+        )
+        supported = False
     else:
         status = "not_established_in_corpus"
         message = (
@@ -251,6 +324,7 @@ def hormone_therapy_context(hormone_therapy: str, trial_ids: List[str]) -> dict:
         "supported": supported,
         "message": message,
         "trials_reporting_hormone_therapy": reporting,
+        "trials_with_any_hormone_therapy_reporting": all_reporting,
     }
 
 
@@ -322,7 +396,9 @@ def check_evidence(condition: str, medicine: str,
             "trial_id": t["trial_id"],
             "display_name": t["display_name"],
             "nct_id": t["nct_id"],
-            "year": int((t.get("completion_date") or t.get("start_date") or "0")[:4] or 0) or None,
+            "year": t.get("publication_year") or (
+                int((t.get("completion_date") or t.get("start_date") or "0")[:4] or 0) or None
+            ),
             "study_type": t["study_type"],
             "total_enrollment": t["enrollment_actual"],
             "female_n": f_count if f_basis == "reported" else None,
@@ -335,6 +411,9 @@ def check_evidence(condition: str, medicine: str,
                 _assertion_view(a) for a in dataset.assertions()
                 if a["trial_id"] == t["trial_id"]
             ],
+            "source_label": t.get("primary_source_label") or (
+                "ClinicalTrials.gov" if t.get("nct_id") else "Primary publication"
+            ),
         }
         for dim, _, _ in CARD_DIMENSIONS:
             v, b, _a = dataset.assertion_value(t["trial_id"], dim)
@@ -377,6 +456,10 @@ def check_evidence(condition: str, medicine: str,
         "effectiveness": effectiveness,
         "safety": safety,
         "class_comparison": comparison,
+        "direct_comparisons": [
+            clinical.direct_comparison_view(c)
+            for c in dataset.direct_comparisons_for(medicine)
+        ],
         "who_was_studied": clinical.who_was_studied(trial_ids),
         "study_selection": study_selection(medicine, matched),
         "totals": totals,
@@ -421,11 +504,25 @@ def _why_this_result(medicine, drug_class, mat, eff, saf, totals) -> str:
     drug_findings = [f for f in eff["findings"] if f["scope"].startswith("trial:")]
     interaction = next((f for f in drug_findings if f.get("comparison_p") is not None), None)
 
-    have: List[str] = [f"{women:,} women were included"]
+    missing_count_trials = totals.get("trials_without_female_count_or_percentage", [])
+    if missing_count_trials:
+        have: List[str] = [
+            f"an exact count of {women:,} women was reported in "
+            f"{len(totals['trials_with_reported_female_count'])} of {totals['trials']} studies"
+        ]
+    else:
+        have = [f"{women:,} women were included"]
     missing: List[str] = []
 
     if eff["n_reporting"] > 0:
-        if interaction:
+        if eff["state"] == clinical.EFF_WOMEN_ONLY:
+            have.append("outcomes were reported in an explicitly defined women-only life-stage study")
+        elif eff["state"] == clinical.EFF_CONFLICTING:
+            have.append(
+                "sex-specific findings differed between the historical post hoc analysis and "
+                "the contemporary low-dose trial"
+            )
+        elif interaction:
             clause = ("effectiveness was analysed by sex with a formal sex-by-treatment "
                       f"interaction test (P = {interaction['comparison_p']})")
             if interaction["significance"] == "no_significant_difference":
@@ -441,7 +538,17 @@ def _why_this_result(medicine, drug_class, mat, eff, saf, totals) -> str:
     # in a long clause list.
     safety_sentence = ""
     if saf["n_reporting"] > 0:
-        if saf["state"] == clinical.SAF_NO_DIFF:
+        if saf["state"] == clinical.SAF_WOMEN_ONLY:
+            safety_sentence = (
+                " Side effects were reported in the women-only life-stage study; this was a "
+                "comparison between treatment regimens, not between women and men."
+            )
+        elif saf["state"] == clinical.SAF_WOMEN_REPORTED_NO_COMPARISON:
+            safety_sentence = (
+                " The contemporary publication discussed low-dose safety in women, but a formal "
+                "between-sex adverse-event comparison was not located."
+            )
+        elif saf["state"] == clinical.SAF_NO_DIFF:
             safety_sentence = (" Safety outcomes were reported separately by sex, and a formal "
                                "between-sex comparison found no significant difference.")
         elif saf["state"] == clinical.SAF_REPORTED_NO_COMPARISON:
@@ -458,6 +565,8 @@ def _why_this_result(medicine, drug_class, mat, eff, saf, totals) -> str:
         missing.append("menopausal status")
     if not trace.get(4):
         missing.append("hormone therapy use")
+    if trace.get(4) and not trace.get(5):
+        missing.append("joint stratification of outcomes by life stage and hormone context")
 
     sentence = (f"{medicine} reached Evidence Maturity {mat['level']}/{mat['max_level']} "
                 f"({mat['label']}): "
@@ -484,25 +593,32 @@ def study_selection(medicine: str, matched: List[dict]) -> dict:
     included_pubs = [r for r in included if r["identifier_type"] in ("pmid", "pmcid")]
 
     # Publications in the dataset linked to THIS medicine's trials.
-    med_ncts = {t["nct_id"] for t in matched}
+    med_ncts = {t["nct_id"] for t in matched if t.get("nct_id")}
+    med_primary_sources = {t.get("primary_source_id") for t in matched}
     med_pubs = [s for s in dataset.sources()
-                if s.get("source_type") == "journal_article" and s.get("nct_id") in med_ncts]
+                if s.get("source_type") == "journal_article"
+                and (s.get("nct_id") in med_ncts or s.get("source_id") in med_primary_sources)]
 
     return {
         "candidate_records_screened": len(rows),
         "evidence_sources_included": len(included),
         "records_excluded": len(excluded),
         "records_deferred": len(deferred),
+        "trial_registry_records_included": len(included_ncts),
+        "randomized_studies_in_corpus": len(dataset.trials()),
+        "randomized_studies_for_selected_medicine": len(matched),
+        # Retained for API compatibility; the value now means included registry
+        # records, not an assertion that every study is Phase 3.
         "unique_phase3_rcts_identified": len(included_ncts),
         "publications_included": len(included_pubs),
         "rcts_for_selected_medicine": len(matched),
         "publications_for_selected_medicine": len(med_pubs),
         "medicine": medicine,
         "reconciliation": (
-            f"{len(rows)} candidate records screened → {len(included)} evidence sources included "
-            f"({len(included_ncts)} unique Phase 3 RCTs + {len(included_pubs)} linked publications). "
-            f"The 'Studies included' figure counts the {len(matched)} Phase 3 RCT(s) for "
-            f"{medicine} shown on this page."
+            f"{len(rows)} candidate records screened. {len(included)} evidence sources were "
+            f"included: {len(included_ncts)} trial registry records and "
+            f"{len(included_pubs)} publication records. The corpus represents "
+            f"{len(dataset.trials())} randomized studies; {len(matched)} are shown for {medicine}."
         ),
     }
 

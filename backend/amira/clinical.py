@@ -22,6 +22,7 @@ from . import dataset, maturity
 EFF_SIGNIFICANT = "Significant sex difference identified"
 EFF_NO_DIFF = "No statistically significant sex difference identified"
 EFF_REPORTED_UNCLEAR = "Sex-specific analysis reported, statistical comparison unclear"
+EFF_WOMEN_ONLY = "Women's outcomes reported; no comparison with men"
 EFF_CONFLICTING = "Conflicting sex-specific results"
 EFF_INSUFFICIENT = "Insufficient sex-specific evidence"
 EFF_NOT_REPORTED = "Sex-specific effectiveness not reported"
@@ -32,6 +33,8 @@ SAF_TRENDS = "Non-significant sex-specific trends identified"
 SAF_NO_DIFF = "No significant sex-specific difference identified"
 # Reported by sex, but only against placebo within each sex — no between-sex test.
 SAF_REPORTED_NO_COMPARISON = "Reported by sex, no formal between-sex comparison"
+SAF_WOMEN_ONLY = "Safety reported in women; no comparison with men"
+SAF_WOMEN_REPORTED_NO_COMPARISON = "Women's safety discussed; no formal between-sex comparison"
 SAF_CONFLICTING = "Conflicting safety findings"
 SAF_INSUFFICIENT = "Insufficient sex-specific safety evidence"
 SAF_NOT_REPORTED = "Sex-specific safety not reported"
@@ -47,6 +50,8 @@ def _source_link(finding: dict) -> dict:
 def _finding_view(f: dict) -> dict:
     return {
         "finding_id": f["finding_id"], "scope": f["scope"], "finding_type": f["finding_type"],
+        "population_scope": f.get("population_scope", "women_and_men"),
+        "reporting_scope": f.get("reporting_scope", "women_and_men_separate"),
         "endpoint": f["endpoint"],
         "female_estimate": f.get("female_estimate"), "male_estimate": f.get("male_estimate"),
         "effect_measure": f.get("effect_measure"),
@@ -59,6 +64,22 @@ def _finding_view(f: dict) -> dict:
         "source_verified": f.get("source_verified", False),
         "human_verified": f.get("human_verified", False),
         "source": _source_link(f),
+    }
+
+
+def direct_comparison_view(comparison: dict) -> dict:
+    """Return a source-linked treatment-arm comparison for the selected medicine."""
+    source = dataset.source_by_id(comparison["source_id"])
+    return {
+        **comparison,
+        "source": {
+            "source_id": source["source_id"],
+            "title": source["title"],
+            "url": source["url"],
+            "pmid": source.get("pmid"),
+            "pmcid": source.get("pmcid"),
+            "source_type": source["source_type"],
+        },
     }
 
 
@@ -84,6 +105,9 @@ def effectiveness_state(medicine: str) -> dict:
     counts = _efficacy_reporting_counts(medicine)
 
     drug_sigs = {f.get("significance") for f in drug_findings}
+    women_only = bool(drug_findings) and all(
+        f.get("population_scope") == "women_only_life_stage" for f in drug_findings
+    )
     # A drug-specific "no difference" claim requires a real drug-specific comparison
     # (a numeric interaction/heterogeneity p reported for THIS medicine).
     has_drug_comparison = any(
@@ -100,6 +124,8 @@ def effectiveness_state(medicine: str) -> dict:
             for t in dataset.trials() if t["medicine"].lower() == medicine.lower()
         }
         state = EFF_NOT_REPORTED if bases == {"not_reported"} else EFF_INSUFFICIENT
+    elif women_only:
+        state = EFF_WOMEN_ONLY
     elif "significant" in drug_sigs and "no_significant_difference" in drug_sigs:
         state = EFF_CONFLICTING
     elif "significant" in drug_sigs:
@@ -118,6 +144,10 @@ def effectiveness_state(medicine: str) -> dict:
             f"Effectiveness was reported separately for women and men, but a formal "
             f"{medicine.lower()}-specific sex-by-treatment interaction test was not located in "
             "the reviewed sources."),
+        EFF_WOMEN_ONLY: (
+            "Effectiveness outcomes were reported in an explicitly defined women-only population. "
+            "The study did not compare outcomes between women and men."
+        ),
         EFF_CONFLICTING: "Drug-specific sex-specific effectiveness results conflict across sources.",
         EFF_INSUFFICIENT: "Not enough sex-specific effectiveness evidence to draw a conclusion.",
         EFF_NOT_REPORTED: "Effectiveness was not analysed separately for women in the reviewed trials.",
@@ -152,8 +182,18 @@ def safety_state(medicine: str) -> dict:
         1 for t in trials
         if dataset.assertion_value(t["trial_id"], "sex_specific_safety_reported")[0] == "yes"
     )
+    women_only = bool(drug_specific) and all(
+        f.get("population_scope") == "women_only_life_stage" for f in drug_specific
+    )
+    women_report_only = bool(drug_specific) and all(
+        f.get("reporting_scope") == "women_only_narrative" for f in drug_specific
+    )
 
-    if "significant" in sigs:
+    if women_only:
+        state = SAF_WOMEN_ONLY
+    elif women_report_only:
+        state = SAF_WOMEN_REPORTED_NO_COMPARISON
+    elif "significant" in sigs:
         state = SAF_SIGNIFICANT
     elif "trend_only" in sigs:
         state = SAF_TRENDS
@@ -187,6 +227,14 @@ def safety_state(medicine: str) -> dict:
         SAF_REPORTED_NO_COMPARISON: (
             "Safety outcomes were reported separately by sex, with no excess versus placebo "
             "reported in either sex. A formal between-sex safety comparison was not reported."),
+        SAF_WOMEN_ONLY: (
+            "Side effects were reported in an explicitly defined women-only population. "
+            "The study did not compare side effects between women and men."
+        ),
+        SAF_WOMEN_REPORTED_NO_COMPARISON: (
+            "The publication discussed safety in women, but a formal between-sex "
+            "adverse-event comparison was not located."
+        ),
         SAF_CONFLICTING: "Sex-specific safety results conflict across sources.",
         SAF_INSUFFICIENT: "Not enough drug-specific, sex-stratified side-effect evidence to draw a conclusion.",
         SAF_NOT_REPORTED: "Side effects were not analysed separately for women in the reviewed trials.",
@@ -230,6 +278,13 @@ def class_comparison(drug_class: str) -> dict:
             gaps.append("Menopausal status not reported")
         if not any(dataset.assertion_value(t, "hormone_therapy_reported")[0] == "yes" for t in trial_ids):
             gaps.append("Hormone therapy not reported")
+        if not any(
+            dataset.assertion_value(
+                t, "outcomes_stratified_by_life_stage_and_hormone_context"
+            )[0] == "yes"
+            for t in trial_ids
+        ):
+            gaps.append("No joint life-stage and hormone-context analysis")
         rows.append({
             "medicine": med,
             "drug_class": drug_class,
@@ -303,6 +358,9 @@ def who_was_studied(trial_ids: List[str]) -> List[dict]:
             "primary_endpoint": t.get("primary_endpoint"),
             "indication": t.get("indication"),
             "registry_url": t["registry_url"],
+            "source_label": t.get("primary_source_label") or (
+                "ClinicalTrials.gov" if t.get("nct_id") else "Primary publication"
+            ),
             "age_note": "Age eligibility only. Age is not used to infer menopausal status.",
         })
     return out

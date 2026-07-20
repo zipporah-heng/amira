@@ -22,6 +22,7 @@ DIMENSIONS = [
     "sex_specific_safety_reported",
     "menopause_status_reported",
     "hormone_therapy_reported",
+    "outcomes_stratified_by_life_stage_and_hormone_context",
     "pregnancy_evidence_reported",
 ]
 
@@ -50,6 +51,7 @@ def load() -> Dict[str, Any]:
         "source_documents": _read("source_documents"),
         "evidence_assertions": _read("evidence_assertions"),
         "findings": _read("findings"),
+        "direct_comparisons": _read("direct_comparisons"),
         "screening_log": _read("screening_log"),
     }
     _validate(data)
@@ -62,7 +64,7 @@ def _validate(data: Dict[str, Any]) -> None:
     trial_ids = {t["trial_id"] for t in trials}
 
     # NCT de-duplication: one trial per NCT id, no repeats.
-    ncts = [t["nct_id"] for t in trials]
+    ncts = [t["nct_id"] for t in trials if t.get("nct_id")]
     if len(ncts) != len(set(ncts)):
         raise DatasetError(f"duplicate NCT ids in trials: {ncts}")
 
@@ -81,6 +83,25 @@ def _validate(data: Dict[str, Any]) -> None:
         # Every assertion must carry a citable passage.
         if not (a.get("exact_passage") or "").strip():
             raise DatasetError(f"assertion {a['assertion_id']} has no exact_passage")
+
+    for comparison in data["direct_comparisons"]:
+        if comparison["trial_id"] not in trial_ids:
+            raise DatasetError(
+                f"comparison {comparison['comparison_id']} references unknown trial"
+            )
+        if comparison["source_id"] not in sources:
+            raise DatasetError(
+                f"comparison {comparison['comparison_id']} references unknown source"
+            )
+        if not comparison.get("outcomes"):
+            raise DatasetError(f"comparison {comparison['comparison_id']} has no outcomes")
+        if not (comparison.get("exact_passage") or "").strip():
+            raise DatasetError(f"comparison {comparison['comparison_id']} has no exact_passage")
+        for index, outcome in enumerate(comparison["outcomes"], start=1):
+            if not (outcome.get("exact_passage") or "").strip():
+                raise DatasetError(
+                    f"comparison {comparison['comparison_id']} outcome {index} has no exact_passage"
+                )
 
 
 def manifest() -> Dict[str, Any]:
@@ -101,6 +122,17 @@ def assertions() -> List[dict]:
 
 def findings() -> List[dict]:
     return load()["findings"]
+
+
+def direct_comparisons() -> List[dict]:
+    return load()["direct_comparisons"]
+
+
+def direct_comparisons_for(medicine: str) -> List[dict]:
+    return [
+        c for c in direct_comparisons()
+        if c["medicine"].strip().lower() == medicine.strip().lower()
+    ]
 
 
 def findings_for(medicine: str, finding_type: str) -> List[dict]:

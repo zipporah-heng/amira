@@ -4,104 +4,139 @@
     "identifier_type": "nct",
     "decision": "include",
     "reason": "Rosuvastatin RCT in the Mantis-approved frozen corpus; registry results posted.",
-    "screened_at": "2026-07-19T06:59:46Z"
+    "screened_at": "2026-07-20T18:42:00Z"
   },
   {
     "candidate": "NCT00468923",
     "identifier_type": "nct",
     "decision": "include",
     "reason": "Rosuvastatin RCT in the Mantis-approved frozen corpus.",
-    "screened_at": "2026-07-19T06:59:46Z"
+    "screened_at": "2026-07-20T18:42:00Z"
   },
   {
     "candidate": "PMID 20176986",
     "identifier_type": "pmid",
     "decision": "include",
     "reason": "Prespecified sex-specific outcome analysis of JUPITER; supplies the women-analyzed evidence dimension.",
-    "screened_at": "2026-07-19T06:59:46Z"
+    "screened_at": "2026-07-20T18:42:00Z"
   },
   {
     "candidate": "PMID 27040132",
     "identifier_type": "pmid",
     "decision": "include",
     "reason": "Primary lipid-arm report of HOPE-3 (NEJM 2016).",
-    "screened_at": "2026-07-19T06:59:46Z"
+    "screened_at": "2026-07-20T18:42:00Z"
   },
   {
     "candidate": "PMC8370761 (PMID 33963372)",
     "identifier_type": "pmcid",
     "decision": "include",
     "reason": "Open-access HOPE-3 long-term follow-up; only located source stating the proportion of women enrolled.",
-    "screened_at": "2026-07-19T06:59:46Z"
+    "screened_at": "2026-07-20T18:42:00Z"
   },
   {
     "candidate": "PMID 27041480",
     "identifier_type": "pmid",
     "decision": "exclude",
     "reason": "HOPE-3 blood-pressure arm; intervention is not rosuvastatin.",
-    "screened_at": "2026-07-19T06:59:46Z"
+    "screened_at": "2026-07-20T18:42:00Z"
   },
   {
     "candidate": "PMID 27039945",
     "identifier_type": "pmid",
     "decision": "exclude",
     "reason": "HOPE-3 combined BP+lipid arm; not the isolated rosuvastatin comparison.",
-    "screened_at": "2026-07-19T06:59:46Z"
+    "screened_at": "2026-07-20T18:42:00Z"
   },
   {
     "candidate": "PMID 30814321 (PMC6453765)",
     "identifier_type": "pmid",
     "decision": "exclude",
     "reason": "HOPE-3 cognition substudy; population is a subset, would double-count participants.",
-    "screened_at": "2026-07-19T06:59:46Z"
+    "screened_at": "2026-07-20T18:42:00Z"
   },
   {
     "candidate": "PMID 25579834",
     "identifier_type": "pmid",
     "decision": "include",
     "reason": "Cholesterol Treatment Trialists' sex-specific meta-analysis (27 statin trials); class-level effectiveness and safety by sex with a formal heterogeneity test.",
-    "screened_at": "2026-07-19T06:59:46Z"
+    "screened_at": "2026-07-20T18:42:00Z"
   },
   {
     "candidate": "NCT00327418 (CARDS)",
     "identifier_type": "nct",
     "decision": "include",
     "reason": "Phase 3 atorvastatin RCT for primary CV prevention; second verified statin for the drug-class comparison.",
-    "screened_at": "2026-07-19T06:59:46Z"
+    "screened_at": "2026-07-20T18:42:00Z"
   },
   {
     "candidate": "PMID 15325833",
     "identifier_type": "pmid",
     "decision": "include",
     "reason": "Primary report of CARDS (Lancet 2004).",
-    "screened_at": "2026-07-19T06:59:46Z"
+    "screened_at": "2026-07-20T18:42:00Z"
   },
   {
     "candidate": "NCT03036124 (DAPA-HF)",
     "identifier_type": "nct",
     "decision": "include",
     "reason": "Phase 3 dapagliflozin RCT in HFrEF; registry results posted with sex breakdown.",
-    "screened_at": "2026-07-19T06:59:46Z"
+    "screened_at": "2026-07-20T18:42:00Z"
   },
   {
     "candidate": "PMID 33787831 (PMC8014207)",
     "identifier_type": "pmid",
     "decision": "include",
     "reason": "Prespecified DAPA-HF sex-specific efficacy and safety analysis with a formal sex-by-treatment interaction test (JAMA Cardiology 2021).",
-    "screened_at": "2026-07-19T06:59:46Z"
+    "screened_at": "2026-07-20T18:42:00Z"
   },
   {
     "candidate": "PMID 36342789",
     "identifier_type": "pmid",
     "decision": "defer",
     "reason": "Pooled DAPA-HF + DELIVER sex-differences analysis; combines two trial populations. Deferred to avoid participant double-counting until pooled-vs-single scope is modelled.",
-    "screened_at": "2026-07-19T06:59:46Z"
+    "screened_at": "2026-07-20T18:42:00Z"
   },
   {
     "candidate": "Pravastatin trials (e.g. WOSCOPS, PROSPER)",
     "identifier_type": "medicine",
     "decision": "defer",
     "reason": "Not yet ingested and verified; excluded from the class comparison until real evidence is retrieved. AMIRA shows only verified drugs.",
-    "screened_at": "2026-07-19T06:59:46Z"
+    "screened_at": "2026-07-20T18:42:00Z"
+  },
+  {
+    "candidate": "PMID 23126349 (PMC8108841)",
+    "identifier_type": "pmid",
+    "decision": "include",
+    "reason": "Randomized double-blind comparison in 125 explicitly postmenopausal women with hypertension; reports hormone-replacement-therapy exclusion criteria, blood-pressure outcomes, and adverse events.",
+    "screened_at": "2026-07-20T18:42:00Z"
+  },
+  {
+    "candidate": "NCT00000476 (DIG)",
+    "identifier_type": "nct",
+    "decision": "include",
+    "reason": "Phase 3 randomized digoxin trial underlying the historical sex subgroup analysis.",
+    "screened_at": "2026-07-20T18:42:00Z"
+  },
+  {
+    "candidate": "PMID 12409542",
+    "identifier_type": "pmid",
+    "decision": "include",
+    "reason": "Post hoc DIG sex analysis with formal interaction tests; explicitly states that hormone-replacement-therapy information was not collected.",
+    "screened_at": "2026-07-20T18:42:00Z"
+  },
+  {
+    "candidate": "NCT03783429 (DECISION)",
+    "identifier_type": "nct",
+    "decision": "include",
+    "reason": "Contemporary Phase 4 randomized low-dose digoxin outcome trial.",
+    "screened_at": "2026-07-20T18:42:00Z"
+  },
+  {
+    "candidate": "PMID 42108270",
+    "identifier_type": "pmid",
+    "decision": "include",
+    "reason": "DECISION primary report with 284 women and a formal sex-by-treatment interaction analysis.",
+    "screened_at": "2026-07-20T18:42:00Z"
   }
 ]

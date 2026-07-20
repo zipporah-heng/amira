@@ -9,7 +9,7 @@ export function WhoWasStudied({ rows }: { rows: WhoRow[] }) {
           <div className="who-card" key={w.trial_id}>
             <div className="who-title">
               <a href={w.registry_url} target="_blank" rel="noopener noreferrer">{w.display_name}</a>
-              <span className="who-nct">{w.nct_id}</span>
+              <span className="who-nct">{w.nct_id || w.source_label || "Primary publication"}</span>
             </div>
             <div className="who-rows">
               <div><span>Medicine</span><b>{w.medicine}</b></div>

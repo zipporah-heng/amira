@@ -1,8 +1,8 @@
 {
-  "dataset_version": "2.0.0",
+  "dataset_version": "3.0.0",
   "source_cutoff": "2026-07-18",
-  "generated_at": "2026-07-19T06:59:46Z",
-  "commit_hash": "c6d7ea725209f696acdb21050cd52e4749b38f31",
+  "generated_at": "2026-07-20T18:42:00Z",
+  "commit_hash": "99e473529be6e89abcb256b8d6d9d2b154b152b5",
   "medicine": "Rosuvastatin",
   "condition": "Cardiovascular disease prevention",
   "drug_class": "Statin",
@@ -10,27 +10,32 @@
     "NCT00239681",
     "NCT00468923",
     "NCT00327418",
-    "NCT03036124"
+    "NCT03036124",
+    "PMID23126349",
+    "NCT00000476",
+    "NCT03783429"
   ],
   "medicines": [
     "Atorvastatin",
     "Dapagliflozin",
-    "Rosuvastatin"
+    "Digoxin",
+    "Rosuvastatin",
+    "Valsartan"
   ],
   "counts": {
-    "trials": 4,
-    "sources": 10,
-    "assertions": 31,
-    "findings": 5,
-    "screening_records": 15
+    "trials": 7,
+    "sources": 15,
+    "assertions": 58,
+    "findings": 10,
+    "direct_comparisons": 1,
+    "screening_records": 20
   },
   "screening_summary": {
-    "identified": 15,
-    "included": 10,
+    "identified": 20,
+    "included": 15,
     "excluded": 3,
     "deferred": 2
   },
   "human_verification_status": "pending",
-  "notes": "Evidence maturity level, effectiveness state and safety state are DERIVED at request time and are never stored here.",
-  "commit_hash_note": "SHA of the commit containing this dataset. Stamped after commit by pipeline/stamp_manifest.py, then amended in."
+  "notes": "Evidence maturity level, effectiveness state and safety state are DERIVED at request time and are never stored here."
 }

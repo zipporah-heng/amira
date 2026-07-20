@@ -18,7 +18,13 @@ REPO = Path(__file__).resolve().parents[1]
 DATA = REPO / "dataset"
 BENCH = REPO / "benchmark"
 
-ALLOWED_HOSTS = ("clinicaltrials.gov", "pubmed.ncbi.nlm.nih.gov", "ncbi.nlm.nih.gov")
+ALLOWED_HOSTS = (
+    "clinicaltrials.gov",
+    "pubmed.ncbi.nlm.nih.gov",
+    "ncbi.nlm.nih.gov",
+    "nejm.org",
+    "nature.com",
+)
 VALID_BASES = {"reported", "derived", "not_reported", "not_located"}
 SYNTHETIC_MARKERS = ("example.org", "DEMO DATA", "amira_demo_evidence", "AMIRA-DEMO-")
 
@@ -44,6 +50,7 @@ def main() -> int:
     sources = load("source_documents.json")
     assertions = load("evidence_assertions.json")
     findings = load("findings.json")
+    comparisons = load("direct_comparisons.json")
     screening = load("screening_log.json")
     if errors:
         print("\n".join(errors))
@@ -53,7 +60,7 @@ def main() -> int:
     trial_ids = {t["trial_id"] for t in trials}
 
     # --- referential integrity ------------------------------------------------ #
-    ncts = [t["nct_id"] for t in trials]
+    ncts = [t["nct_id"] for t in trials if t.get("nct_id")]
     if len(ncts) != len(set(ncts)):
         err(f"duplicate NCT ids: {ncts}")
     for n in ncts:
@@ -88,6 +95,21 @@ def main() -> int:
         if f.get("human_verified") and not f.get("verifier"):
             err(f"{f['finding_id']} is human_verified with no named verifier")
 
+    for c in comparisons:
+        if c["trial_id"] not in trial_ids:
+            err(f"{c['comparison_id']} references unknown trial {c['trial_id']}")
+        if c["source_id"] not in source_ids:
+            err(f"{c['comparison_id']} references unknown source {c['source_id']}")
+        if not (c.get("exact_passage") or "").strip():
+            err(f"{c['comparison_id']} has no exact_passage")
+        if not c.get("outcomes"):
+            err(f"{c['comparison_id']} has no outcomes")
+        for index, outcome in enumerate(c.get("outcomes", []), start=1):
+            if not (outcome.get("exact_passage") or "").strip():
+                err(f"{c['comparison_id']} outcome {index} has no exact_passage")
+        if c.get("human_verified") and not c.get("verifier"):
+            err(f"{c['comparison_id']} is human_verified with no named verifier")
+
     # --- source links --------------------------------------------------------- #
     for s in sources:
         if not s["url"].startswith("https://"):
@@ -96,7 +118,10 @@ def main() -> int:
             err(f"{s['source_id']} url is not an authoritative host: {s['url']}")
 
     # --- no stored maturity level --------------------------------------------- #
-    blob = json.dumps({"t": trials, "a": assertions, "f": findings, "m": manifest})
+    blob = json.dumps({
+        "t": trials, "a": assertions, "f": findings,
+        "c": comparisons, "m": manifest,
+    })
     for banned in ('"maturity_level"', '"evidence_level"'):
         if banned in blob:
             err(f"dataset stores a derived maturity level ({banned})")
@@ -110,6 +135,7 @@ def main() -> int:
     counts = manifest.get("counts", {})
     actual = {"trials": len(trials), "sources": len(sources),
               "assertions": len(assertions), "findings": len(findings),
+              "direct_comparisons": len(comparisons),
               "screening_records": len(screening)}
     for k, v in actual.items():
         if k in counts and counts[k] != v:
@@ -138,7 +164,8 @@ def main() -> int:
 
     # --- human verification honesty -------------------------------------------- #
     hv = sum(1 for a in assertions if a.get("human_verified")) + \
-         sum(1 for f in findings if f.get("human_verified"))
+         sum(1 for f in findings if f.get("human_verified")) + \
+         sum(1 for c in comparisons if c.get("human_verified"))
     notes.append(f"human-verified records: {hv} (expected 0 until named sign-off)")
 
     # --- report ---------------------------------------------------------------- #
