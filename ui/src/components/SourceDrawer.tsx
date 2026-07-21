@@ -18,7 +18,7 @@ export function SourceDrawer({ trial, onClose }: { trial: TrialRow; onClose: () 
 
         <div className="dr-body">
           <div className="dr-meta">
-            <div><div className="k">Total participants</div><div className="v">{trial.total_enrollment.toLocaleString()}</div></div>
+            <div><div className="k">Total participants</div><div className="v">{trial.total_enrollment != null ? trial.total_enrollment.toLocaleString() : "Not reported"}</div></div>
             <div><div className="k">Women (N)</div><div className="v">{trial.female_n != null ? trial.female_n.toLocaleString() : "Not reported"}</div></div>
             <div><div className="k">% Women</div><div className="v">{trial.female_pct != null ? `${trial.female_pct}%` : "—"}</div></div>
             <div><div className="k">Minimum age</div><div className="v">{trial.minimum_age || "—"}</div></div>

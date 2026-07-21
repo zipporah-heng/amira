@@ -174,8 +174,11 @@ def effectiveness_state(medicine: str) -> dict:
 
 def safety_state(medicine: str) -> dict:
     findings = dataset.findings_for(medicine, "safety")
-    sigs = [f.get("significance") for f in findings]
     drug_specific = [f for f in findings if f["scope"].startswith("trial:")]
+    # A drug-specific safety CONCLUSION (significant / trend) may only come from
+    # verified, trial-scoped, medicine-specific findings. Class-level findings are
+    # contextual and must NEVER set a medicine-specific safety state.
+    sigs = [f.get("significance") for f in drug_specific if f.get("source_verified", False)]
 
     trials = [t for t in dataset.trials() if t["medicine"].lower() == medicine.lower()]
     reporting = sum(
@@ -345,10 +348,14 @@ def who_was_studied(trial_ids: List[str]) -> List[dict]:
         t = next(x for x in dataset.trials() if x["trial_id"] == tid)
         fcount, fbasis, _ = dataset.assertion_value(tid, "female_enrollment_count")
         fpct, pbasis, _ = dataset.assertion_value(tid, "female_enrollment_pct")
+        te = dataset.total_enrollment_projection(tid)
         out.append({
             "trial_id": tid, "display_name": t["display_name"], "nct_id": t["nct_id"],
             "medicine": t["medicine"], "study_phase": t.get("study_phase"),
-            "total_participants": t["enrollment_actual"],
+            # Assertion-backed total (nullable); never raw enrollment_actual.
+            "total_participants": te["value"],
+            "total_participants_basis": te["basis"],
+            "total_participants_state": te["state"],
             "female_n": fcount if fbasis == "reported" else None,
             "female_n_basis": fbasis,
             "female_pct": fpct if pbasis in ("reported", "derived") else None,

@@ -143,7 +143,11 @@ def aggregate_participants(trial_ids: List[str]) -> dict:
             continue
 
         pct, p_basis, _ = dataset.assertion_value(tid, "female_enrollment_pct")
-        if p_basis == "reported" and isinstance(pct, (int, float)) and isinstance(total, (int, float)):
+        # Only derive a female count from a percentage when the SAME trial's total
+        # enrollment is itself evidence-supported (basis reported). Never derive a
+        # count against an unsupported total.
+        if (p_basis == "reported" and isinstance(pct, (int, float))
+                and t_basis == "reported" and isinstance(total, (int, float))):
             est = int(round(float(pct) / 100.0 * int(total)))
             estimated_extra += est
             trials_with_pct_only.append(tid)
@@ -163,9 +167,19 @@ def aggregate_participants(trial_ids: List[str]) -> dict:
     else:
         basis = "reported"
 
+    # A combined female percentage is only valid when BOTH coverages are complete
+    # over the SAME set of trials: every trial has a reported total AND a
+    # reported/derived female count. Otherwise the numerator and denominator would
+    # span mismatched populations (e.g. 110 women / 100 supported participants =
+    # 110%), which must be impossible. Fail closed to null.
+    coverage_matches = (
+        not trials_without_reported_total          # total coverage complete
+        and not trials_without_women_data          # female coverage complete
+        and participants_total > 0
+    )
     women_pct_of_participants = (
         round(women_estimated_total / participants_total * 100, 1)
-        if participants_total and not trials_without_women_data else None
+        if coverage_matches else None
     )
 
     if trials_without_women_data:
@@ -203,8 +217,8 @@ def aggregate_participants(trial_ids: List[str]) -> dict:
         "women_estimate_components": estimate_components,
         "women_pct_of_participants": women_pct_of_participants,
         "women_pct_basis": (
-            "not_calculated_incomplete_coverage"
-            if trials_without_women_data else "derived"
+            "derived" if women_pct_of_participants is not None
+            else "not_calculated_incomplete_coverage"
         ),
         "count_basis_warning": count_warning,
     }
@@ -431,6 +445,7 @@ def check_evidence(condition: str, medicine: str,
     for t in matched:
         f_count, f_basis, f_a = dataset.assertion_value(t["trial_id"], "female_enrollment_count")
         p_val, p_basis, p_a = dataset.assertion_value(t["trial_id"], "female_enrollment_pct")
+        _te = dataset.total_enrollment_projection(t["trial_id"])
         row = {
             "trial_id": t["trial_id"],
             "display_name": t["display_name"],
@@ -439,7 +454,11 @@ def check_evidence(condition: str, medicine: str,
                 int((t.get("completion_date") or t.get("start_date") or "0")[:4] or 0) or None
             ),
             "study_type": t["study_type"],
-            "total_enrollment": t["enrollment_actual"],
+            # Assertion-backed total: a number only when a `reported` total_enrollment
+            # assertion with a resolvable source exists — never raw enrollment_actual.
+            "total_enrollment": _te["value"],
+            "total_enrollment_basis": _te["basis"],
+            "total_enrollment_state": _te["state"],
             "female_n": f_count if f_basis == "reported" else None,
             "female_n_basis": f_basis,
             "female_pct": p_val if p_basis in ("reported", "derived") else None,
@@ -456,7 +475,9 @@ def check_evidence(condition: str, medicine: str,
         }
         for dim, _, _ in CARD_DIMENSIONS:
             v, b, _a = dataset.assertion_value(t["trial_id"], dim)
-            row[dim] = v if b != "absent" else "not_reported"
+            # Preserve the evidence state; NEVER collapse absent/not_located into
+            # a "not_reported" claim about the literature.
+            row[dim] = v if b not in ("absent",) else "absent"
         trial_rows.append(row)
 
     totals = aggregate_participants(trial_ids)
@@ -691,7 +712,8 @@ def other_evidence_paths(medicine: str, condition: str) -> List[dict]:
         trial_id = f["scope"].split(":", 1)[1]
         c_val, c_basis, _ = dataset.assertion_value(trial_id, "female_enrollment_count")
         p_val, p_basis, _ = dataset.assertion_value(trial_id, "female_enrollment_pct")
-        total = next((t.get("enrollment_actual") for t in med_trials if t["trial_id"] == trial_id), None)
+        # Assertion-backed total only (never raw enrollment_actual).
+        total = dataset.total_enrollment_projection(trial_id)["value"]
         bullets = []
         if total:
             bullets.append(f"{f['scope'].split(':',1)[1]}: {int(total):,} participants")

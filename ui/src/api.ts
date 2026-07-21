@@ -32,7 +32,9 @@ export interface TrialRow {
   nct_id: string | null;
   year: number | null;
   study_type: string;
-  total_enrollment: number;
+  total_enrollment: number | null;   // null when no reported total_enrollment assertion
+  total_enrollment_basis?: string;
+  total_enrollment_state?: string;
   female_n: number | null;
   female_n_basis: string;
   female_pct: number | null;
@@ -193,7 +195,9 @@ export interface WhoRow {
   nct_id: string | null;
   medicine: string;
   study_phase: string | null;
-  total_participants: number;
+  total_participants: number | null;
+  total_participants_basis?: string;
+  total_participants_state?: string;
   female_n: number | null;
   female_n_basis: string;
   female_pct: number | null;

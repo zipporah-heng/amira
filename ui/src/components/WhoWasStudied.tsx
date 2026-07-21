@@ -14,7 +14,7 @@ export function WhoWasStudied({ rows }: { rows: WhoRow[] }) {
             <div className="who-rows">
               <div><span>Medicine</span><b>{w.medicine}</b></div>
               <div><span>Phase</span><b>{w.study_phase || "—"}</b></div>
-              <div><span>Total participants</span><b>{w.total_participants.toLocaleString()}</b></div>
+              <div><span>Total participants</span><b>{w.total_participants != null ? w.total_participants.toLocaleString() : "Not reported"}</b></div>
               <div><span>Women (N)</span><b>{w.female_n != null ? w.female_n.toLocaleString() : "not reported in reviewed sources"}</b></div>
               <div><span>% women</span><b>{w.female_pct != null ? `${w.female_pct}%${w.female_pct_basis === "derived" ? " (derived)" : ""}` : "—"}</b></div>
               <div><span>Minimum age</span><b>{w.minimum_age || "—"}</b></div>

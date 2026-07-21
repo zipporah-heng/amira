@@ -175,12 +175,19 @@ def main() -> int:
     sys.path.insert(0, str(REPO / "backend"))
     try:
         from amira import exports as _exports  # noqa: E402
-        for v in _exports.evidence_backed_export_violations():
-            err(f"export invariant: trial {v['trial_id']} exposes '{v['dimension']}' "
-                f"without support ({v['reason']})")
-        notes.append("export evidence-boundary invariant: OK (no unsupported values exported)")
+        report = _exports.evidence_integrity_report()
+        for category, items in report.items():
+            for v in items:
+                loc = v.get("trial_id") or v.get("finding_id") or "?"
+                dim = v.get("dimension", "")
+                err(f"evidence integrity [{category}]: {loc} {dim} — {v.get('reason','')}".strip())
+        total = sum(len(v) for v in report.values())
+        if total == 0:
+            notes.append("evidence-integrity invariants: OK "
+                         "(required assertions, source integrity, no duplicates/conflicts, "
+                         "value equality, no unsupported exports)")
     except Exception as e:  # pragma: no cover - import/enumeration failure is itself a failure
-        err(f"could not run export evidence-boundary invariant: {e!r}")
+        err(f"could not run evidence-integrity invariants: {e!r}")
 
     # --- report ---------------------------------------------------------------- #
     print("AMIRA offline dataset validation")

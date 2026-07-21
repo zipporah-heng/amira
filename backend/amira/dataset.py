@@ -164,3 +164,44 @@ def assertion_value(trial_id: str, dimension: str):
         return None, "absent", None
     a = found[0]
     return a["value"], a["value_basis"], a
+
+
+# Evidence bases that may back an exported/aggregated numeric value.
+POSITIVE_NUMERIC_BASES = ("reported", "derived")
+
+
+def total_enrollment_projection(trial_id: str) -> dict:
+    """THE single, assertion-backed projection for a trial's total enrollment.
+
+    Every public / derived surface (API check-evidence, who_was_studied,
+    other_evidence_paths, participant aggregation, exports) must read total
+    enrollment through here — never through the raw trials.json ``enrollment_actual``.
+    Fail-closed: ``value`` is a real number only when a ``total_enrollment``
+    assertion is present with a ``reported`` basis and a resolvable source;
+    otherwise ``value`` is ``None`` and the state explains why.
+
+    Returns: value (int|None), basis, state, source_id, source_verified, coverage.
+      state:    absent | not_located | not_reported | reported | derived
+      coverage: complete (evidence-backed number available) | incomplete
+    """
+    value, basis, a = assertion_value(trial_id, "total_enrollment")
+    if a is None:
+        return {"value": None, "basis": "absent", "state": "absent",
+                "source_id": None, "source_verified": False, "coverage": "incomplete"}
+    source_id = a.get("source_id")
+    source_ok = False
+    if source_id:
+        try:
+            s = source_by_id(source_id)
+            source_ok = bool(s.get("url", "").startswith("https://"))
+        except DatasetError:
+            source_ok = False
+    numeric = basis in POSITIVE_NUMERIC_BASES and isinstance(value, (int, float)) and source_ok
+    return {
+        "value": int(value) if numeric else None,
+        "basis": basis,
+        "state": basis,  # basis and evidence-state are 1:1 for this dimension
+        "source_id": source_id,
+        "source_verified": bool(a.get("source_verified", False)),
+        "coverage": "complete" if numeric else "incomplete",
+    }
