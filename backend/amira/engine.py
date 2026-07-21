@@ -122,6 +122,8 @@ def aggregate_participants(trial_ids: List[str]) -> dict:
     trials_with_reported_count: List[str] = []
     trials_with_pct_only: List[str] = []
     trials_without_women_data: List[str] = []
+    trials_with_reported_total: List[str] = []
+    trials_without_reported_total: List[str] = []
     estimated_extra = 0
     estimate_components: List[dict] = []
 
@@ -129,8 +131,10 @@ def aggregate_participants(trial_ids: List[str]) -> dict:
         total, t_basis, _ = dataset.assertion_value(tid, "total_enrollment")
         if t_basis == "reported" and isinstance(total, (int, float)):
             participants_total += int(total)
+            trials_with_reported_total.append(tid)
         else:
             participants_basis_ok = False
+            trials_without_reported_total.append(tid)
 
         count, c_basis, _ = dataset.assertion_value(tid, "female_enrollment_count")
         if c_basis == "reported" and isinstance(count, (int, float)):
@@ -184,6 +188,11 @@ def aggregate_participants(trial_ids: List[str]) -> dict:
         "trials": len(trial_ids),
         "participants_total": participants_total,
         "participants_basis": "reported" if participants_basis_ok else "incomplete",
+        # Explicit total-enrollment coverage: the same trials the export leaves
+        # blank are the ones excluded from participants_total here.
+        "trials_with_reported_total_enrollment": trials_with_reported_total,
+        "trials_without_reported_total_enrollment": trials_without_reported_total,
+        "participant_total_coverage": "complete" if not trials_without_reported_total else "incomplete",
         "women_reported_count": women_reported,
         "women_reported_basis": "reported",
         "trials_with_reported_female_count": trials_with_reported_count,

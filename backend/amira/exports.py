@@ -49,7 +49,13 @@ def trial_rows() -> List[dict]:
             "condition": t["condition"],
             "study_phase": t.get("study_phase"),
             "study_type": t["study_type"],
-            "total_enrollment": total if t_basis != "absent" else t["enrollment_actual"],
+            # Fail-closed: an evidence-backed total is exported ONLY when a
+            # `total_enrollment` assertion is actually reported. When the assertion
+            # is absent/not_reported/not_located we leave the cell blank rather than
+            # leaking trials.json::enrollment_actual as a normal total. Value and
+            # basis stay inseparable, and this matches engine.aggregate_participants,
+            # which only counts a `reported` total.
+            "total_enrollment": total if (t_basis == "reported" and isinstance(total, (int, float))) else "",
             "total_enrollment_basis": t_basis,
             "female_n": f_count if f_basis == "reported" else "",
             "female_n_basis": f_basis,
@@ -69,6 +75,44 @@ def trial_rows() -> List[dict]:
             row[dim] = v if b != "absent" else "not_reported"
         rows.append(row)
     return rows
+
+
+# Export fields that are presented as evidence-backed, mapped to the assertion
+# dimension that must support them and the value bases that are acceptable.
+# General invariant: a non-empty evidence-backed export field must have a
+# corresponding assertion with an acceptable basis AND a linked source.
+EVIDENCE_BACKED_FIELDS = {
+    "total_enrollment": ("total_enrollment", {"reported"}),
+    "female_n": ("female_enrollment_count", {"reported"}),
+    "female_pct": ("female_enrollment_pct", {"reported", "derived"}),
+}
+
+
+def evidence_backed_export_violations(rows: List[dict] | None = None) -> List[dict]:
+    """Verify the evidence boundary on the export surface: any non-empty
+    evidence-backed field must be supported by an assertion with an acceptable
+    basis and a resolvable source. Returns a list of
+    ``{"trial_id", "dimension", "reason"}`` for every violation (empty when the
+    corpus is fully evidenced, so this never false-fails on the frozen corpus)."""
+    rows = trial_rows() if rows is None else rows
+    violations: List[dict] = []
+    for r in rows:
+        tid = r.get("trial_id")
+        for field, (dimension, ok_bases) in EVIDENCE_BACKED_FIELDS.items():
+            val = r.get(field, "")
+            if val == "" or val is None:
+                continue  # a blank field makes no evidence claim
+            _, basis, a = dataset.assertion_value(tid, dimension)
+            if a is None:
+                violations.append({"trial_id": tid, "dimension": dimension,
+                                   "reason": "exported value with no supporting assertion"})
+            elif basis not in ok_bases:
+                violations.append({"trial_id": tid, "dimension": dimension,
+                                   "reason": f"exported value with unacceptable basis '{basis}'"})
+            elif not a.get("source_id"):
+                violations.append({"trial_id": tid, "dimension": dimension,
+                                   "reason": "exported value with no linked source"})
+    return violations
 
 
 def assertion_rows() -> List[dict]:

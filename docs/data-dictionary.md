@@ -13,8 +13,17 @@ numbers for the UI, the API and every download.
 | `brief_title` / `official_title` | string | Verbatim from the registry |
 | `medicine` / `condition` | string | Scope-locked values |
 | `study_type` | string | e.g. Randomized Controlled Trial |
-| `enrollment_actual` | integer | Registry `enrollmentInfo.count` (ACTUAL) |
+| `enrollment_actual` | integer | Registry `enrollmentInfo.count` (ACTUAL). Raw registry metadata — see the evidence-boundary note below |
 | `enrollment_basis` | enum | `reported` |
+
+> **Evidence-boundary invariant.** AMIRA does not export or aggregate an
+> evidence-backed enrollment value unless a corresponding sourced evidence
+> assertion is present. The export field `total_enrollment` is populated only
+> from a `reported` `total_enrollment` assertion; when that assertion is absent
+> the export leaves `total_enrollment` blank (basis `absent`) and
+> `aggregate_participants` excludes the trial and reports
+> `participant_total_coverage: incomplete`. Raw `enrollment_actual` is never
+> surfaced as an evidence-backed total.
 | `sex_eligibility` | string | Registry eligibility (`ALL`) |
 | `minimum_age` | string | Registry minimum age — **never** used to infer menopause |
 | `start_date` / `completion_date` | string | Registry dates |

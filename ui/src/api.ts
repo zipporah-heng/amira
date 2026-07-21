@@ -68,6 +68,9 @@ export interface Totals {
   trials_with_reported_female_count: string[];
   trials_with_percentage_only: string[];
   trials_without_female_count_or_percentage?: string[];
+  trials_with_reported_total_enrollment?: string[];
+  trials_without_reported_total_enrollment?: string[];
+  participant_total_coverage?: "complete" | "incomplete";
   women_estimated_total: number;
   women_estimated_basis: string;
   women_estimate_components: {

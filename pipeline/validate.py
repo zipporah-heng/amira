@@ -168,6 +168,20 @@ def main() -> int:
          sum(1 for c in comparisons if c.get("human_verified"))
     notes.append(f"human-verified records: {hv} (expected 0 until named sign-off)")
 
+    # --- export evidence-boundary invariant ------------------------------------ #
+    # AMIRA does not export an evidence-backed value unless a corresponding sourced
+    # assertion is present. Reuse the real export layer so the download surface and
+    # this check can never drift apart.
+    sys.path.insert(0, str(REPO / "backend"))
+    try:
+        from amira import exports as _exports  # noqa: E402
+        for v in _exports.evidence_backed_export_violations():
+            err(f"export invariant: trial {v['trial_id']} exposes '{v['dimension']}' "
+                f"without support ({v['reason']})")
+        notes.append("export evidence-boundary invariant: OK (no unsupported values exported)")
+    except Exception as e:  # pragma: no cover - import/enumeration failure is itself a failure
+        err(f"could not run export evidence-boundary invariant: {e!r}")
+
     # --- report ---------------------------------------------------------------- #
     print("AMIRA offline dataset validation")
     print(f"  dataset_version : {manifest.get('dataset_version')}")
