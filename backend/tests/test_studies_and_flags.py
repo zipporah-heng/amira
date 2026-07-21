@@ -68,3 +68,30 @@ def test_maturity_is_always_present_regardless_of_pilot_flag(monkeypatch):
     r = engine.check_evidence(condition="Heart failure", medicine="Digoxin")
     assert r["maturity"]["level"] == 2
     assert r["maturity"]["label"] == "Women Analyzed"
+
+
+# --- Dapagliflozin evidence-path: decimal truncation regression -------------- #
+def test_first_sentence_does_not_truncate_decimals():
+    txt = ("A prespecified analysis reported HR 0.79 (95% CI 0.59-1.06) in women. "
+           "This is a second sentence.")
+    out = engine._first_sentence(txt)
+    assert "0.79" in out and "1.06" in out
+    assert not out.endswith("HR 0.")
+    assert "second sentence" not in out  # only the first sentence
+
+
+def test_dapagliflozin_path_headline_is_complete_not_truncated():
+    r = engine.check_evidence(condition="Heart failure", medicine="Digoxin")
+    dapa = next(p for p in r["other_evidence_paths"] if p["medicine"] == "Dapagliflozin")
+    assert "0.79" in dapa["headline"] and "0.59-1.06" in dapa["headline"]
+    assert "HR 0." not in dapa["headline"].replace("HR 0.79", "").replace("HR 0.73", "")
+    # CI crosses 1.0 -> inconclusive, with neutral explanatory note (not a danger claim).
+    assert dapa["ci_crosses_one"] is True
+    assert "inconclusive" in dapa["interpretation_note"].lower()
+    assert "crosses 1.0" in dapa["interpretation_note"]
+
+
+def test_ci_crossing_helpers():
+    assert engine._ci_crosses_one("95% CI 0.59-1.06") is True
+    assert engine._ci_crosses_one("95% CI 0.37 to 0.80") is False   # entirely below 1.0
+    assert engine._ci_crosses_one(None) is False

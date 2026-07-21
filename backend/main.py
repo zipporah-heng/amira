@@ -321,14 +321,19 @@ def _reusable_assets() -> dict:
     return {
         "assets": [a for a in assets if a["present"]],
         "honest_status": [
-            "Benchmark passages are pending human review.",
+            "Benchmark is prepared for human validation; draft labels awaiting independent review.",
             "Model evaluation is pending until reviewed labels are available.",
             "No accuracy figure is claimed.",
-            "No validated gold benchmark is claimed.",
-            ("An open license is present." if license_present
+            "No validated / gold benchmark is claimed.",
+            ("Source code is Apache-2.0; original schema, docs and annotations are CC BY 4.0. "
+             "Reproduced publication passages remain under their original rights and are not "
+             "relicensed by AMIRA." if license_present
              else "No open license is claimed: reuse terms are pending owner approval."),
         ],
         "license_present": license_present,
+        "licenses": ({"code": "Apache-2.0", "content": "CC-BY-4.0",
+                      "third_party": "Reproduced publication text is not relicensed; see LICENSES.md"}
+                     if license_present else None),
     }
 
 

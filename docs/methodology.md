@@ -135,8 +135,22 @@ de-duplicated, and ordered by a stable content hash so splits are reproducible:
 **18 development · 6 validation · 6 frozen held-out test**.
 
 Each item carries: `benchmark_id`, `source_id`, `nct_id`, `pmid`, `pmcid`,
-`source_url`, `exact_passage`, `gold_label`, `split`, `annotation_status`,
-`human_verifier`, `retrieved_at`.
+`source_url`, `exact_passage`, `draft_label`, `split`, `annotation_status`,
+`human_verifier`, `retrieved_at`. The `draft_label` field holds **provisional,
+rule-drafted labels** — not gold labels and not human-verified.
+
+## Benchmark completion protocol
+
+The benchmark is **prepared for human validation**; it is not yet validated. Before any
+evaluation result may be published:
+
+1. **Two independent reviewers** label each passage against the schema.
+2. **Disagreements are adjudicated and resolved.**
+3. **Reviewer identities and review dates are recorded** on each item.
+4. Only then is the extractor evaluated against the reviewed labels and results published.
+
+Current status: draft labels only; no reviewers assigned; no dates recorded; no agreement
+or accuracy scores exist.
 
 ## Evaluation methodology
 
@@ -146,6 +160,6 @@ accuracy figures.
 When an evaluation is published it must identify, in the results file:
 `model`, `prompt_version`, `dataset_version`, `source_cutoff`, `test_split`,
 `commit_hash`, plus per-field accuracy, macro-F1, citation-support accuracy and
-abstention accuracy. Results are only valid once benchmark gold labels carry named
-human sign-off; running the extractor against rule-drafted labels would measure
-agreement with a rule, not with ground truth.
+abstention accuracy. Results are only valid once the benchmark's draft labels have
+completed the human-validation protocol above; running the extractor against
+rule-drafted labels would measure agreement with a rule, not with ground truth.

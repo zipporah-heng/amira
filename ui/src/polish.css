@@ -103,6 +103,16 @@
 .op-card.info { background: linear-gradient(160deg, var(--lav-50), #fff 72%); border: 1px solid var(--lav-200); border-left: 4px solid var(--lav-500); }
 .op-card.info .op-med { color: var(--lav-700); }
 .op-card.info .op-dot { color: var(--lav-500); }
+/* Hormonal-health focus statement (subtle; does not overwhelm the journey) */
+.hormonal-focus { margin: 8px 0 4px; padding: 14px 18px; background: var(--lav-50); border: 1px solid var(--lav-100); border-left: 4px solid var(--lav-500); border-radius: 12px; }
+.hormonal-focus.compact { margin-bottom: 6px; }
+.hf-lead { font-size: 15px; color: var(--ink-2); line-height: 1.55; margin: 0; }
+.hf-lead strong { color: var(--lav-700); }
+.hf-note { font-size: 13.5px; color: var(--ink-3); line-height: 1.5; margin: 8px 0 0; }
+.hf-note strong { color: var(--ink-2); }
+
+/* Inconclusive-estimate note: NEUTRAL explanatory styling, never red danger */
+.op-note { margin-top: 10px; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--border); border-left: 3px solid var(--lav-300); border-radius: 8px; padding: 10px 12px; }
 
 /* Collapse header links into the accessible menu on tablet/mobile */
 @media (max-width: 1100px) {

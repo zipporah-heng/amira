@@ -63,12 +63,12 @@ export function OpenBenchmark() {
           </p>
           <p style={{ fontSize: 12.5, color: "var(--ink-3)", marginTop: 8 }}>
             Each item carries a benchmark ID, source ID, NCT/PMID/PMCID where applicable, the
-            exact passage, candidate label, split, annotation status and verifier.
+            exact passage, <strong>draft label</strong>, split, annotation status and verifier.
           </p>
           <p style={{ fontSize: 12.5, color: "var(--amber)", marginTop: 8 }}>
-            Labels are rule-drafted from the retrieved passage and are marked{" "}
-            <strong>pending human review</strong> ({data?.human_verified_items ?? 0} of{" "}
-            {data?.total ?? 0} human-verified). They are not yet ground truth.
+            Draft labels are rule-drafted from the retrieved passage and are{" "}
+            <strong>awaiting independent human review</strong> ({data?.human_verified_items ?? 0} of{" "}
+            {data?.total ?? 0} human-verified). They are provisional, not gold labels or ground truth.
           </p>
           <div className="dl-btns">
             <a className="dl-btn" href="/api/download/benchmark.jsonl">⬇ Download Benchmark</a>
@@ -105,13 +105,31 @@ export function OpenBenchmark() {
         )}
       </div>
 
+      <div className="card" style={{ marginTop: 22 }}>
+        <div className="section-title">Benchmark completion protocol</div>
+        <p style={{ marginTop: 8, fontSize: 14 }}>
+          The benchmark is <strong>prepared for human validation</strong>; it has not yet been
+          validated. Before any evaluation result may be published:
+        </p>
+        <ol style={{ marginTop: 8, paddingLeft: 20, fontSize: 14, lineHeight: 1.6 }}>
+          <li>Two independent reviewers label each passage against the schema.</li>
+          <li>Disagreements are adjudicated and resolved.</li>
+          <li>Reviewer identities and review dates are recorded on each item.</li>
+          <li>Only then is the extractor evaluated against the reviewed labels and results published.</li>
+        </ol>
+        <p style={{ marginTop: 8, fontSize: 12.5, color: "var(--ink-3)" }}>
+          Current status: draft labels only · no reviewers assigned · no dates recorded ·
+          no agreement or accuracy scores exist yet.
+        </p>
+      </div>
+
       {data?.items?.length > 0 && (
         <div className="card" style={{ marginTop: 22 }}>
           <div className="section-title">Sample benchmark passages</div>
           <div className="tbl-wrap">
             <table className="studies">
               <thead>
-                <tr><th>ID</th><th>Split</th><th>Source</th><th>Candidate label</th><th>Status</th></tr>
+                <tr><th>ID</th><th>Split</th><th>Source</th><th>Draft label</th><th>Status</th></tr>
               </thead>
               <tbody>
                 {data.items.slice(0, 8).map((it: any) => (
@@ -124,7 +142,7 @@ export function OpenBenchmark() {
                       </a>
                     </td>
                     <td>
-                      {Object.entries(it.gold_label || {})
+                      {Object.entries(it.draft_label || it.gold_label || {})
                         .filter(([, v]) => v !== null && v !== "not_reported" && v !== false)
                         .map(([k, v]) => `${k.replace(/_/g, " ")}: ${v}`)
                         .join("; ") || "no women's-evidence signal"}

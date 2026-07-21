@@ -1,4 +1,4 @@
-const GH = "https://github.com/zipporah-heng/amira/blob/video-redesign/";
+const GH = "https://github.com/zipporah-heng/amira/blob/main/";
 
 const ASSETS = [
   { icon: "🧩", title: "Women's Evidence Schema", sub: "Versioned JSON Schema (v0.2)", href: GH + "schema/womens_evidence_schema_v0.2.json" },

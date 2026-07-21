@@ -26,14 +26,17 @@ Served live at `GET /api/assets` (only assets that actually exist are listed).
 
 ## Honest status
 
-- **Benchmark passages are pending human review.** No gold standard is signed
-  off yet.
+- **Benchmark is prepared for human validation.** Labels are rule-drafted
+  (`draft_label`) and awaiting independent human review; no gold standard is
+  signed off yet.
 - **Model evaluation is pending** until reviewed labels are available.
 - **No accuracy figure is claimed.**
-- **No validated gold benchmark is claimed.**
-- **No open license is claimed** unless a real `LICENSE` file (and dataset
-  license) has been approved by the repository owner. `GET /api/assets` reports
-  `license_present: false` until then; reuse terms are pending owner approval.
+- **No validated / gold benchmark is claimed.**
+- **Licensing.** Source code is **Apache-2.0** ([`LICENSE`](../LICENSE)); AMIRA's
+  original schema, documentation and annotations are **CC BY 4.0**; reproduced
+  publication passages and abstracts remain under their original publishers'
+  rights and are **not relicensed** by AMIRA. See [`LICENSES.md`](../LICENSES.md).
+  `GET /api/assets` reports `license_present: true`.
 
 ## Feature flags
 

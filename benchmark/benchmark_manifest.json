@@ -13,5 +13,12 @@
   ],
   "annotation_status": "pending_human_review",
   "human_verified_items": 0,
-  "note": "All passages are verbatim text retrieved from ClinicalTrials.gov, PubMed or PubMed Central. Gold labels are rule-drafted and require named human review before any evaluation result may be published."
+  "note": "All passages are verbatim text retrieved from ClinicalTrials.gov, PubMed or PubMed Central. Draft labels are rule-drafted and require named human review before any evaluation result may be published.",
+  "label_field": "draft_label",
+  "completion_protocol": [
+    "Two independent reviewers label each passage against the schema.",
+    "Disagreements are adjudicated and resolved.",
+    "Reviewer identities and review dates are recorded on each item.",
+    "Only then may the extractor be evaluated against the reviewed labels and results published."
+  ]
 }
