@@ -29,7 +29,7 @@
 | Downloadable scientific assets | `GET /api/assets` · `/api/download/*.csv|.jsonl` |
 | License & limitations | [`LICENSE`](LICENSE) · [`LICENSES.md`](LICENSES.md) · [Scientific status](#scientific-status-limitations--human-review) |
 | Demo video | [AMIRA Demo](https://www.loom.com/share/4400996ba53343398dfe2fb94dea64bd) |
-| Technical video | [AMIRA Tech Walkthrough](https://www.loom.com/share/3e906e5632024d6d989670943082c6a3) |
+| Technical video | [AMIRA Tech Walkthrough](https://www.loom.com/share/eabc4c0a19ab4d78a7c1646e7a88ac69) |
 
 ---
 
