@@ -23,6 +23,13 @@ describe("Header", () => {
     expect(screen.queryByText(/Video-ready/i)).not.toBeInTheDocument();
   });
 
+  it("has no Share button (and is not replaced by Login)", () => {
+    const { container } = renderHeader();
+    expect(container.querySelector(".hdr-share")).toBeNull();
+    expect(screen.queryByRole("button", { name: /share/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/log ?in/i)).not.toBeInTheDocument();
+  });
+
   it("provides functional platform navigation with the correct routes", () => {
     renderHeader();
     const routes: Record<string, string> = {
