@@ -1,0 +1,72 @@
+{
+  "status": "EVALUATION PENDING",
+  "evaluation_type": "process_metrics_only",
+  "run_at": "2026-07-20T18:42:00Z",
+  "provider": {
+    "provider": "recorded",
+    "provider_label": "Recorded corpus extraction",
+    "model": "recorded-corpus-v3.0.0",
+    "is_recorded": true,
+    "live_capable": false,
+    "prompt_version": "evidence-extraction-v0.1",
+    "schema_version": "0.2",
+    "api_key_present": false
+  },
+  "dataset_version": "3.0.0",
+  "corpus_passages_evaluated": 8,
+  "schema_validity_rate": 1.0,
+  "quote_verification_rate": 1.0,
+  "clinical_accuracy": null,
+  "macro_f1": null,
+  "note": "Process metrics only. No clinical-accuracy figure is claimed: the benchmark labels are pending human review, so there is no gold standard to score against. A validated accuracy figure will be reported only after named human sign-off of the benchmark labels.",
+  "per_item": [
+    {
+      "passage_id": "F-EFF-JUP-001",
+      "medicine": "Rosuvastatin",
+      "schema_valid": true,
+      "validation_state": "quote_verified"
+    },
+    {
+      "passage_id": "F-EFF-DAPA-001",
+      "medicine": "Dapagliflozin",
+      "schema_valid": true,
+      "validation_state": "quote_verified"
+    },
+    {
+      "passage_id": "F-SAF-DAPA-001",
+      "medicine": "Dapagliflozin",
+      "schema_valid": true,
+      "validation_state": "quote_verified"
+    },
+    {
+      "passage_id": "F-EFF-HAY-001",
+      "medicine": "Valsartan",
+      "schema_valid": true,
+      "validation_state": "quote_verified"
+    },
+    {
+      "passage_id": "F-SAF-HAY-001",
+      "medicine": "Valsartan",
+      "schema_valid": true,
+      "validation_state": "quote_verified"
+    },
+    {
+      "passage_id": "F-EFF-DIG-001",
+      "medicine": "Digoxin",
+      "schema_valid": true,
+      "validation_state": "quote_verified"
+    },
+    {
+      "passage_id": "F-EFF-DEC-001",
+      "medicine": "Digoxin",
+      "schema_valid": true,
+      "validation_state": "quote_verified"
+    },
+    {
+      "passage_id": "F-SAF-DEC-001",
+      "medicine": "Digoxin",
+      "schema_valid": true,
+      "validation_state": "quote_verified"
+    }
+  ]
+}

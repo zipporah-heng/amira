@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
-import { Sidebar } from "./Sidebar";
+import { Header } from "./Header";
 
 export function AmiraShell({ children }: { children: ReactNode }) {
   return (
     <div className="app">
-      <Sidebar />
+      <Header />
       <main className="main">
         <div className="container">
           {children}

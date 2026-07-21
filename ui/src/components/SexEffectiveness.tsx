@@ -2,6 +2,7 @@ import type { EffectivenessState, Finding } from "../api";
 
 function FindingCard({ f }: { f: Finding }) {
   const classLevel = f.scope.startsWith("class:");
+  const womenOnly = f.population_scope === "women_only_life_stage";
   return (
     <div className="finding-card">
       <div className="fc-head">
@@ -15,13 +16,17 @@ function FindingCard({ f }: { f: Finding }) {
           <div className="est"><span className="est-k">Women</span>
             <span className="est-v">{f.female_estimate || "—"}</span>
             <span className="est-ci">{f.female_ci}</span></div>
-          <div className="est"><span className="est-k">Men</span>
-            <span className="est-v">{f.male_estimate || "—"}</span>
-            <span className="est-ci">{f.male_ci}</span></div>
+          {!womenOnly && (
+            <div className="est"><span className="est-k">Men</span>
+              <span className="est-v">{f.male_estimate || "—"}</span>
+              <span className="est-ci">{f.male_ci}</span></div>
+          )}
         </div>
       )}
       <div className="fc-test">
-        {f.comparison_p != null ? (
+        {womenOnly ? (
+          <span className="test-badge neutral">Women-only study; no between-sex test</span>
+        ) : f.comparison_p != null ? (
           <span className="test-badge ok">
             {classLevel ? "Class-level" : "Drug-specific"} sex comparison p = {f.comparison_p}
           </span>
@@ -53,7 +58,7 @@ export function SexEffectiveness({ data }: { data: EffectivenessState }) {
         </div>
         <div className="hero-count">
           {data.n_reporting} of {data.n_trials}
-          <span>included trials reported a sex-specific effectiveness analysis</span>
+          <span>included trials reported outcomes for women or an analysis by sex</span>
         </div>
       </div>
 

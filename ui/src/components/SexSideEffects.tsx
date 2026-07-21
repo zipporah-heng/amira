@@ -1,6 +1,8 @@
 import type { Finding, SafetyState } from "../api";
 
 function SafetyFinding({ f, highlight }: { f: Finding; highlight: "sig" | "trend" | "neutral" }) {
+  const womenOnly = f.population_scope === "women_only_life_stage";
+  const womenNarrative = f.reporting_scope === "women_only_narrative";
   return (
     <div className={`safety-finding ${highlight}`}>
       <div className="sf-head">
@@ -11,16 +13,20 @@ function SafetyFinding({ f, highlight }: { f: Finding; highlight: "sig" | "trend
           <span className="sf-tag neutral">
             {f.scope.startsWith("class:")
               ? "Class-level"
-              : f.significance === "no_significant_difference"
-                ? "Reported by sex · no significant difference"
-                : "Context"}
+              : womenOnly
+                ? "Women-only study"
+                : womenNarrative
+                  ? "Safety discussed in women"
+                : f.significance === "no_significant_difference"
+                  ? "Reported by sex · no significant difference"
+                  : "Context"}
           </span>
         )}
       </div>
       {(f.female_rate || f.male_rate) && (
         <div className="sf-rates">
           <span>Women: <b>{f.female_rate || "—"}</b></span>
-          <span>Men: <b>{f.male_rate || "—"}</b></span>
+          {!womenOnly && <span>Men: <b>{f.male_rate || "—"}</b></span>}
           {f.comparison_p != null && <span>p = {f.comparison_p}</span>}
         </div>
       )}
@@ -50,7 +56,7 @@ export function SexSideEffects({ data }: { data: SafetyState }) {
         </div>
         <div className="hero-count">
           {data.n_reporting} of {data.n_trials}
-          <span>included trials reported adverse events separately by sex</span>
+          <span>included trials reported side effects for women or separately by sex</span>
         </div>
       </div>
 

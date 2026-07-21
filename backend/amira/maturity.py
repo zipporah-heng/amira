@@ -9,8 +9,8 @@ Levels (Mantis rules):
     2  Women Analyzed             sex-specific efficacy OR safety outcomes are reported
     3  Life Stage Aware           menopausal status / life stage is reported
     4  Hormone Aware              hormone therapy use is reported
-    5  Precision Women's Evidence sex-specific outcomes reported AND stratified by both
-                                  life stage and hormonal context
+    5  Precision Women's Evidence outcomes explicitly stratified by both life stage
+                                  and hormonal context
 
 Levels are cumulative: the awarded level is the highest N for which every level
 1..N is satisfied.
@@ -71,8 +71,12 @@ def evaluate(trial_ids: List[str]) -> Dict:
         3: any(_reports(t, "menopause_status_reported") for t in trial_ids),
         4: any(_reports(t, "hormone_therapy_reported") for t in trial_ids),
     }
-    # Level 5 requires sex-specific outcomes stratified by BOTH life stage and hormones.
-    checks[5] = checks[2] and checks[3] and checks[4]
+    # Level 5 requires an explicit source assertion that outcomes were stratified by
+    # BOTH life stage and hormonal context. Reporting both variables alone is not enough.
+    checks[5] = any(
+        _reports(t, "outcomes_stratified_by_life_stage_and_hormone_context")
+        for t in trial_ids
+    )
 
     level = 0
     for n in (1, 2, 3, 4, 5):
@@ -104,6 +108,7 @@ def evaluate(trial_ids: List[str]) -> Dict:
         2: ("sex_specific_efficacy_reported", "sex_specific_safety_reported"),
         3: ("menopause_status_reported",),
         4: ("hormone_therapy_reported",),
+        5: ("outcomes_stratified_by_life_stage_and_hormone_context",),
     }
 
     def _evidence(n: int) -> list:

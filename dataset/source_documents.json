@@ -10,7 +10,7 @@
     "pmcid": null,
     "url": "https://clinicaltrials.gov/study/NCT00239681",
     "api_url": "https://clinicaltrials.gov/api/v2/studies/NCT00239681",
-    "retrieved_at": "2026-07-19T06:59:46Z",
+    "retrieved_at": "2026-07-20T18:42:00Z",
     "license_note": "ClinicalTrials.gov records are U.S. Government public-domain data."
   },
   {
@@ -24,7 +24,7 @@
     "pmcid": null,
     "url": "https://clinicaltrials.gov/study/NCT00468923",
     "api_url": "https://clinicaltrials.gov/api/v2/studies/NCT00468923",
-    "retrieved_at": "2026-07-19T06:59:46Z",
+    "retrieved_at": "2026-07-20T18:42:00Z",
     "license_note": "ClinicalTrials.gov records are U.S. Government public-domain data."
   },
   {
@@ -38,7 +38,7 @@
     "pmcid": null,
     "url": "https://pubmed.ncbi.nlm.nih.gov/20176986/",
     "api_url": null,
-    "retrieved_at": "2026-07-19T06:59:46Z",
+    "retrieved_at": "2026-07-20T18:42:00Z",
     "license_note": "Abstract text (c) publisher; short excerpts quoted for citation."
   },
   {
@@ -52,7 +52,7 @@
     "pmcid": null,
     "url": "https://pubmed.ncbi.nlm.nih.gov/27040132/",
     "api_url": null,
-    "retrieved_at": "2026-07-19T06:59:46Z",
+    "retrieved_at": "2026-07-20T18:42:00Z",
     "license_note": "Abstract text (c) publisher; short excerpts quoted for citation."
   },
   {
@@ -66,7 +66,7 @@
     "pmcid": "PMC8370761",
     "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8370761/",
     "api_url": null,
-    "retrieved_at": "2026-07-19T06:59:46Z",
+    "retrieved_at": "2026-07-20T18:42:00Z",
     "license_note": "Open access via PubMed Central; short excerpts quoted for citation."
   },
   {
@@ -80,7 +80,7 @@
     "pmcid": null,
     "url": "https://pubmed.ncbi.nlm.nih.gov/25579834/",
     "api_url": null,
-    "retrieved_at": "2026-07-19T06:59:46Z",
+    "retrieved_at": "2026-07-20T18:42:00Z",
     "license_note": "Abstract text (c) publisher; short excerpts quoted for citation. Class-level (statin) evidence; not specific to one medicine."
   },
   {
@@ -94,7 +94,7 @@
     "pmcid": null,
     "url": "https://clinicaltrials.gov/study/NCT00327418",
     "api_url": "https://clinicaltrials.gov/api/v2/studies/NCT00327418",
-    "retrieved_at": "2026-07-19T06:59:46Z",
+    "retrieved_at": "2026-07-20T18:42:00Z",
     "license_note": "ClinicalTrials.gov records are U.S. Government public-domain data."
   },
   {
@@ -108,7 +108,7 @@
     "pmcid": null,
     "url": "https://pubmed.ncbi.nlm.nih.gov/15325833/",
     "api_url": null,
-    "retrieved_at": "2026-07-19T06:59:46Z",
+    "retrieved_at": "2026-07-20T18:42:00Z",
     "license_note": "Abstract text (c) publisher; short excerpts quoted for citation."
   },
   {
@@ -122,7 +122,7 @@
     "pmcid": null,
     "url": "https://clinicaltrials.gov/study/NCT03036124",
     "api_url": "https://clinicaltrials.gov/api/v2/studies/NCT03036124",
-    "retrieved_at": "2026-07-19T06:59:46Z",
+    "retrieved_at": "2026-07-20T18:42:00Z",
     "license_note": "ClinicalTrials.gov records are U.S. Government public-domain data."
   },
   {
@@ -136,7 +136,77 @@
     "pmcid": "PMC8014207",
     "url": "https://pubmed.ncbi.nlm.nih.gov/33787831/",
     "api_url": null,
-    "retrieved_at": "2026-07-19T06:59:46Z",
+    "retrieved_at": "2026-07-20T18:42:00Z",
     "license_note": "Prespecified sex-specific analysis of DAPA-HF. Abstract (c) publisher; open access via PMC8014207; short excerpts quoted for citation."
+  },
+  {
+    "source_id": "SRC-PMC8108841",
+    "source_type": "journal_article",
+    "title": "Changes in aortic pulse wave velocity in hypertensive postmenopausal women: comparison between a calcium channel blocker vs angiotensin receptor blocker regimen.",
+    "publisher": "Journal of clinical hypertension (Greenwich, Conn.)",
+    "year": 2012,
+    "nct_id": null,
+    "pmid": "23126349",
+    "pmcid": "PMC8108841",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8108841/",
+    "api_url": null,
+    "retrieved_at": "2026-07-20T18:42:00Z",
+    "license_note": "Open access via PubMed Central; short excerpts quoted for citation."
+  },
+  {
+    "source_id": "SRC-CTGOV-NCT00000476",
+    "source_type": "trial_registry_record",
+    "title": "Digitalis Investigation Group (DIG)",
+    "publisher": "ClinicalTrials.gov",
+    "year": 1990,
+    "nct_id": "NCT00000476",
+    "pmid": null,
+    "pmcid": null,
+    "url": "https://clinicaltrials.gov/study/NCT00000476",
+    "api_url": "https://clinicaltrials.gov/api/v2/studies/NCT00000476",
+    "retrieved_at": "2026-07-20T18:42:00Z",
+    "license_note": "ClinicalTrials.gov records are U.S. Government public-domain data."
+  },
+  {
+    "source_id": "SRC-PMID-12409542",
+    "source_type": "journal_article",
+    "title": "Sex-based differences in the effect of digoxin for the treatment of heart failure.",
+    "publisher": "The New England journal of medicine",
+    "year": 2002,
+    "nct_id": "NCT00000476",
+    "pmid": "12409542",
+    "pmcid": null,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/12409542/",
+    "api_url": null,
+    "retrieved_at": "2026-07-20T18:42:00Z",
+    "license_note": "PubMed abstract; short excerpts quoted for citation. Post hoc sex analysis."
+  },
+  {
+    "source_id": "SRC-CTGOV-NCT03783429",
+    "source_type": "trial_registry_record",
+    "title": "Digoxin Evaluation in Chronic Heart Failure: Investigational Study In Outpatients in the Netherlands",
+    "publisher": "ClinicalTrials.gov",
+    "year": 2018,
+    "nct_id": "NCT03783429",
+    "pmid": null,
+    "pmcid": null,
+    "url": "https://clinicaltrials.gov/study/NCT03783429",
+    "api_url": "https://clinicaltrials.gov/api/v2/studies/NCT03783429",
+    "retrieved_at": "2026-07-20T18:42:00Z",
+    "license_note": "ClinicalTrials.gov records are U.S. Government public-domain data."
+  },
+  {
+    "source_id": "SRC-PMID-42108270",
+    "source_type": "journal_article",
+    "title": "Low-dose digoxin in patients with heart failure with reduced or mildly reduced ejection fraction: a randomized controlled trial.",
+    "publisher": "Nature medicine",
+    "year": 2026,
+    "nct_id": "NCT03783429",
+    "pmid": "42108270",
+    "pmcid": null,
+    "url": "https://www.nature.com/articles/s41591-026-04406-6",
+    "api_url": null,
+    "retrieved_at": "2026-07-20T18:42:00Z",
+    "license_note": "Open-access publisher article; short excerpts quoted for citation."
   }
 ]

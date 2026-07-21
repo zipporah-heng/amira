@@ -3,6 +3,10 @@ services:
     name: amira
     runtime: python
     plan: free
+    # A PR titled with [render preview] gets its own isolated onrender.com URL.
+    # Manual mode keeps previews opt-in and leaves the production service alone.
+    previews:
+      generation: manual
     # Build the React UI, then install the Python backend. Node is available on
     # Render's Python runtime image for the UI build step.
     buildCommand: >-
@@ -18,3 +22,21 @@ services:
         value: 3.12.4
       - key: NODE_VERSION
         value: 20.11.1
+      # Provisional modules are feature-flagged. All default to scientifically
+      # safe behaviour with no external service: the pilot score is a pure
+      # computation, AI extraction defaults to the offline `recorded` provider
+      # (no API key needed), and NHANES reads a committed cache. Set any flag to
+      # 0 to hide that module. See docs/open-science-assets.md.
+      # Pilot 0-100 score is OFF by default; the verified 1-5 maturity is primary.
+      # Set to "1" only to demonstrate the experimental score (labelled provisional).
+      - key: AMIRA_ENABLE_PILOT_SCORE
+        value: "0"
+      - key: AMIRA_ENABLE_AI_EXTRACTION
+        value: "1"
+      - key: AMIRA_ENABLE_NHANES
+        value: "1"
+      - key: AMIRA_LLM_PROVIDER
+        value: recorded
+      # To use a live extraction provider instead of the offline recorded replay,
+      # set AMIRA_LLM_PROVIDER (openai|anthropic), AMIRA_LLM_MODEL, and add
+      # AMIRA_LLM_API_KEY as a SECRET in the Render dashboard (never commit it).

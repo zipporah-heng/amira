@@ -21,7 +21,7 @@ export function ScreeningPanel({ selection }: { selection?: StudySelection }) {
         <div className="screen-counts">
           <div><b>{selection.candidate_records_screened}</b><span>candidate records screened</span></div>
           <div className="ok"><b>{selection.evidence_sources_included}</b><span>evidence sources included</span></div>
-          <div><b>{selection.unique_phase3_rcts_identified}</b><span>unique Phase 3 RCTs</span></div>
+          <div><b>{selection.randomized_studies_in_corpus}</b><span>randomized studies represented</span></div>
           <div className="x"><b>{selection.records_excluded}</b><span>records excluded</span></div>
           <div><b>{selection.records_deferred}</b><span>deferred</span></div>
         </div>

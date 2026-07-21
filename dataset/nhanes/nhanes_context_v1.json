@@ -1,0 +1,113 @@
+{
+  "schema": "amira-nhanes-context-v1",
+  "cycle": "2017-2018",
+  "domain": "Women aged 18 and older (RIAGENDR==2 and RIDAGEYR>=18)",
+  "measure": "Reported use of the drug class (any prescription in RXQ_RX)",
+  "weight_variable": "WTINT2YR (interview weight)",
+  "design_variables": {
+    "strata": "SDMVSTRA",
+    "psu": "SDMVPSU"
+  },
+  "variance_method": "Taylor series linearization of a domain proportion",
+  "suppression_rule": {
+    "min_unweighted_numerator": 30,
+    "max_relative_standard_error": 0.3,
+    "basis": "NCHS Data Presentation Standards for Proportions (adapted)."
+  },
+  "age_range_years": [
+    18,
+    80
+  ],
+  "unweighted_denominator_women": 3016,
+  "files": [
+    {
+      "name": "DEMO_J",
+      "data_url": "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2017/DataFiles/DEMO_J.xpt",
+      "documentation_url": "https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/DEMO_J.htm"
+    },
+    {
+      "name": "RXQ_RX_J",
+      "data_url": "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2017/DataFiles/RXQ_RX_J.xpt",
+      "documentation_url": "https://wwwn.cdc.gov/Nchs/Nhanes/2017-2018/RXQ_RX_J.htm"
+    }
+  ],
+  "retrieved_at": "2026-07-20T18:42:00Z",
+  "generated_by": "pipeline/nhanes_context.py",
+  "cache_version": "v1",
+  "results": [
+    {
+      "drug_class": "Statin",
+      "ingredients_matched": [
+        "ATORVASTATIN",
+        "ROSUVASTATIN",
+        "SIMVASTATIN",
+        "PRAVASTATIN",
+        "LOVASTATIN",
+        "FLUVASTATIN",
+        "PITAVASTATIN"
+      ],
+      "unweighted_users": 559,
+      "unweighted_denominator": 3016,
+      "older_women_users_unweighted": 338,
+      "suppressed": false,
+      "weighted_use_percent": 15.08,
+      "standard_error": 1.008,
+      "relative_standard_error": 0.067,
+      "older_women_share_note": "338 of 559 unweighted users were aged 65+."
+    },
+    {
+      "drug_class": "Cardiac glycoside",
+      "ingredients_matched": [
+        "DIGOXIN",
+        "DIGITOXIN"
+      ],
+      "unweighted_users": 7,
+      "unweighted_denominator": 3016,
+      "older_women_users_unweighted": 7,
+      "suppressed": true,
+      "weighted_use_percent": null,
+      "standard_error": null,
+      "relative_standard_error": null,
+      "suppression_reason": "Estimate not displayed because the available sample is insufficient for a stable population estimate (unweighted users = 7; NCHS-style rule requires >= 30 and relative standard error <= 30%)."
+    },
+    {
+      "drug_class": "SGLT2 inhibitor",
+      "ingredients_matched": [
+        "DAPAGLIFLOZIN",
+        "CANAGLIFLOZIN",
+        "EMPAGLIFLOZIN",
+        "ERTUGLIFLOZIN"
+      ],
+      "unweighted_users": 7,
+      "unweighted_denominator": 3016,
+      "older_women_users_unweighted": 1,
+      "suppressed": true,
+      "weighted_use_percent": null,
+      "standard_error": null,
+      "relative_standard_error": null,
+      "suppression_reason": "Estimate not displayed because the available sample is insufficient for a stable population estimate (unweighted users = 7; NCHS-style rule requires >= 30 and relative standard error <= 30%)."
+    },
+    {
+      "drug_class": "Angiotensin receptor blocker",
+      "ingredients_matched": [
+        "VALSARTAN",
+        "LOSARTAN",
+        "OLMESARTAN",
+        "IRBESARTAN",
+        "CANDESARTAN",
+        "TELMISARTAN",
+        "AZILSARTAN",
+        "EPROSARTAN"
+      ],
+      "unweighted_users": 245,
+      "unweighted_denominator": 3016,
+      "older_women_users_unweighted": 157,
+      "suppressed": false,
+      "weighted_use_percent": 6.81,
+      "standard_error": 0.595,
+      "relative_standard_error": 0.087,
+      "older_women_share_note": "157 of 245 unweighted users were aged 65+."
+    }
+  ],
+  "usage_boundary": "Reported medication use in the surveyed population. NHANES is population context, separate from clinical-trial evidence. It does not indicate that a medicine caused an outcome, is effective, is safer, or is prescribed most often, and it is not a treatment recommendation."
+}

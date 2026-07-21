@@ -110,7 +110,11 @@ def test_age_never_infers_life_stage():
     assert ctx["status"] == "not_established_in_corpus"
     assert "age is not used to infer" in ctx["message"].lower()
     for t in dataset.trials():
-        assert dataset.assertion_value(t["trial_id"], "menopause_status_reported")[0] != "yes"
+        value, _basis, assertion = dataset.assertion_value(
+            t["trial_id"], "menopause_status_reported"
+        )
+        if value == "yes":
+            assert "postmenopausal" in assertion["exact_passage"].lower()
 
 
 # 10. Existing suites still pass — covered by running the whole suite; here we assert
@@ -119,8 +123,11 @@ def test_headline_copy_and_maturity_not_stored_survive():
     import json
     from pathlib import Path
     ce = (Path(__file__).resolve().parents[2] / "ui" / "src" / "pages" / "CheckEvidence.tsx").read_text(encoding="utf-8")
-    assert "What does the evidence show for women?" in ce
+    # video-redesign: the product question is now the readiness framing.
+    assert "How ready is the evidence supporting" in ce
     assert "women like me" not in ce
+    # AMIRA still never claims to determine whether a medicine is safe for an individual.
+    assert "Is this safe for women?" not in ce
     blob = json.dumps(dataset.load())
     assert "\"maturity_level\"" not in blob and "\"evidence_level\"" not in blob
 
@@ -174,19 +181,25 @@ def test_brand_descriptor_is_consistent():
     product identity is stated. The primary clinician headline is untouched."""
     from pathlib import Path
     ui = (Path(__file__).resolve().parents[2] / "ui" / "src")
-    sidebar = (ui / "components" / "Sidebar.tsx").read_text(encoding="utf-8")
-    assert "Evidence Intelligence Platform" in sidebar
-    assert "AI-powered evidence" not in sidebar
+    # The brand descriptor now lives in the header lockup (the left sidebar was
+    # removed in the visual-correction redesign).
+    header = (ui / "components" / "Header.tsx").read_text(encoding="utf-8")
+    assert "Evidence Intelligence Platform" in header
+    assert "AI-powered evidence" not in header
+    assert not (ui / "components" / "Sidebar.tsx").exists(), "the left sidebar must be gone"
     shell = (ui / "components" / "AmiraShell.tsx").read_text(encoding="utf-8")
     assert "Count women. Study women. Care for women." in shell
+    # No internal development labels on the user-facing screen.
+    ce_src = (ui / "pages" / "CheckEvidence.tsx").read_text(encoding="utf-8")
+    assert "Video-ready" not in ce_src and "cached records" not in ce_src
     # Forbidden descriptors must not appear anywhere in shipped UI source.
     for f in ui.rglob("*.tsx"):
         text = f.read_text(encoding="utf-8")
         assert "Scientific Intelligence Platform" not in text
         assert "Women's Health Evidence Intelligence" not in text
-    # The clinician product headline is preserved.
+    # The product headline is the video-redesign readiness framing.
     ce = (ui / "pages" / "CheckEvidence.tsx").read_text(encoding="utf-8")
-    assert "What does the evidence show for women?" in ce
+    assert "How ready is the evidence supporting" in ce
 
 
 # --- Final blocker pass: bounded safety claims + provenance + states ---------- #

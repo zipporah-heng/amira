@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+  <defs>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5630ad"/>
+      <stop offset="1" stop-color="#9b7bea"/>
+    </linearGradient>
+    <linearGradient id="hero" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f5f2fe"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="14" flood-color="#5630ad" flood-opacity="0.09"/>
+    </filter>
+    <style>
+      .ui { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }
+      .ink { fill: #1b1630; }
+      .copy { fill: #4a4463; }
+      .muted { fill: #837c9c; }
+      .purple { fill: #6a3fd0; }
+      .eyebrow { font-size: 12px; font-weight: 750; letter-spacing: 1.4px; }
+      .small { font-size: 13px; }
+      .body { font-size: 17px; }
+      .label { font-size: 15px; font-weight: 700; }
+    </style>
+  </defs>
+
+  <rect width="1440" height="900" fill="#faf9ff"/>
+  <circle cx="1380" cy="45" r="180" fill="#f0ebfd"/>
+  <circle cx="30" cy="870" r="190" fill="#eef7f5"/>
+
+  <!-- App bar -->
+  <rect width="1440" height="76" fill="#ffffff"/>
+  <line x1="0" y1="76" x2="1440" y2="76" stroke="#ece8f8"/>
+  <g class="ui">
+    <rect x="60" y="20" width="38" height="38" rx="11" fill="url(#brand)"/>
+    <path d="M70 47 L79 29 L88 47 M74 41 H84" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="110" y="39" font-size="22" font-weight="780" class="ink">AMIRA</text>
+    <text x="110" y="57" font-size="11.5" class="muted" letter-spacing=".35">EVIDENCE INTELLIGENCE PLATFORM</text>
+    <rect x="1034" y="19" width="338" height="40" rx="20" fill="#f5f2fe" stroke="#dcd0f8"/>
+    <rect x="1038" y="23" width="163" height="32" rx="16" fill="#ffffff" filter="url(#shadow)"/>
+    <text x="1062" y="44" font-size="13.5" font-weight="700" class="purple">Tell me plainly</text>
+    <text x="1232" y="44" font-size="13.5" font-weight="600" class="muted">Evidence details</text>
+  </g>
+
+  <g class="ui">
+    <!-- Page intro -->
+    <text x="60" y="116" class="purple small" font-weight="700">← Change medicine or question</text>
+    <text x="60" y="159" font-size="34" font-weight="740" class="ink">What do we know about rosuvastatin in women?</text>
+    <text x="60" y="187" class="copy body">Statin · Cardiovascular event prevention</text>
+
+    <!-- 10-second answer -->
+    <rect x="60" y="211" width="1320" height="248" rx="20" fill="url(#hero)" stroke="#dcd0f8" filter="url(#shadow)"/>
+    <rect x="90" y="238" width="174" height="25" rx="12.5" fill="#ece5fc"/>
+    <circle cx="105" cy="250.5" r="4" fill="#6a3fd0"/>
+    <text x="117" y="255" class="purple eyebrow">10-SECOND ANSWER</text>
+    <text x="90" y="303" font-size="31" font-weight="760" class="ink">Some evidence. Important gaps.</text>
+    <text x="90" y="340" font-size="19" class="copy">Women were included, and one trial examined whether the medicine worked in women.</text>
+    <text x="90" y="369" font-size="19" class="copy">But women-specific safety, menopause status and hormone therapy were not clearly reported.</text>
+    <rect x="90" y="391" width="866" height="45" rx="11" fill="#fff8e9" stroke="#f0dfb9"/>
+    <circle cx="112" cy="413.5" r="9" fill="#b07d1a"/>
+    <text x="109" y="417.5" font-size="12" font-weight="800" fill="#fff">i</text>
+    <text x="132" y="418" font-size="14" font-weight="620" fill="#705013">This does not mean the medicine is unsafe or ineffective. It means key questions remain unanswered.</text>
+
+    <line x1="1000" y1="239" x2="1000" y2="431" stroke="#e4ddf5"/>
+    <text x="1040" y="257" class="muted eyebrow">WOMEN'S EVIDENCE COVERAGE</text>
+    <text x="1040" y="302" font-size="30" font-weight="780" fill="#8a6212">Partial</text>
+    <g transform="translate(1040 325)">
+      <rect width="52" height="10" rx="5" fill="#6a3fd0"/>
+      <rect x="60" width="52" height="10" rx="5" fill="#6a3fd0"/>
+      <rect x="120" width="52" height="10" rx="5" fill="#e6e1ef"/>
+      <rect x="180" width="52" height="10" rx="5" fill="#e6e1ef"/>
+      <rect x="240" width="52" height="10" rx="5" fill="#e6e1ef"/>
+    </g>
+    <text x="1040" y="366" class="copy label">2 of 5 evidence questions answered</text>
+    <text x="1040" y="393" class="muted small">AMIRA maturity: 2/5 · Women analyzed</text>
+    <text x="1040" y="416" class="muted small">Evidence reporting—not a medicine rating</text>
+
+    <!-- Three human cards -->
+    <rect x="60" y="485" width="420" height="270" rx="18" fill="#ffffff" stroke="#cfe9e0" filter="url(#shadow)"/>
+    <circle cx="93" cy="520" r="17" fill="#e9f6f1"/>
+    <path d="M85 520 L91 526 L102 514" fill="none" stroke="#1f7a5f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="121" y="527" font-size="20" font-weight="740" class="ink">What we know</text>
+    <text x="91" y="570" class="ink label">6,801 women</text>
+    <text x="91" y="592" class="copy small">were explicitly counted in JUPITER.</text>
+    <text x="91" y="628" class="ink label">Effectiveness was examined</text>
+    <text x="91" y="650" class="copy small">for women and men in one of two trials.</text>
+    <text x="91" y="688" class="ink label">2 Phase 3 trials</text>
+    <text x="91" y="710" class="copy small">are included in this AMIRA result.</text>
+
+    <rect x="500" y="485" width="420" height="270" rx="18" fill="#ffffff" stroke="#f0d9e2" filter="url(#shadow)"/>
+    <circle cx="533" cy="520" r="17" fill="#f9edf1"/>
+    <path d="M526 513 L540 527 M540 513 L526 527" stroke="#a63d63" stroke-width="2.8" stroke-linecap="round"/>
+    <text x="561" y="527" font-size="20" font-weight="740" class="ink">What is missing</text>
+    <circle cx="535" cy="568" r="4" fill="#a63d63"/>
+    <text x="551" y="574" class="copy body">Safety results reported separately for women</text>
+    <circle cx="535" cy="615" r="4" fill="#a63d63"/>
+    <text x="551" y="621" class="copy body">Menopause status</text>
+    <circle cx="535" cy="662" r="4" fill="#a63d63"/>
+    <text x="551" y="668" class="copy body">Hormone therapy use</text>
+    <text x="533" y="715" class="muted small" font-style="italic">Not reported does not mean “no effect.”</text>
+
+    <rect x="940" y="485" width="440" height="270" rx="18" fill="#ffffff" stroke="#dcd0f8" filter="url(#shadow)"/>
+    <circle cx="973" cy="520" r="17" fill="#ece5fc"/>
+    <path d="M966 520 H980 M975 515 L980 520 L975 525" fill="none" stroke="#6a3fd0" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="1001" y="527" font-size="20" font-weight="740" class="ink">What can I review next?</text>
+    <text x="972" y="569" class="copy body">See exactly why AMIRA reached this answer,</text>
+    <text x="972" y="594" class="copy body">or compare evidence coverage with other statins.</text>
+    <rect x="972" y="624" width="207" height="45" rx="11" fill="url(#brand)"/>
+    <text x="995" y="652" font-size="14" font-weight="730" fill="#fff">Review the evidence →</text>
+    <rect x="1189" y="624" width="159" height="45" rx="11" fill="#ffffff" stroke="#c3aef0"/>
+    <text x="1207" y="652" font-size="14" font-weight="700" class="purple">Compare statins</text>
+    <text x="972" y="710" class="muted small">Every conclusion links to its original source.</text>
+
+    <!-- Safety boundary -->
+    <rect x="60" y="782" width="1320" height="72" rx="16" fill="#1b1630"/>
+    <circle cx="94" cy="818" r="16" fill="#31294d"/>
+    <path d="M87 818 L92 823 L101 813" fill="none" stroke="#c3aef0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="124" y="814" font-size="15.5" font-weight="720" fill="#fff">AMIRA does not recommend a medicine.</text>
+    <text x="124" y="836" font-size="14" fill="#c9c4d8">It shows what the research reports, what it leaves unanswered, and where every conclusion came from.</text>
+    <text x="1195" y="825" font-size="14" font-weight="720" fill="#c3aef0">View sources ↗</text>
+  </g>
+</svg>

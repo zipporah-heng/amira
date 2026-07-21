@@ -1,8 +1,4 @@
-"""AMIRA real-evidence ingestion for the frozen corpus.
-
-Frozen corpus (Mantis-approved scope lock):
-    medicine  : rosuvastatin
-    trials    : JUPITER (NCT00239681), HOPE-3 (NCT00468923)
+"""AMIRA real-evidence ingestion for the reviewed multi-condition corpus.
 
 This script fetches REAL records from ClinicalTrials.gov API v2, PubMed E-utilities
 and PMC, and emits the normalized dataset the API, UI and downloads all read from.
@@ -36,7 +32,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 DATA = REPO / "dataset"
 
-DATASET_VERSION = "2.0.0"
+DATASET_VERSION = "3.0.0"
 # Corpus is frozen: no source published after this date is admitted.
 SOURCE_CUTOFF = "2026-07-18"
 MEDICINE = "Rosuvastatin"
@@ -56,6 +52,10 @@ EXPECTED = {
     "NCT00468923": {"enrollment": 12705, "has_results": False},
     "NCT00327418": {"enrollment": 2800, "has_results": False},  # CARDS (atorvastatin)
     "NCT03036124": {"enrollment": 4744, "female": 1109, "male": 3635, "has_results": True},  # DAPA-HF
+    # ClinicalTrials.gov currently lists 982, while the peer-reviewed primary report
+    # states that 1,001 participants were randomized. AMIRA retains both facts and
+    # uses the publication population for result calculations.
+    "NCT03783429": {"registry_enrollment": 982},
 }
 
 
@@ -150,14 +150,24 @@ def fetch_pmc_text(pmcid: str) -> str:
     url = EUTILS + "efetch.fcgi?" + urllib.parse.urlencode(
         {"db": "pmc", "id": pmcid, "retmode": "xml"}
     )
-    return _clean(re.sub(r"<[^>]+>", " ", _get_text(url)))
+    text = _clean(re.sub(r"<[^>]+>", " ", _get_text(url)))
+    # Some older PMC records expose only front matter through E-utilities even
+    # though the article reader contains the full text. Use the public reader as
+    # a deterministic fallback when the retrieved record is unusually short.
+    if len(text) < 10_000:
+        reader_url = f"https://pmc.ncbi.nlm.nih.gov/articles/{pmcid}/?report=xml"
+        reader_text = _clean(re.sub(r"<[^>]+>", " ", _get_text(reader_url)))
+        if len(reader_text) > len(text):
+            text = reader_text
+    return text
 
 
 def _clean(s: str) -> str:
     s = re.sub(r"<[^>]+>", "", s)
     s = (s.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&")
            .replace("&#x2265;", ">=").replace("≥", ">=").replace("≤", "<=")
-           .replace("’", "'").replace("–", "-").replace("—", "-"))
+           .replace("’", "'").replace("–", "-").replace("—", "-")
+           .replace("‐", "-").replace("−", "-"))
     return re.sub(r"\s+", " ", s).strip()
 
 
@@ -208,15 +218,20 @@ def build(offline: bool = False) -> dict:
     hope = fetch_ctgov("NCT00468923")
     cards = fetch_ctgov("NCT00327418")  # CARDS (atorvastatin)
     dapa = fetch_ctgov("NCT03036124")   # DAPA-HF (dapagliflozin)
+    dig = fetch_ctgov("NCT00000476")    # Digitalis Investigation Group
+    decision = fetch_ctgov("NCT03783429")  # modern low-dose digoxin
 
     jup_p = jup["protocolSection"]
     hope_p = hope["protocolSection"]
     cards_p = cards["protocolSection"]
     dapa_p = dapa["protocolSection"]
+    dig_p = dig["protocolSection"]
+    decision_p = decision["protocolSection"]
     jup_enroll = jup_p["designModule"]["enrollmentInfo"]["count"]
     hope_enroll = hope_p["designModule"]["enrollmentInfo"]["count"]
     cards_enroll = cards_p["designModule"]["enrollmentInfo"]["count"]
     dapa_enroll = dapa_p["designModule"]["enrollmentInfo"]["count"]
+    decision_registry_enroll = decision_p["designModule"]["enrollmentInfo"]["count"]
     jup_female = ctgov_female_count(jup)
     dapa_female = ctgov_female_count(dapa)
 
@@ -230,6 +245,8 @@ def build(offline: bool = False) -> dict:
     de = EXPECTED["NCT03036124"]
     assert dapa_enroll == de["enrollment"], f"DAPA-HF enrollment drift: {dapa_enroll} != {de['enrollment']}"
     assert dapa_female == de["female"], f"DAPA-HF female count drift: {dapa_female} != {de['female']}"
+    assert decision_registry_enroll == EXPECTED["NCT03783429"]["registry_enrollment"], \
+        f"DECISION registry enrollment drift: {decision_registry_enroll}"
 
     # --- publications -------------------------------------------------------- #
     mora = fetch_pubmed_abstract("20176986")       # JUPITER sex-specific analysis
@@ -238,12 +255,25 @@ def build(offline: bool = False) -> dict:
     ctt = fetch_pubmed_abstract("25579834")        # CTT class-level sex-specific meta-analysis
     cards_pub = fetch_pubmed_abstract("15325833")  # CARDS main report (Lancet 2004)
     butt = fetch_pubmed_abstract("33787831")       # DAPA-HF prespecified sex analysis (JAMA Cardiol 2021)
+    hayoz = fetch_pubmed_abstract("23126349")      # postmenopausal hypertension head-to-head RCT
+    hayoz_text = fetch_pmc_text("PMC8108841")
+    rathore = fetch_pubmed_abstract("12409542")    # DIG post hoc sex analysis
+    decision_pub = fetch_pubmed_abstract("42108270")  # DECISION low-dose digoxin RCT
+
+    # The open-access publisher page supplies formal subgroup details not present
+    # in the DECISION PubMed abstract.
+    decision_full = _clean(re.sub(r"<[^>]+>", " ", _get_text(
+        "https://www.nature.com/articles/s41591-026-04406-6"
+    )))
 
     mora_all = " ".join(mora["sections"].values())
     hope_lipid_all = " ".join(hope_lipid["sections"].values())
     ctt_all = " ".join(ctt["sections"].values())
     cards_all = " ".join(cards_pub["sections"].values())
     butt_all = " ".join(butt["sections"].values())
+    hayoz_all = " ".join(hayoz["sections"].values())
+    rathore_all = " ".join(rathore["sections"].values())
+    decision_all = " ".join(decision_pub["sections"].values())
 
     p_jup_women = find_passage(mora_all, r"6801 women")
     p_jup_sexspec = find_passage(mora_all, r"sex-specific outcomes")
@@ -260,12 +290,37 @@ def build(offline: bool = False) -> dict:
     p_dapa_women = find_sentence(butt_all, r"1109 were women")
     p_dapa_hr = find_passage(butt_all, r"hazard ratios, 0\.73")
     p_dapa_safety = find_passage(butt_all, r"serious adverse events were not more frequent")
+    p_hayoz_population = find_sentence(hayoz_all, r"125 postmenopausal hypertensive women")
+    p_hayoz_design = find_passage(hayoz_text, r"42-week, single-center, randomized, controlled, double-blind")
+    p_hayoz_hrt = find_passage(
+        hayoz_text, r"history or current use of oral or topical hormone replacement therapy"
+    )
+    p_hayoz_target = find_sentence(hayoz_text, r"71\.7% vs 71\.4%")
+    p_hayoz_edema = find_passage(hayoz_text, r"77\.4% and 14\.3%")
+    p_dig_total = find_passage(rathore_all, r"6800 patients")
+    p_dig_effect = find_passage(rathore_all, r"33\.1 percent vs\. 28\.9 percent")
+    p_dig_interaction = find_passage(rathore_all, r"adjusted hazard ratio.{0,100}1\.23")
+    p_decision_total = find_sentence(decision_all, r"1,001 patients")
+    p_decision_primary = find_passage(decision_all, r"rate ratio 0\.81")
+    p_decision_women = find_sentence(decision_full, r"28% were women \(\s*n\s*=\s*284\s*\)")
+    p_decision_sex = find_passage(
+        decision_full, r"rate ratio digoxin versus placebo: 0\.71 and 0\.85"
+    )
+    p_decision_safety = find_passage(decision_full, r"low-dose digoxin was safe in the 284 women studied")
 
     for name, val in [("JUPITER women", p_jup_women), ("JUPITER sex-specific", p_jup_sexspec),
                       ("JUPITER HR", p_jup_hr), ("HOPE-3 N", p_hope_n),
                       ("HOPE-3 % women", p_hope_pct), ("CTT sex analysis", p_ctt_sex),
                       ("CARDS N", p_cards_n), ("DAPA-HF women", p_dapa_women),
-                      ("DAPA-HF HR", p_dapa_hr), ("DAPA-HF safety", p_dapa_safety)]:
+                      ("DAPA-HF HR", p_dapa_hr), ("DAPA-HF safety", p_dapa_safety),
+                      ("Hayoz population", p_hayoz_population), ("Hayoz design", p_hayoz_design),
+                      ("Hayoz HRT", p_hayoz_hrt), ("Hayoz target BP", p_hayoz_target),
+                      ("Hayoz edema", p_hayoz_edema), ("DIG total", p_dig_total),
+                      ("DIG effect", p_dig_effect), ("DIG interaction", p_dig_interaction),
+                      ("DECISION total", p_decision_total),
+                      ("DECISION primary", p_decision_primary),
+                      ("DECISION women", p_decision_women), ("DECISION sex", p_decision_sex),
+                      ("DECISION safety", p_decision_safety)]:
         if not val:
             raise SystemExit(f"Required passage not found in live source: {name}")
 
@@ -343,6 +398,41 @@ def build(offline: bool = False) -> dict:
          "api_url": None, "retrieved_at": retrieved_at,
          "license_note": "Prespecified sex-specific analysis of DAPA-HF. Abstract (c) publisher; "
                          "open access via PMC8014207; short excerpts quoted for citation."},
+        {"source_id": "SRC-PMC8108841", "source_type": "journal_article",
+         "title": hayoz["title"], "publisher": hayoz["journal"], "year": hayoz["year"],
+         "nct_id": None, "pmid": "23126349", "pmcid": "PMC8108841",
+         "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8108841/",
+         "api_url": None, "retrieved_at": retrieved_at,
+         "license_note": "Open access via PubMed Central; short excerpts quoted for citation."},
+        {"source_id": "SRC-CTGOV-NCT00000476", "source_type": "trial_registry_record",
+         "title": _clean(dig_p["identificationModule"]["briefTitle"]),
+         "publisher": "ClinicalTrials.gov", "year": 1990,
+         "nct_id": "NCT00000476", "pmid": None, "pmcid": None,
+         "url": "https://clinicaltrials.gov/study/NCT00000476",
+         "api_url": CTGOV.format(nct="NCT00000476"),
+         "retrieved_at": retrieved_at,
+         "license_note": "ClinicalTrials.gov records are U.S. Government public-domain data."},
+        {"source_id": "SRC-PMID-12409542", "source_type": "journal_article",
+         "title": rathore["title"], "publisher": rathore["journal"], "year": rathore["year"],
+         "nct_id": "NCT00000476", "pmid": "12409542", "pmcid": None,
+         "url": "https://pubmed.ncbi.nlm.nih.gov/12409542/",
+         "api_url": None, "retrieved_at": retrieved_at,
+         "license_note": "PubMed abstract; short excerpts quoted for citation. Post hoc sex analysis."},
+        {"source_id": "SRC-CTGOV-NCT03783429", "source_type": "trial_registry_record",
+         "title": _clean(decision_p["identificationModule"]["briefTitle"]),
+         "publisher": "ClinicalTrials.gov", "year": 2018,
+         "nct_id": "NCT03783429", "pmid": None, "pmcid": None,
+         "url": "https://clinicaltrials.gov/study/NCT03783429",
+         "api_url": CTGOV.format(nct="NCT03783429"),
+         "retrieved_at": retrieved_at,
+         "license_note": "ClinicalTrials.gov records are U.S. Government public-domain data."},
+        {"source_id": "SRC-PMID-42108270", "source_type": "journal_article",
+         "title": decision_pub["title"], "publisher": decision_pub["journal"],
+         "year": decision_pub["year"], "nct_id": "NCT03783429",
+         "pmid": "42108270", "pmcid": None,
+         "url": "https://www.nature.com/articles/s41591-026-04406-6",
+         "api_url": None, "retrieved_at": retrieved_at,
+         "license_note": "Open-access publisher article; short excerpts quoted for citation."},
     ]
 
     # --- trials -------------------------------------------------------------- #
@@ -417,6 +507,61 @@ def build(offline: bool = False) -> dict:
          "has_registry_results": True,
          "registry_url": "https://clinicaltrials.gov/study/NCT03036124",
          "primary_source_id": "SRC-CTGOV-NCT03036124"},
+        {"trial_id": "HAYOZ-2012", "nct_id": None,
+         "acronym": "HAYOZ-2012", "display_name": "Hayoz 2012",
+         "brief_title": hayoz["title"], "official_title": hayoz["title"],
+         "medicine": "Valsartan", "drug_class": "Angiotensin receptor blocker",
+         "indication": "Hypertension in postmenopausal women",
+         "condition": "Hypertension",
+         "study_type": "Randomized Controlled Trial", "study_phase": "Not reported",
+         "evidence_role": "life_stage_specific_randomized_study",
+         "reported_life_stages": ["menopause_postmenopause"],
+         "hormone_therapy_population": "excluded_current_or_prior",
+         "primary_endpoint": "Change in carotid-to-femoral pulse wave velocity at 38 weeks",
+         "enrollment_actual": 125, "enrollment_basis": "reported",
+         "sex_eligibility": "FEMALE", "minimum_age": "50 Years",
+         "start_date": None, "completion_date": None, "publication_year": 2012,
+         "has_registry_results": False,
+         "registry_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8108841/",
+         "primary_source_label": "PMC full text",
+         "primary_source_id": "SRC-PMC8108841"},
+        {"trial_id": "DIG", "nct_id": "NCT00000476",
+         "acronym": "DIG", "display_name": "DIG",
+         "brief_title": _clean(dig_p["identificationModule"]["briefTitle"]),
+         "official_title": _clean(dig_p["identificationModule"].get("officialTitle") or ""),
+         "medicine": "Digoxin", "drug_class": "Cardiac glycoside",
+         "indication": "Stable heart failure with reduced ejection fraction and sinus rhythm",
+         "condition": "Heart failure",
+         "study_type": "Randomized Controlled Trial", "study_phase": "Phase 3",
+         "evidence_role": "pivotal_trial_with_post_hoc_sex_analysis",
+         "primary_endpoint": "Death from any cause in the 6,800-patient main trial",
+         "enrollment_actual": 6800, "enrollment_basis": "reported_main_trial_population",
+         "sex_eligibility": dig_p["eligibilityModule"].get("sex"),
+         "minimum_age": dig_p["eligibilityModule"].get("minimumAge"),
+         "start_date": dig_p["statusModule"].get("startDateStruct", {}).get("date"),
+         "completion_date": dig_p["statusModule"].get("completionDateStruct", {}).get("date"),
+         "has_registry_results": bool(dig.get("hasResults")),
+         "registry_url": "https://clinicaltrials.gov/study/NCT00000476",
+         "primary_source_id": "SRC-CTGOV-NCT00000476"},
+        {"trial_id": "DECISION", "nct_id": "NCT03783429",
+         "acronym": "DECISION", "display_name": "DECISION",
+         "brief_title": _clean(decision_p["identificationModule"]["briefTitle"]),
+         "official_title": _clean(decision_p["identificationModule"].get("officialTitle") or ""),
+         "medicine": "Digoxin", "drug_class": "Cardiac glycoside",
+         "indication": "Symptomatic chronic heart failure with LVEF 50% or less",
+         "condition": "Heart failure",
+         "study_type": "Randomized Controlled Trial", "study_phase": "Phase 4",
+         "evidence_role": "contemporary_low_dose_outcome_trial",
+         "primary_endpoint": "Total worsening heart failure events and cardiovascular mortality",
+         "enrollment_actual": 1001, "enrollment_basis": "reported_analysis_population",
+         "sex_eligibility": decision_p["eligibilityModule"].get("sex"),
+         "minimum_age": decision_p["eligibilityModule"].get("minimumAge"),
+         "start_date": decision_p["statusModule"].get("startDateStruct", {}).get("date"),
+         "completion_date": decision_p["statusModule"].get("completionDateStruct", {}).get("date"),
+         "has_registry_results": bool(decision.get("hasResults")),
+         "registry_url": "https://www.nature.com/articles/s41591-026-04406-6",
+         "primary_source_label": "Nature Medicine primary report",
+         "primary_source_id": "SRC-PMID-42108270"},
     ]
 
     # --- evidence assertions -------------------------------------------------- #
@@ -544,6 +689,96 @@ def build(offline: bool = False) -> dict:
           "SRC-CTGOV-NCT03036124",
           "Registry record reports no pregnancy-specific evidence for this population.",
           "Registry record review"),
+        # ---- Hayoz 2012: women-only, explicitly postmenopausal hypertension RCT ----
+        A("A-HAY-001", "HAYOZ-2012", "total_enrollment", 125, "reported",
+          "SRC-PMC8108841", p_hayoz_population, "Abstract"),
+        A("A-HAY-002", "HAYOZ-2012", "female_enrollment_count", 125, "reported",
+          "SRC-PMC8108841", p_hayoz_population, "Abstract",
+          "All randomized participants were explicitly described as postmenopausal women."),
+        A("A-HAY-003", "HAYOZ-2012", "female_enrollment_pct", 100.0, "derived",
+          "SRC-PMC8108841", p_hayoz_population, "Computed from reported population",
+          "Derived by AMIRA as 125/125 because the study population was women only."),
+        A("A-HAY-004", "HAYOZ-2012", "sex_specific_efficacy_reported", "yes", "reported",
+          "SRC-PMC8108841", p_hayoz_target, "Results, patient disposition",
+          "Outcomes were reported for an explicitly defined women-only population; this is not a comparison with men."),
+        A("A-HAY-005", "HAYOZ-2012", "sex_specific_safety_reported", "yes", "reported",
+          "SRC-PMC8108841", p_hayoz_edema, "Safety results",
+          "Adverse events were reported for an explicitly defined women-only population."),
+        A("A-HAY-006", "HAYOZ-2012", "menopause_status_reported", "yes", "reported",
+          "SRC-PMC8108841", p_hayoz_population, "Abstract and eligibility criteria",
+          "The source explicitly identifies every participant as postmenopausal."),
+        A("A-HAY-007", "HAYOZ-2012", "hormone_therapy_reported", "yes", "reported",
+          "SRC-PMC8108841", p_hayoz_hrt, "Methods, Patients",
+          "Current or prior oral or topical hormone replacement therapy was an exclusion criterion. "
+          "This reports hormonal context; it does not compare hormone-therapy users with non-users."),
+        A("A-HAY-008", "HAYOZ-2012", "outcomes_stratified_by_life_stage_and_hormone_context",
+          "not_reported", "not_reported", "SRC-PMC8108841", p_hayoz_hrt,
+          "Methods and Results",
+          "The trial studied one postmenopausal, no-current-or-prior-HRT population. It did not "
+          "stratify outcomes across multiple life-stage and hormone-therapy groups."),
+        A("A-HAY-009", "HAYOZ-2012", "pregnancy_evidence_reported", "not_reported", "not_reported",
+          "SRC-PMC8108841", p_hayoz_population, "Population review",
+          "The reviewed study is specific to postmenopausal women and reports no pregnancy evidence."),
+        # ---- DIG: historical trial with a post hoc sex analysis ----
+        A("A-DIG-001", "DIG", "total_enrollment", 6800, "reported",
+          "SRC-PMID-12409542", p_dig_total, "Abstract, Methods",
+          "This is the main DIG trial population analyzed for the primary mortality outcome."),
+        A("A-DIG-002", "DIG", "female_enrollment_count", None, "not_located",
+          "SRC-PMID-12409542", p_dig_total, "Abstract, Methods",
+          "An exact female count is not stated in the machine-retrieved abstract."),
+        A("A-DIG-003", "DIG", "female_enrollment_pct", None, "not_located",
+          "SRC-PMID-12409542", p_dig_total, "Abstract, Methods",
+          "A female enrollment percentage is not stated in the machine-retrieved abstract."),
+        A("A-DIG-004", "DIG", "sex_specific_efficacy_reported", "yes", "reported",
+          "SRC-PMID-12409542", p_dig_interaction, "Abstract, Results",
+          "Post hoc sex subgroup analysis with a formal sex-by-treatment interaction test."),
+        A("A-DIG-005", "DIG", "sex_specific_safety_reported", "not_located", "not_located",
+          "SRC-PMID-12409542", p_dig_effect, "Abstract, Results",
+          "A sex-specific adverse-event analysis is not available in the machine-retrieved abstract."),
+        A("A-DIG-006", "DIG", "menopause_status_reported", "not_reported", "not_reported",
+          "SRC-PMID-12409542", p_dig_effect, "Abstract review",
+          "Women were analyzed by sex, but menopausal status is not reported in the abstract. "
+          "Age is not used to infer it."),
+        A("A-DIG-007", "DIG", "hormone_therapy_reported", "not_located", "not_located",
+          "SRC-PMID-12409542", p_dig_effect, "Abstract review",
+          "Hormone-therapy use is not available in the machine-retrieved abstract."),
+        A("A-DIG-008", "DIG", "outcomes_stratified_by_life_stage_and_hormone_context",
+          "not_located", "not_located", "SRC-PMID-12409542", p_dig_effect,
+          "Abstract review",
+          "No joint life-stage and hormone-context analysis is available in the abstract."),
+        A("A-DIG-009", "DIG", "pregnancy_evidence_reported", "not_reported", "not_reported",
+          "SRC-CTGOV-NCT00000476",
+          "The registry record reports no pregnancy-specific outcome evidence.", "Registry record review"),
+        # ---- DECISION: contemporary low-dose digoxin RCT ----
+        A("A-DEC-001", "DECISION", "total_enrollment", 1001, "reported",
+          "SRC-PMID-42108270", p_decision_total, "Abstract",
+          "The primary publication reports 1,001 randomized participants. The registry currently "
+          "lists 982; AMIRA uses the publication population for the published result calculations."),
+        A("A-DEC-002", "DECISION", "female_enrollment_count", 284, "reported",
+          "SRC-PMID-42108270", p_decision_women, "Full text, subgroup results"),
+        A("A-DEC-003", "DECISION", "female_enrollment_pct", 28.0, "reported",
+          "SRC-PMID-42108270", p_decision_total, "Abstract",
+          "The publication reports 28% women; the exact count is 284 in the full text."),
+        A("A-DEC-004", "DECISION", "sex_specific_efficacy_reported", "yes", "reported",
+          "SRC-PMID-42108270", p_decision_sex, "Full text, subgroup analysis",
+          "Treatment effects were reported for women and men with a formal interaction test."),
+        A("A-DEC-005", "DECISION", "sex_specific_safety_reported", "yes", "reported",
+          "SRC-PMID-42108270", p_decision_safety, "Full text, Discussion",
+          "The publication explicitly discusses low-dose digoxin safety in the 284 women studied; "
+          "no formal between-sex safety interaction estimate was located."),
+        A("A-DEC-006", "DECISION", "menopause_status_reported", "not_reported", "not_reported",
+          "SRC-PMID-42108270", p_decision_women, "Full text review",
+          "The publication reports sex and age, but not menopausal status. Age is not used to infer it."),
+        A("A-DEC-007", "DECISION", "hormone_therapy_reported", "not_reported", "not_reported",
+          "SRC-PMID-42108270", p_decision_women, "Full text review",
+          "No menopausal hormone-therapy measure was located in the reviewed publication or registry."),
+        A("A-DEC-008", "DECISION", "outcomes_stratified_by_life_stage_and_hormone_context",
+          "not_reported", "not_reported", "SRC-PMID-42108270", p_decision_women,
+          "Full text review",
+          "The sex subgroup was not stratified by menopausal stage and hormone-therapy context."),
+        A("A-DEC-009", "DECISION", "pregnancy_evidence_reported", "not_reported", "not_reported",
+          "SRC-CTGOV-NCT03783429",
+          "The registry record reports no pregnancy-specific outcome evidence.", "Registry record review"),
     ]
 
     # --- structured sex-specific findings (effect estimates) ------------------ #
@@ -553,6 +788,8 @@ def build(offline: bool = False) -> dict:
         base = {
             "finding_id": fid, "medicine": medicine, "drug_class": DRUG_CLASS,
             "scope": scope, "finding_type": ftype, "endpoint": endpoint,
+            "population_scope": "women_and_men",
+            "reporting_scope": "women_and_men_separate",
             "female_estimate": None, "male_estimate": None, "effect_measure": None,
             "female_ci": None, "male_ci": None,
             "comparison_test": None, "comparison_p": None,
@@ -626,6 +863,129 @@ def build(offline: bool = False) -> dict:
                          "placebo; no formal between-sex safety comparison or interaction test was "
                          "reported in the reviewed source, so no between-sex safety difference is "
                          "claimed either way."),
+        # ---- Explicitly postmenopausal women-only trial ----
+        F("F-EFF-HAY-001", "Valsartan", "trial:HAYOZ-2012", "efficacy",
+          "Reached target office blood pressure at 38 weeks", "SRC-PMC8108841",
+          p_hayoz_target, "Results, patient disposition",
+          drug_class="Angiotensin receptor blocker", population_scope="women_only_life_stage",
+          female_estimate="71.7%", effect_measure="Target attainment rate",
+          significance="not_tested",
+          interpretation="In this postmenopausal women-only trial, 71.7% of the valsartan-based "
+                         "regimen group and 71.4% of the amlodipine-based regimen group reached "
+                         "target office blood pressure. This compares treatment arms within women; "
+                         "it is not a comparison between women and men."),
+        F("F-SAF-HAY-001", "Valsartan", "trial:HAYOZ-2012", "safety",
+          "Peripheral edema", "SRC-PMC8108841", p_hayoz_edema, "Safety Results",
+          drug_class="Angiotensin receptor blocker", population_scope="women_only_life_stage",
+          female_rate="14.3% with valsartan-based regimen", significance="not_tested",
+          interpretation="Peripheral edema was reported in 14.3% of the valsartan-based regimen "
+                         "group and 77.4% of the amlodipine-based regimen group (P<0.001) in this "
+                         "single postmenopausal women-only study. The result is treatment-arm "
+                         "evidence within women, not a between-sex safety comparison."),
+        # ---- DIG: historical post hoc sex interaction ----
+        F("F-EFF-DIG-001", "Digoxin", "trial:DIG", "efficacy",
+          "Death from any cause", "SRC-PMID-12409542", p_dig_interaction,
+          "Abstract, Results", drug_class="Cardiac glycoside",
+          female_estimate="Adjusted HR 1.23", male_estimate="Adjusted HR 0.93",
+          effect_measure="Hazard ratio vs placebo",
+          female_ci="95% CI 1.02-1.47", male_ci="95% CI 0.85-1.02",
+          female_rate="33.1% digoxin vs 28.9% placebo",
+          male_rate="35.2% digoxin vs 36.9% placebo",
+          comparison_test="Adjusted sex-by-treatment interaction",
+          comparison_p="0.014", significance="significant",
+          interpretation="A post hoc DIG analysis found a statistically significant interaction "
+                         "between sex and digoxin for all-cause mortality. Among women, mortality "
+                         "was 33.1% with digoxin and 28.9% with placebo, an absolute difference of "
+                         "4.2 percentage points; the unadjusted women-only confidence interval "
+                         "included no difference. This analysis identifies an association in a "
+                         "post hoc subgroup and does not establish a menopause-specific effect."),
+        # ---- DECISION: contemporary low-dose digoxin evidence ----
+        F("F-EFF-DEC-001", "Digoxin", "trial:DECISION", "efficacy",
+          "Total worsening heart failure events and cardiovascular mortality",
+          "SRC-PMID-42108270", p_decision_sex, "Full text, subgroup analysis",
+          drug_class="Cardiac glycoside",
+          female_estimate="RR 0.71", male_estimate="RR 0.85", effect_measure="Rate ratio",
+          female_ci="95% CI 0.38-1.32", male_ci="95% CI 0.63-1.14",
+          comparison_test="Sex-by-treatment interaction", comparison_p="0.61",
+          significance="no_significant_difference",
+          interpretation="DECISION targeted a low serum digoxin concentration of 0.5-0.9 ng/mL. "
+                         "The primary-outcome treatment effect did not differ significantly between "
+                         "women and men (interaction P=0.61). The overall primary outcome was also "
+                         "not statistically significant (RR 0.81, 95% CI 0.61-1.07; P=0.133)."),
+        F("F-SAF-DEC-001", "Digoxin", "trial:DECISION", "safety",
+          "Low-dose digoxin safety in women", "SRC-PMID-42108270", p_decision_safety,
+          "Full text, Discussion", drug_class="Cardiac glycoside",
+          reporting_scope="women_only_narrative",
+          effect_measure="Narrative safety assessment", significance="not_tested",
+          interpretation="The publication reports that low-dose digoxin was safe in the 284 women "
+                         "studied. A formal between-sex adverse-event interaction estimate was not "
+                         "located, so AMIRA does not infer equivalent safety between women and men."),
+    ]
+
+    # --- direct treatment-arm comparisons ------------------------------------ #
+    # Kept separate from sex-interaction findings so a women-only head-to-head
+    # study is never mislabeled as a comparison between women and men.
+    direct_comparisons = [
+        {
+            "comparison_id": "CMP-HAYOZ-001",
+            "trial_id": "HAYOZ-2012",
+            "medicine": "Valsartan",
+            "comparator": "Amlodipine",
+            "medicine_regimen": "Valsartan-based regimen",
+            "comparator_regimen": "Amlodipine-based regimen",
+            "population": "Postmenopausal women with hypertension",
+            "duration": "38 weeks",
+            "headline": "Both regimens reached similar blood pressure targets. Side effects differed.",
+            "clinical_boundary": (
+                "This is evidence from one study, not a prescribing recommendation. It does not "
+                "establish that either medicine is better for every patient."
+            ),
+            "regimen_note": (
+                "Participants received valsartan or amlodipine, with hydrochlorothiazide added "
+                "from week 12 when target blood pressure was not reached. This is therefore a "
+                "comparison of treatment regimens, not pure monotherapy."
+            ),
+            "limitations": [
+                "Single-center study with 125 randomized participants",
+                "Hydrochlorothiazide use differed between groups",
+                "Novartis provided financial support and several authors were employees",
+                "The study does not establish that either regimen is better for every patient",
+            ],
+            "outcomes": [
+                {
+                    "outcome_type": "effectiveness",
+                    "endpoint": "Reached target office blood pressure",
+                    "medicine_value": "71.7%",
+                    "comparator_value": "71.4%",
+                    "comparison_test": "Between-regimen comparison at study end",
+                    "comparison_p": "Not significant",
+                    "interpretation": "Target blood pressure attainment was nearly identical.",
+                    "exact_passage": p_hayoz_target,
+                    "source_locator": "Results, patient disposition",
+                },
+                {
+                    "outcome_type": "safety",
+                    "endpoint": "Peripheral edema",
+                    "medicine_value": "14.3%",
+                    "comparator_value": "77.4%",
+                    "comparison_test": "Between-regimen adverse-event comparison",
+                    "comparison_p": "P < 0.001",
+                    "interpretation": (
+                        "Peripheral edema was reported more often with the amlodipine-based regimen "
+                        "in this study."
+                    ),
+                    "exact_passage": p_hayoz_edema,
+                    "source_locator": "Safety Results",
+                },
+            ],
+            "source_id": "SRC-PMC8108841",
+            "exact_passage": p_hayoz_population,
+            "source_locator": "Abstract and full-text results",
+            "source_verified": True,
+            "human_verified": False,
+            "verifier": None,
+            "retrieved_at": retrieved_at,
+        }
     ]
 
     # --- screening log -------------------------------------------------------- #
@@ -678,6 +1038,26 @@ def build(offline: bool = False) -> dict:
          "reason": "Not yet ingested and verified; excluded from the class comparison until real "
                    "evidence is retrieved. AMIRA shows only verified drugs.",
          "screened_at": retrieved_at},
+        {"candidate": "PMID 23126349 (PMC8108841)", "identifier_type": "pmid",
+         "decision": "include",
+         "reason": "Randomized double-blind comparison in 125 explicitly postmenopausal women "
+                   "with hypertension; reports hormone-replacement-therapy exclusion criteria, "
+                   "blood-pressure outcomes, and adverse events.",
+         "screened_at": retrieved_at},
+        {"candidate": "NCT00000476 (DIG)", "identifier_type": "nct", "decision": "include",
+         "reason": "Phase 3 randomized digoxin trial underlying the historical sex subgroup analysis.",
+         "screened_at": retrieved_at},
+        {"candidate": "PMID 12409542", "identifier_type": "pmid", "decision": "include",
+         "reason": "Post hoc DIG sex analysis with formal interaction tests; explicitly states "
+                   "that hormone-replacement-therapy information was not collected.",
+         "screened_at": retrieved_at},
+        {"candidate": "NCT03783429 (DECISION)", "identifier_type": "nct", "decision": "include",
+         "reason": "Contemporary Phase 4 randomized low-dose digoxin outcome trial.",
+         "screened_at": retrieved_at},
+        {"candidate": "PMID 42108270", "identifier_type": "pmid", "decision": "include",
+         "reason": "DECISION primary report with 284 women and a formal sex-by-treatment "
+                   "interaction analysis.",
+         "screened_at": retrieved_at},
     ]
 
     manifest = {
@@ -688,10 +1068,14 @@ def build(offline: bool = False) -> dict:
         "medicine": MEDICINE,
         "condition": CONDITION,
         "drug_class": DRUG_CLASS,
-        "corpus": ["NCT00239681", "NCT00468923", "NCT00327418", "NCT03036124"],
+        "corpus": [
+            "NCT00239681", "NCT00468923", "NCT00327418", "NCT03036124",
+            "PMID23126349", "NCT00000476", "NCT03783429",
+        ],
         "medicines": sorted({t["medicine"] for t in trials}),
         "counts": {"trials": len(trials), "sources": len(sources),
                    "assertions": len(assertions), "findings": len(findings),
+                   "direct_comparisons": len(direct_comparisons),
                    "screening_records": len(screening)},
         "screening_summary": {
             "identified": len([s for s in screening]) ,
@@ -705,6 +1089,7 @@ def build(offline: bool = False) -> dict:
     }
     return {"manifest": manifest, "trials": trials, "source_documents": sources,
             "evidence_assertions": assertions, "findings": findings,
+            "direct_comparisons": direct_comparisons,
             "screening_log": screening}
 
 
@@ -722,7 +1107,7 @@ def main():
     data = build(offline=False)
     DATA.mkdir(parents=True, exist_ok=True)
     for name in ("manifest", "trials", "source_documents", "evidence_assertions",
-                 "findings", "screening_log"):
+                 "findings", "direct_comparisons", "screening_log"):
         (DATA / f"{name}.json").write_text(
             json.dumps(data[name], indent=2, ensure_ascii=False), encoding="utf-8"
         )

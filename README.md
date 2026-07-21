@@ -2,161 +2,301 @@
 
 *Count women. Study women. Care for women.*
 
-> **The question AMIRA answers:** *"What does the evidence show for women?"*
+> **The question AMIRA answers:** *"How ready is the evidence supporting this medicine for women?"*
 
-### Counted is not the same as studied
+**Live application:** **https://amira-d8l6.onrender.com/amira/check-evidence**
 
-A trial can enrol thousands of women and still never analyse whether the medicine worked
-differently in them. Women get counted; they don't always get studied. That gap is
-invisible in a normal drug label — AMIRA makes it visible and measurable.
+---
 
-For any medicine, AMIRA shows:
+## What AMIRA does
 
-- **how well it was studied in women** — a 1-to-5 Evidence Maturity level
-- **whether effectiveness was analysed by sex** — and whether a real statistical test backs it
-- **whether safety was analysed by sex**
-- **what important evidence is missing** — menopause status, hormone therapy, and more
-- **where every number came from** — each claim links to the trial registry or publication
+AMIRA is a source-linked evidence-intelligence platform for **women's-health evidence
+completeness**. For a given medicine it shows how completely that medicine was studied
+*in women* — who was included, what was analysed by sex, what remains unknown, and where
+every number came from.
 
 AMIRA measures **evidence completeness**. It does **not** diagnose, prescribe, recommend
 treatment, tell anyone whether a medicine is safe for them, or rank medicines by how well
 they work.
 
-*Try it: **[amira-d8l6.onrender.com](https://amira-d8l6.onrender.com/amira/check-evidence)***
+### The problem: counted is not the same as studied
+
+A trial can enrol thousands of women and still never analyse whether the medicine worked or
+behaved differently in them. Women get **counted**; they don't always get **studied**. That
+gap is invisible on a normal drug label. AMIRA makes it visible and measurable, and — just
+as importantly — it distinguishes *evidence that is genuinely missing* from *evidence we
+simply haven't retrieved yet*, instead of collapsing everything into "insufficient".
+
+For any medicine, AMIRA shows:
+
+- **how completely it was studied in women** — a 1–5 **Evidence Maturity** level;
+- **the single most important thing to notice** — a plain-language, source-linked finding;
+- **how women were represented** — inclusion, sex-specific effectiveness and safety,
+  menopause, hormone therapy, older women, race/ethnicity;
+- **how the evidence was found** — the AI extraction pipeline, the structured schema, and
+  the exact-passage validation behind each field;
+- **population context** — reported medication use among U.S. women (NHANES), kept
+  strictly separate from the clinical-trial evidence;
+- **where every number came from** — each claim links to its trial registry or publication.
 
 ---
+
+## Live application & main user journey
+
+Open the app, then:
+
+1. **Select evidence** — Condition → Drug Class → Medicine (+ optional Life Stage / Hormone
+   Therapy). The medicine list is driven by the drug class (e.g. *Cardiac glycoside →
+   Digoxin*, *SGLT2 inhibitor → Dapagliflozin*).
+2. **What should I notice?** — the headline finding for the medicine, with its comparison
+   and limitations, next to the segmented **Evidence Maturity** meter.
+3. **How were women represented?** — seven state cards (Yes / Limited / Not reported / Not
+   located).
+4. **How AMIRA's AI found this evidence** — the extraction pipeline, five trace cards, and
+   the Women's Evidence Schema. "Open evidence trace" runs the recorded extraction demo.
+5. **Another evidence path to review** — other same-condition medicines shown as *separate*
+   paths, never as a head-to-head comparison or recommendation.
+6. **Studies behind this result**, **Population Context — NHANES**, **Reusable Scientific
+   Assets**, and **Continue exploring**.
+
+Header navigation links the wider platform: **Check Evidence**, **Research Map**,
+**Open Benchmark**, **Methodology**, and **GitHub**.
+
+Routes: `/amira/check-evidence`, `/amira/research-map`, `/amira/open-benchmark`,
+`/amira/methodology`.
 
 ---
 
 ## Everything shown is real
 
-There is **no synthetic evidence** in this repository. Every number the UI shows is
-computed from a normalized dataset built by [`pipeline/ingest.py`](pipeline/ingest.py)
-from live **ClinicalTrials.gov**, **PubMed** and **PubMed Central** records, and every
-assertion carries an exact source passage and a resolvable URL.
+There is **no synthetic evidence** in this repository. Every number the UI shows is computed
+from a normalized dataset built by [`pipeline/ingest.py`](pipeline/ingest.py) from
+**ClinicalTrials.gov**, **PubMed** and **PubMed Central** records, and every assertion carries
+an exact source passage and a resolvable URL.
 
-**Frozen corpus v2.0.0** (source cutoff 2026-07-18):
+**Frozen corpus v3.0.0** (source cutoff 2026-07-18):
 
-| Condition | Class | Medicine | Trials | Sources |
-|---|---|---|---|---|
-| CV prevention | Statin | Rosuvastatin | JUPITER ([NCT00239681](https://clinicaltrials.gov/study/NCT00239681)), HOPE-3 ([NCT00468923](https://clinicaltrials.gov/study/NCT00468923)) | + Mora 2010 (PMID 20176986) |
-| CV prevention | Statin | Atorvastatin | CARDS ([NCT00327418](https://clinicaltrials.gov/study/NCT00327418)) | PMID 15325833 |
-| CV prevention | Statin | *Class-level* | 27 statin trials | CTT (PMID 25579834) |
-| Heart failure | SGLT2 inhibitor | Dapagliflozin | DAPA-HF ([NCT03036124](https://clinicaltrials.gov/study/NCT03036124)) | Butt 2021 sex analysis (PMID 33787831 / PMC8014207) |
+| Condition | Drug class | Medicine | Trials / studies |
+|---|---|---|---|
+| Cardiovascular disease prevention | Statin | Rosuvastatin | JUPITER ([NCT00239681](https://clinicaltrials.gov/study/NCT00239681)), HOPE-3 ([NCT00468923](https://clinicaltrials.gov/study/NCT00468923)) |
+| Cardiovascular disease prevention | Statin | Atorvastatin | CARDS ([NCT00327418](https://clinicaltrials.gov/study/NCT00327418)) |
+| Heart failure | Cardiac glycoside | Digoxin | DIG ([NCT00000476](https://clinicaltrials.gov/study/NCT00000476)) + 2002 sex-based analysis (PMID 12409542); DECISION ([NCT03783429](https://clinicaltrials.gov/study/NCT03783429)) |
+| Heart failure | SGLT2 inhibitor | Dapagliflozin | DAPA-HF ([NCT03036124](https://clinicaltrials.gov/study/NCT03036124)) + prespecified sex analysis (PMID 33787831) |
+| Hypertension | Angiotensin receptor blocker | Valsartan | Hayoz 2012, postmenopausal women-only (PMC8108841) |
 
-**Corpus at a glance:** 4 Phase 3 RCT records · 6 linked publications · 10 included
-evidence sources · 31 evidence assertions · 5 sex-specific findings · 15 screening
-decisions · 30 benchmark passages (18 development / 6 validation / 6 frozen held-out
-test). Reproduce these counts with `python pipeline/validate.py`.
+**Corpus at a glance:** 7 randomized-study records · 15 included evidence sources · 58
+evidence assertions · 10 sex-specific findings · 1 direct comparison · 20 screening
+decisions · 30 benchmark passages. Reproduce every count with `python pipeline/validate.py`.
 
-**Two contrasting real cases.** Rosuvastatin shows women counted + analysed but *no formal
-drug-specific interaction test*. **Dapagliflozin** shows the stronger case: a prespecified
-DAPA-HF sex analysis with a **real interaction test** — women HR 0.79 (95% CI 0.59–1.06) vs men
-HR 0.73 (0.63–0.85), **P interaction = 0.67** — plus sex-stratified safety. AMIRA distinguishes
-*evidence that exists* from *evidence that is missing*, rather than always returning "insufficient".
+**Two real teaching cases.**
+- **Digoxin (default view)** surfaces the historical DIG post-hoc signal: **33.1%** of women
+  assigned digoxin died during follow-up vs **28.9%** on placebo — adjusted **HR 1.23
+  (95% CI 1.02–1.47), P = 0.014** for the sex interaction. AMIRA presents this with its full
+  context: a historical post-hoc analysis, *not* menopause-specific, and *not* proof that an
+  individual outcome was caused by digoxin.
+- **Dapagliflozin** shows a cleaner modern case: DAPA-HF enrolled 4,744 (1,109 women, 23.4%),
+  women HR 0.79 (95% CI 0.59–1.06) vs men HR 0.73 (0.63–0.85), **P interaction = 0.67** — a
+  reported formal sex-by-treatment test.
 
-### The four questions, answered from real data
-
-| Question | Rosuvastatin answer | Source |
-|---|---|---|
-| **How well studied in women?** | **2 / 5 — Women Analyzed** (derived) | 6,801 women reported |
-| **Did effectiveness differ?** | **Sex-specific analysis reported, statistical comparison unclear** — women HR 0.54 (95% CI 0.37–0.80) vs men HR 0.58 (0.45–0.73), but no formal rosuvastatin-specific interaction test located. *Class-level* heterogeneity-by-sex p=0.33 (CTT) is shown separately and does not drive the drug-specific result | PMID 20176986; PMID 25579834 (class-level) |
-| **Did side effects differ?** | **Insufficient sex-specific safety evidence** — 0 of 2 rosuvastatin trials reported adverse events by sex | evidence gap |
-| **How does the class compare?** | 1 statin has a verified maturity score; 2 represented (atorvastatin's is **Not yet established** — female count not located) | class comparison |
-
-| Fact | Value | Basis |
-|---|---|---|
-| Participants (rosuvastatin corpus) | 30,507 | reported |
-| Women with an exact published count | **6,801** (JUPITER) | reported |
-| HOPE-3 women | **46% — no exact count is published** | reported (percentage only) |
-| CARDS women | **not located in retrieved sources** | not_located |
-| Menopausal status / hormone therapy | 0 of 2 rosuvastatin trials | not reported |
-
-### Five integrity rules the code enforces
-
-1. **Reported ≠ derived.** A published count and a number AMIRA computed are never
-   silently summed. Mixed figures are labelled `mixed_reported_and_derived`.
-2. **Age is never used to infer menopause.** JUPITER enrolled women ≥60, HOPE-3 ≥65,
-   CARDS ≥40; none advances the maturity level. Level 3 requires an explicit
-   menopausal-status report.
-3. **Significance is never inferred.** A finding may only claim "significant" or "no
-   significant difference" when it records an actual reported statistical comparison.
-   Absence of a comparison yields *insufficient*, never *no difference*.
-4. **Evidence strength ≠ effectiveness.** The class comparison ranks how well each
-   medicine was *studied* in women. It never claims one drug outperforms another; a build
-   test fails on superiority language.
-5. **Nothing unverified is marked verified.** All assertions and findings are
-   *source-verified* (machine-checked against the retrieved source); **none** has named
-   human sign-off, so `human_verified` is `false` throughout. See
-   [`VERIFICATION_WORKSHEET.md`](VERIFICATION_WORKSHEET.md).
+Dapagliflozin appears only as a *separate evidence path*; it is never described as a
+replacement for, or a comparator superior to, digoxin. These are not head-to-head trials.
 
 ---
 
-## Quick start
+## Evidence Maturity methodology (the primary score)
+
+The verified **1–5 Evidence Maturity** level (rendered as the segmented meter) is derived at
+request time from the evidence assertions — never stored:
+
+1. **Women Counted** — female enrolment reported (count or percentage)
+2. **Women Analyzed** — sex-specific effectiveness *or* safety outcomes reported
+3. **Life Stage Aware** — menopausal status / life stage reported
+4. **Hormone Aware** — hormone-therapy use reported
+5. **Precision Women's Evidence** — outcomes stratified by *both* life stage and hormonal context
+
+Levels are cumulative. **Age is never used to infer menopause** — Level 3 requires an explicit
+menopausal-status report. Full rules: [`docs/methodology.md`](docs/methodology.md).
+
+There is also an **experimental "AMIRA Evidence Readiness — Pilot v0.1"** 0–100 completeness
+score (`backend/amira/readiness.py`, rules in
+[`docs/evidence-readiness-pilot-v0.1.md`](docs/evidence-readiness-pilot-v0.1.md)). It is a
+deterministic function of the evidence — **not** a model opinion, and **not** a measure of
+whether a medicine is better, safer, or more effective. It is **off by default**
+(`AMIRA_ENABLE_PILOT_SCORE=0`); the verified 1–5 level is the primary score.
+
+---
+
+## How AMIRA's AI found this evidence
+
+The reusable AI contribution is a schema + prompt + validator + scoring rules + evaluation
+harness — **not** a single proprietary model. The pipeline is:
+
+> Clinical literature → passage retrieval → schema-constrained extraction (AMIRA-Extract)
+> → exact-passage validation → human review → deterministic Evidence Maturity engine
+> → dashboard + Research Map + open assets
+
+- **AMIRA-Extract** ([`backend/amira/extract.py`](backend/amira/extract.py)) converts one
+  clinical-research passage from one source into the structured **Women's Evidence Schema
+  v0.2** ([`schema/womens_evidence_schema_v0.2.json`](schema/womens_evidence_schema_v0.2.json)).
+  It is **passage-local and source-local**: a field is never borrowed from another trial (a
+  DIG passage never inherits DECISION's 284-woman count). The LLM extracts; it never
+  calculates the score.
+- **Providers are pluggable** via environment variables (`AMIRA_LLM_PROVIDER`,
+  `AMIRA_LLM_MODEL`, `AMIRA_LLM_API_KEY`). API keys are read from the environment only — never
+  committed, logged, or exposed in the browser. The OpenAI path uses schema-constrained
+  Structured Outputs; if a live call fails, the failure is surfaced honestly.
+
+### Recorded extraction demonstration
+
+The default provider is **`recorded`** — a *Recorded AMIRA-Extract demonstration*. It replays
+a previously generated, source-verified extraction from the committed corpus so the pipeline
+can be shown without sending any data to an external model. The UI labels it as recorded
+("Run recorded extraction", "Live model call: No"); it never claims a live model ran.
+
+### Validation & source honesty
+
+Every extraction is validated (schema → exact quote → anti-inference guards). AMIRA stores
+source *excerpts*, so a verified match is shown as **"Stored evidence excerpt matched"** — it
+never claims the entire original publication was auto-verified. Guards reject: inferring
+menopause from age, claiming a sex comparison with no reported test, and inferring "no
+difference" from silence. Model card: [`docs/ai-model-card.md`](docs/ai-model-card.md).
+
+---
+
+## Research Map & Open Benchmark
+
+- **Research Map** (`/amira/research-map`, `/api/trials`) groups the corpus trials by
+  condition and drug class so the coverage — and the gaps — are visible at a glance.
+- **Open Benchmark** (`/amira/open-benchmark`, `/api/benchmark`) exposes 30 verbatim
+  benchmark passages. Labels are rule-drafted and marked `pending_human_review`; **no
+  evaluation has been run**, so the UI shows **EVALUATION PENDING** and claims no accuracy.
+
+---
+
+## Population Context — NHANES
+
+A scientifically bounded module ([`docs/nhanes-data-card.md`](docs/nhanes-data-card.md))
+reporting **medication *use* among U.S. women** from CDC NHANES 2017–2018, with survey
+weights (`WTINT2YR`), design variables (`SDMVSTRA`, `SDMVPSU`), Taylor-linearized standard
+errors, and NCHS-style small-cell suppression. It is **separate from clinical-trial
+evidence** and never implies causality, effectiveness, safety, or prescribing.
+
+Committed cache ([`dataset/nhanes/nhanes_context_v1.json`](dataset/nhanes/nhanes_context_v1.json),
+built by [`pipeline/nhanes_context.py`](pipeline/nhanes_context.py)): statins 15.08% and ARBs
+6.81% among adult women are shown; **cardiac glycosides and SGLT2 inhibitors are suppressed**
+(unweighted n = 7 each) — the honest, intended behaviour.
+
+---
+
+## Integrity rules the code enforces
+
+1. **Reported ≠ derived.** A published count and an AMIRA-computed number are never silently
+   summed; mixed figures are labelled.
+2. **Age never infers menopause.** Level 3 requires an explicit menopausal-status report.
+3. **Significance is never inferred.** "Significant" / "no significant difference" require a
+   reported statistical test; absence yields *insufficient*, never *no difference*.
+4. **No cross-study leakage.** Extractions are passage/source/trial-local (regression-tested).
+5. **Evidence completeness ≠ effectiveness.** Nothing ranks medicines by clinical
+   performance; a build test fails on superiority language.
+6. **Nothing unverified is marked verified.** `human_verified` is `false` throughout.
+
+---
+
+## Technical architecture
+
+- **Backend:** FastAPI ([`backend/main.py`](backend/main.py)) serving the API *and* the built
+  UI from one process. Deterministic engines: `dataset`, `engine`, `maturity`, `clinical`,
+  `readiness`, `extract`, `nhanes`, `flags`. No database — the normalized dataset in
+  [`dataset/`](dataset/) is the single source of truth.
+- **Frontend:** React + TypeScript + Vite ([`ui/`](ui/)); one API-driven page per screen,
+  responsive from 1920 down to 390 with no horizontal overflow.
+- **Data pipeline:** [`pipeline/`](pipeline/) (ingest, benchmark, validate, LLM extraction,
+  extraction validation, NHANES). **Feature flags** (`AMIRA_ENABLE_PILOT_SCORE`,
+  `AMIRA_ENABLE_AI_EXTRACTION`, `AMIRA_ENABLE_NHANES`) default to scientifically safe behaviour
+  with no external service required.
+- **Deployment:** [`render.yaml`](render.yaml) builds the UI, installs the backend, and serves
+  the committed dataset (no live network calls at request time).
+
+---
+
+## Setup & local run
+
+The dataset is already committed, so you can run without any network access. (Only re-run
+`pipeline/ingest.py` if you want to rebuild the corpus from live sources.)
 
 ```bash
-# 1. Build the dataset from live sources (requires network)
-python pipeline/ingest.py
-python pipeline/build_benchmark.py
-
-# 2. Backend
+# 1. Backend
 cd backend && python -m venv .venv
 .venv/Scripts/python -m pip install -r requirements.txt && cd ..
 
-# 3. UI
+# 2. UI
 cd ui && npm ci && npm run build && cd ..
 
-# 4. Run (API + UI on one URL)
+# 3. Run (API + UI on one URL)
 uvicorn main:app --app-dir backend --port 8000
 ```
 
 Open **http://localhost:8000** → redirects to `/amira/check-evidence`.
 
-```bash
-cd backend && .venv/Scripts/python -m pytest -q    # 78 integrity + build-guard tests
+Optional environment variables (all default-safe):
 
-# Offline reproducibility check (no network): validates the committed corpus
-python pipeline/validate.py
+```
+AMIRA_ENABLE_PILOT_SCORE=0     # experimental 0–100 score (off by default)
+AMIRA_ENABLE_AI_EXTRACTION=1   # AI pipeline + recorded demo
+AMIRA_ENABLE_NHANES=1          # NHANES population context
+AMIRA_LLM_PROVIDER=recorded    # recorded | openai | anthropic
+# AMIRA_LLM_MODEL, AMIRA_LLM_API_KEY  — only for a live provider; never commit a key
 ```
 
-## API
+## Testing
 
-`POST /api/check-evidence` — body: `condition`, `medicine`, `life_stage`,
-`hormone_therapy`. Every response carries `dataset_version`, `source_cutoff`,
-`commit_hash`, `generated_at` and resolvable source links.
+```bash
+# Backend (run from backend/ so the `amira` package imports)
+cd backend && python -m pytest -q          # 127 integrity, provenance & build-guard tests
 
-Changing **life stage** or **hormone therapy** changes the returned evidence context;
-because no trial in the corpus reports either, specific selections return a **bounded
-response** naming exactly what is missing. Unsupported medicines return
-`medicine_not_in_corpus` rather than a guess.
+# Dataset & extraction validation (offline, no network)
+python pipeline/validate.py                # corpus consistency + no synthetic markers
+python pipeline/validate_extractions.py    # schema + exact-quote validation
 
-Other endpoints: `/api/trials`, `/api/evidence-assertions`, `/api/screening-log`,
-`/api/benchmark`, `/api/manifest`, and downloads under `/api/download/*.csv|.jsonl`
-generated from the *same* records the API serves.
+# Frontend
+cd ui && npm test                          # 22 component tests
+```
 
-## Benchmark
+## API & downloadable assets
 
-30 verbatim passages from the five corpus sources — 18 development / 6 validation /
-6 frozen held-out test. Labels are rule-drafted and marked
-`pending_human_review`. **No evaluation has been run**, so the UI displays
-**EVALUATION PENDING** and no accuracy figure is claimed.
+`POST /api/check-evidence` — body: `condition`, `medicine`, `life_stage`, `hormone_therapy`.
+Every response carries `dataset_version`, `source_cutoff`, `commit_hash`, `generated_at` and
+resolvable source links. Other endpoints: `/api/catalog`, `/api/trials`,
+`/api/evidence-assertions`, `/api/findings`, `/api/class-comparison`, `/api/screening-log`,
+`/api/readiness`, `/api/ai/pipeline`, `/api/ai/passages`, `/api/ai/extract`, `/api/nhanes`,
+`/api/assets`, `/api/benchmark`, `/api/manifest`, `/api/flags`.
+
+Downloads, generated from the *same* records the API serves:
+`/api/download/trials.csv` · `trials.jsonl` · `evidence_assertions.csv` · `.jsonl` ·
+`findings.csv` · `.jsonl` · `benchmark.jsonl`. Reusable assets (schema, prompt library,
+dataset, benchmark, pipeline, evaluation runner, docs) are listed at `/api/assets` and in
+[`docs/open-science-assets.md`](docs/open-science-assets.md).
 
 ## Documentation
 
-- [Inclusion / exclusion protocol](docs/inclusion-exclusion-protocol.md) (+ [screening log](dataset/screening_log.json))
-- [Dataset card](docs/dataset-card.md) · [Data dictionary](docs/data-dictionary.md)
-- [Methodology](docs/methodology.md) — source hierarchy, maturity model, labeling, benchmark, evaluation
+- [Methodology](docs/methodology.md) · [Evidence Readiness pilot](docs/evidence-readiness-pilot-v0.1.md)
+- [AI model card](docs/ai-model-card.md) · [NHANES data card](docs/nhanes-data-card.md)
+- [Open-science assets](docs/open-science-assets.md)
+- [Inclusion / exclusion protocol](docs/inclusion-exclusion-protocol.md) · [Dataset card](docs/dataset-card.md) · [Data dictionary](docs/data-dictionary.md)
 - [Limitations and licensing](docs/limitations-and-licensing.md)
 - [Verification worksheet](VERIFICATION_WORKSHEET.md) — every assertion and finding with its source link
 
-## Scientific status
+## Scientific status, limitations & human review
 
 AMIRA reports its own limits as plainly as its results:
 
-- **Every assertion and finding is source-verified** — machine-checked against the
-  retrieved primary source, each with an exact passage and a resolvable URL.
-- **Named human sign-off is still outstanding**, so `human_verified` is `false`
-  throughout the dataset. Nothing is presented as human-verified.
-- **Benchmark labels are rule-drafted** and marked `pending_human_review`.
-- **No model evaluation has been run**, so the product displays **EVALUATION PENDING**
-  and claims **no accuracy figure**.
+- **Every assertion and finding is source-verified** — machine-checked against the retrieved
+  primary source, each with an exact passage and a resolvable URL.
+- **Named human sign-off is still outstanding**, so `human_verified` is `false` throughout;
+  the UI shows "Human review pending". Nothing is presented as human-verified.
+- **Benchmark labels are rule-drafted** (`pending_human_review`); **no model evaluation has
+  been run**, so the product shows **EVALUATION PENDING** and claims **no accuracy figure**.
+- **No validated gold benchmark and no open license are claimed** unless a `LICENSE` file and
+  dataset license have been approved by the repository owner.
+- The corpus is small and frozen (source cutoff 2026-07-18); it is research infrastructure,
+  not a validated clinical decision tool.

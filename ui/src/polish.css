@@ -1,0 +1,111 @@
+/* ============================================================
+   Responsive polish: full desktop width, larger readable text,
+   prominent logo. Loaded LAST so these rules win. Media queries
+   at the bottom keep responsive behaviour intact.
+   ============================================================ */
+
+/* --- Full desktop width --- */
+.container { max-width: 1720px; }
+.site-header-inner { max-width: 1720px; align-items: center; min-height: 0; padding-top: 16px; padding-bottom: 16px; }
+
+/* --- Prominent logo (by width; header grows as needed) --- */
+.hdr-logo { width: 210px; height: auto; }
+.hdr-tag { font-size: 12.5px; margin-top: 2px; }
+
+/* --- Typography (desktop minimums) --- */
+.check-page .page-q { font-size: clamp(30px, 3vw, 44px); }
+.check-page .page-sub { font-size: 17px; }
+.notice-title, .rep-h { font-size: 27px; }
+.ai-h, .op-h, .nhp-h, .assets-h, .continue-h { font-size: 26px; }
+.nf-eyebrow { font-size: 12px; }
+.nf-headline { font-size: 25px; }
+.nf-stats { font-size: 16px; }
+.nf-caveat { font-size: 14px; }
+.nf-link { font-size: 16px; }
+.nm-head { font-size: 17px; }
+.nm-note { font-size: 14px; }
+.mm-value { font-size: 40px; } .mm-den { font-size: 20px; } .mm-label { font-size: 14px; }
+.rep-cell-title { font-size: 14px; }
+.rep-status { font-size: 13px; }
+.op-med { font-size: 19px; }
+.op-class { font-size: 13.5px; }
+.op-descriptor, .op-bullets li { font-size: 15px; }
+.op-tag { font-size: 13px; }
+.op-disclaimer { font-size: 15px; }
+.schema-title { font-size: 17px; }
+.schema-table, .schema-field, .schema-meaning { font-size: 14px; }
+.pipe5-lab { font-size: 13px; }
+.trace5-k { font-size: 12px; } .trace5-v { font-size: 14px; }
+.ai-found-note { font-size: 14px; }
+#studies table.studies td { font-size: 15px; }
+#studies table.studies th { font-size: 13px; }
+.nhp-sub { font-size: 15px; } .nhp-k { font-size: 15px; } .nhp-v { font-size: 14px; }
+.nhp-stable { font-size: 15px; } .nhp-boundary { font-size: 14px; }
+.asset6-title { font-size: 15px; } .asset6-sub { font-size: 13px; } .asset6-badge { font-size: 11px; }
+.arch-node { font-size: 13px; }
+.continue-btn { font-size: 16px; }
+.cta, .check-btn, .field select, .field label { font-size: 16px; }
+.callout, .muted { font-size: 15px; }
+.filter-card .safety-line { font-size: 14px; }
+.share-btn { font-size: 15px; }
+
+/* extra breathing room now that the container is wider */
+.notice-card, .representation, .ai-found, .other-paths, .nhanes-panel, .assets-section { padding: 24px 26px; }
+
+/* --- Responsive (kept last so it overrides the desktop base above) --- */
+@media (max-width: 1200px) {
+  .container { max-width: 100%; }
+  .site-header-inner { max-width: 100%; }
+}
+@media (max-width: 1040px) {
+  .hdr-logo { width: 190px; }
+  .notice-grid, .ai-found-grid, .op-grid, .nhp-cols { grid-template-columns: 1fr; }
+  .rep-row { grid-template-columns: repeat(4, 1fr); }
+  .assets6 { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 768px) {
+  .rep-row { grid-template-columns: repeat(3, 1fr); }
+  .filter-row { grid-template-columns: 1fr 1fr 1fr; }
+}
+@media (max-width: 680px) {
+  .hdr-logo { width: 150px; }
+  .site-header-inner { padding: 12px 16px; gap: 10px; }
+  .hdr-tag { font-size: 10.5px; }
+  .hdr-share { display: none; }   /* keep only the menu button on mobile */
+  .hdr-right { gap: 0; }
+  .check-page .page-q { font-size: 28px; }
+  .rep-row { grid-template-columns: repeat(2, 1fr); }
+  .filter-row { grid-template-columns: 1fr 1fr; }
+  .assets6 { grid-template-columns: repeat(2, 1fr); }
+  .trace5 { grid-template-columns: repeat(2, 1fr); }
+  .notice-card, .representation, .ai-found, .other-paths, .nhanes-panel, .assets-section { padding: 18px 16px; }
+}
+
+/* --- Header navigation --- */
+.hdr-nav { display: flex; gap: 4px; margin-left: 18px; flex: 1; align-items: center; }
+.hdr-nav-link { font-size: 16px; font-weight: 600; color: var(--ink-2); text-decoration: none; padding: 9px 13px; border-radius: 9px; white-space: nowrap; }
+.hdr-nav-link:hover { background: var(--lav-50); color: var(--ink); text-decoration: none; }
+.hdr-nav-link.active { background: var(--lav-100); color: var(--lav-700); }
+.hdr-nav-link:focus-visible, .hdr-burger:focus-visible, .hdr-mobile-link:focus-visible, .share-btn:focus-visible {
+  outline: 3px solid var(--lav-300); outline-offset: 2px;
+}
+.hdr-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.hdr-burger { display: none; flex-direction: column; gap: 4px; background: none; border: 1px solid var(--border-strong); border-radius: 9px; width: 44px; height: 44px; align-items: center; justify-content: center; }
+.hdr-burger span { width: 20px; height: 2px; background: var(--ink-2); border-radius: 2px; }
+.hdr-mobile { display: flex; flex-direction: column; padding: 8px 20px 14px; border-top: 1px solid var(--border); background: #fff; }
+.hdr-mobile-link { font-size: 16px; font-weight: 600; color: var(--ink-2); padding: 12px 8px; min-height: 44px; display: flex; align-items: center; border-radius: 9px; text-decoration: none; }
+.hdr-mobile-link.active { color: var(--lav-700); background: var(--lav-50); }
+
+/* --- Evidence-path card treatments: pink warning vs lavender --- */
+.op-card.warn { background: #fdeef2; border: 1px solid #f0c6d3; border-left: 4px solid #d1436e; }
+.op-card.warn .op-med { color: #b23a63; }
+.op-card.warn .op-dot { color: #d1436e; }
+.op-card.info { background: linear-gradient(160deg, var(--lav-50), #fff 72%); border: 1px solid var(--lav-200); border-left: 4px solid var(--lav-500); }
+.op-card.info .op-med { color: var(--lav-700); }
+.op-card.info .op-dot { color: var(--lav-500); }
+
+/* Collapse header links into the accessible menu on tablet/mobile */
+@media (max-width: 1100px) {
+  .hdr-nav { display: none; }
+  .hdr-burger { display: flex; }
+}
