@@ -1,9 +1,10 @@
 import { NavLink } from "react-router-dom";
 import amiraLogo from "../assets/amira-logo.png";
 
-/** Approved header: enlarged AMIRA logo lockup on the left, truthful status
- *  badges in the centre, Share on the right. Thin lower border, white
- *  background, no left sidebar. Matches the approved mockup. */
+/** Header: the prominent AMIRA logo lockup on the left and Share on the right.
+ *  No technical status badges compete with the clinical question — source and
+ *  extraction status live inside "How AMIRA's AI found this evidence" and the
+ *  evidence trace. White background, thin lower border, no left sidebar. */
 export function Header() {
   const share = () => navigator.clipboard?.writeText(window.location.href);
   return (
@@ -13,11 +14,6 @@ export function Header() {
           <img src={amiraLogo} className="hdr-logo" alt="AMIRA" />
           <span className="hdr-tag">Evidence Intelligence Platform</span>
         </NavLink>
-
-        <div className="hdr-badges" role="note">
-          <span className="hdr-badge amber"><span className="dot" /> Source-linked evidence</span>
-          <span className="hdr-badge lav"><span className="dot" /> Recorded AI extraction demo</span>
-        </div>
 
         <button className="share-btn hdr-share" onClick={share}>⌁ Share</button>
       </div>

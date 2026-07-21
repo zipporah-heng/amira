@@ -15,10 +15,11 @@ describe("Header", () => {
     expect(container.querySelector("nav.nav")).toBeNull();
   });
 
-  it("shows truthful status badges and no internal development labels", () => {
+  it("does not show technical status badges in the header", () => {
     renderHeader();
-    expect(screen.getByText("Source-linked evidence")).toBeInTheDocument();
-    expect(screen.getByText("Recorded AI extraction demo")).toBeInTheDocument();
+    // These belong inside the AI evidence trace, not competing with the clinical question.
+    expect(screen.queryByText("Source-linked evidence")).not.toBeInTheDocument();
+    expect(screen.queryByText("Recorded AI extraction demo")).not.toBeInTheDocument();
     expect(screen.queryByText(/Video-ready/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/cached records/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Concept mockup/i)).not.toBeInTheDocument();
