@@ -11,6 +11,7 @@ interface Card {
   bullets: string[];
   sourceUrl: string;
   tone: "warn" | "info";
+  note?: string | null;
 }
 
 function currentCard(report: EvidenceResponse): Card | null {
@@ -45,7 +46,7 @@ export function OtherEvidencePaths({ report }: { report: EvidenceResponse }) {
     ...others.map((p): Card => ({
       medicine: p.medicine, drugClass: p.drug_class,
       descriptor: p.headline, bullets: p.bullets, sourceUrl: p.source.url,
-      tone: "info",
+      tone: "info", note: p.interpretation_note,
     })),
   ];
 
@@ -67,6 +68,7 @@ export function OtherEvidencePaths({ report }: { report: EvidenceResponse }) {
             </div>
             <p className="op-descriptor">{c.descriptor}</p>
             <ul className="op-bullets">{c.bullets.map((b) => <li key={b}>{b}</li>)}</ul>
+            {c.note && <p className="op-note">{c.note}</p>}
             <a href={c.sourceUrl} target="_blank" rel="noopener noreferrer" className="src-link">View exact passage →</a>
           </div>
         ))}

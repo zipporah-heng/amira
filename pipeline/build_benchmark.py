@@ -6,7 +6,7 @@ are fetched live and the exact text is stored with its identifiers, so any item 
 be traced back and re-verified.
 
 Honesty rules:
-  * gold_label is drafted by rule from the passage text and is marked
+  * draft_label is drafted by rule from the passage text and is marked
     annotation_status = "pending_human_review" with verifier = null.
     Nothing here is marked human-verified.
   * The held-out test split is frozen: item ids are assigned deterministically by
@@ -95,7 +95,7 @@ def sentences(text: str) -> list[str]:
     return out
 
 
-# --- rule-drafted gold labels (pending human review) ------------------------ #
+# --- rule-drafted DRAFT labels (pending human review; not gold labels) ------- #
 WOMAN = r"\b(women|female|woman)\b"
 
 
@@ -200,7 +200,7 @@ def main():
             "pmcid": src["pmcid"],
             "source_url": src["url"],
             "exact_passage": c["passage"],
-            "gold_label": draft_label(c["passage"]),
+            "draft_label": draft_label(c["passage"]),
             "split": split,
             "annotation_status": "pending_human_review",
             "human_verifier": None,
@@ -229,9 +229,16 @@ def main():
         "corpus": ["NCT00239681", "NCT00468923"],
         "annotation_status": "pending_human_review",
         "human_verified_items": 0,
+        "label_field": "draft_label",
         "note": ("All passages are verbatim text retrieved from ClinicalTrials.gov, PubMed or "
-                 "PubMed Central. Gold labels are rule-drafted and require named human review "
+                 "PubMed Central. Draft labels are rule-drafted and require named human review "
                  "before any evaluation result may be published."),
+        "completion_protocol": [
+            "Two independent reviewers label each passage against the schema.",
+            "Disagreements are adjudicated and resolved.",
+            "Reviewer identities and review dates are recorded on each item.",
+            "Only then may the extractor be evaluated against the reviewed labels and results published.",
+        ],
     }
     (OUT / "benchmark_manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 

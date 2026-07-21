@@ -16,9 +16,39 @@ menopausal-status claim.
 
 from __future__ import annotations
 
+import re
 from typing import Dict, List, Optional
 
 from . import clinical, dataset, flags, maturity, readiness
+
+
+def _first_sentence(text: str) -> str:
+    """First sentence of a finding, split ONLY on a period followed by whitespace.
+
+    This never truncates a decimal such as ``0.79`` (there is no space after the
+    decimal point), fixing the "HR 0." bug from a naive ``split('.')``."""
+    text = (text or "").strip()
+    if not text:
+        return ""
+    first = re.split(r"\.\s+", text, maxsplit=1)[0].rstrip(". ")
+    return first + "."
+
+
+def _ci_bounds(ci: Optional[str]):
+    """Extract (lower, upper) numeric bounds from a CI string like
+    '95% CI 0.59-1.06' or '95% CI, 0.37 to 0.80'. Returns None if not parseable."""
+    if not ci:
+        return None
+    nums = re.findall(r"\d+(?:\.\d+)?", ci.replace("95%", "").replace("CI", ""))
+    vals = [float(n) for n in nums]
+    if len(vals) >= 2:
+        return vals[-2], vals[-1]
+    return None
+
+
+def _ci_crosses_one(ci: Optional[str]) -> bool:
+    b = _ci_bounds(ci)
+    return bool(b and b[0] < 1.0 < b[1])
 
 # The five agreed clinical life stages, plus an explicit "not specified" default.
 # Age is NEVER used to infer any of these — a specific stage returns a bounded
@@ -666,12 +696,28 @@ def other_evidence_paths(medicine: str, condition: str) -> List[dict]:
         if f.get("comparison_p") is not None:
             bullets.append(f"Sex-by-treatment interaction P = {f['comparison_p']}")
         s = dataset.source_by_id(f["source_id"])
+        # Full first sentence — NEVER truncated at a decimal (fixes the "HR 0." bug).
+        headline = _first_sentence(f["interpretation"]) if f.get("interpretation") else f["endpoint"]
+        # When the female CI crosses 1.0, the estimate is statistically inconclusive.
+        female_ci = f.get("female_ci")
+        inconclusive = _ci_crosses_one(female_ci)
+        note = None
+        if inconclusive:
+            b = _ci_bounds(female_ci)
+            rng = f"{b[0]}–{b[1]}" if b else "the reported range"
+            note = (f"The estimate ({f.get('female_estimate') or 'the point estimate'}) suggests possible "
+                    f"benefit, but the result is statistically inconclusive: the 95% CI ({rng}) crosses 1.0. "
+                    "Menopause-specific evidence remains limited or unavailable in the reviewed record.")
         paths.append({
             "medicine": med,
             "drug_class": med_trials[0].get("drug_class"),
-            "headline": f["interpretation"].split(".")[0] + "." if f.get("interpretation") else f["endpoint"],
+            "headline": headline,
             "bullets": bullets,
             "significance": f.get("significance"),
+            "female_estimate": f.get("female_estimate"),
+            "female_ci": female_ci,
+            "ci_crosses_one": inconclusive,
+            "interpretation_note": note,
             "boundary": "This is not a head-to-head comparison or treatment recommendation.",
             "source": {"title": s["title"], "url": s["url"], "pmid": s.get("pmid"),
                        "source_type": s["source_type"]},

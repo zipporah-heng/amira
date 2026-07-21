@@ -1,4 +1,5 @@
 import { MethodologyFlow } from "../components/MethodologyFlow";
+import { HormonalFocus } from "../components/HormonalFocus";
 
 /** Definitions of the maturity ladder. The AWARDED level is never defined here —
  *  it is derived from evidence by the API at request time. */
@@ -19,6 +20,8 @@ export function Methodology() {
         AMIRA turns fragmented research into standardized, machine-readable women's hormonal
         evidence, then shows what the research did and did not report.
       </p>
+
+      <HormonalFocus />
 
       <MethodologyFlow />
 

@@ -6,6 +6,31 @@
 
 **Live application:** **https://amira-d8l6.onrender.com/amira/check-evidence**
 
+> AMIRA addresses a specific hormonal health evidence problem: researchers cannot consistently
+> determine whether **menopause** and **hormone therapy** were represented in medication studies.
+> AMIRA uses AI to extract and structure these fields while preserving what was **not reported**
+> or **could not be located**. The Digoxin mortality finding is **sex-specific, not
+> menopause-specific**, and AMIRA does not reinterpret it as hormonal evidence; AMIRA identifies
+> whether menopause and hormone-therapy information was reported, not reported, or not located,
+> and does not provide treatment recommendations.
+
+## Challenge deliverables
+
+| Deliverable | Link |
+| --- | --- |
+| Working application | https://amira-d8l6.onrender.com/amira/check-evidence |
+| Source code | https://github.com/zipporah-heng/amira |
+| Dataset | [`dataset/`](https://github.com/zipporah-heng/amira/tree/main/dataset) · CSV/JSONL via `/api/download/*` |
+| Open benchmark | [live](https://amira-d8l6.onrender.com/amira/open-benchmark) · [`benchmark/`](https://github.com/zipporah-heng/amira/tree/main/benchmark) |
+| Evaluation runner | [`evaluation/run_extraction_evaluation.py`](https://github.com/zipporah-heng/amira/blob/main/evaluation/run_extraction_evaluation.py) |
+| Methodology | [live](https://amira-d8l6.onrender.com/amira/methodology) · [`docs/methodology.md`](https://github.com/zipporah-heng/amira/blob/main/docs/methodology.md) |
+| Women's Evidence Schema | [`schema/womens_evidence_schema_v0.2.json`](https://github.com/zipporah-heng/amira/blob/main/schema/womens_evidence_schema_v0.2.json) |
+| API entry point | `GET /api/manifest`, `POST /api/check-evidence`, `GET /api/assets` (see [API & downloadable assets](#api--downloadable-assets)) |
+| Downloadable scientific assets | `GET /api/assets` · `/api/download/*.csv|.jsonl` |
+| License & limitations | [`LICENSE`](LICENSE) · [`LICENSES.md`](LICENSES.md) · [Scientific status](#scientific-status-limitations--human-review) |
+| Demo video | Not yet provided |
+| Technical video | Not yet provided |
+
 ---
 
 ## What AMIRA does
@@ -296,7 +321,17 @@ AMIRA reports its own limits as plainly as its results:
   the UI shows "Human review pending". Nothing is presented as human-verified.
 - **Benchmark labels are rule-drafted** (`pending_human_review`); **no model evaluation has
   been run**, so the product shows **EVALUATION PENDING** and claims **no accuracy figure**.
-- **No validated gold benchmark and no open license are claimed** unless a `LICENSE` file and
-  dataset license have been approved by the repository owner.
+- **No validated / gold benchmark is claimed.** The benchmark is *prepared for human
+  validation*: draft labels await independent review under the completion protocol in
+  [`docs/methodology.md`](docs/methodology.md).
 - The corpus is small and frozen (source cutoff 2026-07-18); it is research infrastructure,
   not a validated clinical decision tool.
+
+## Licensing
+
+- **Source code** — Apache License 2.0 ([`LICENSE`](LICENSE)).
+- **Original schema, documentation, and annotations** — CC BY 4.0.
+- **Third-party material** — reproduced publication passages, abstracts, and source text
+  remain subject to their **original rights and are not relicensed by AMIRA**;
+  ClinicalTrials.gov records are U.S. Government public domain; NHANES follows CDC/NCHS
+  terms. AMIRA claims **no ownership of source publication text**. See [`LICENSES.md`](LICENSES.md).

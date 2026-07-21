@@ -525,6 +525,10 @@ export interface EvidencePath {
   headline: string;
   bullets: string[];
   significance: string | null;
+  female_estimate?: string | null;
+  female_ci?: string | null;
+  ci_crosses_one?: boolean;
+  interpretation_note?: string | null;
   boundary: string;
   source: { title: string; url: string; pmid: string | null; source_type: string };
 }

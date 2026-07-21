@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { checkEvidence, type EvidenceResponse } from "../api";
 import { EvidenceSearch, type Filters, type ConditionEntry } from "../components/EvidenceSearch";
+import { HormonalFocus } from "../components/HormonalFocus";
 import { WhatToNotice } from "../components/WhatToNotice";
 import { Representation } from "../components/Representation";
 import { AiFound } from "../components/AiFound";
@@ -55,6 +56,9 @@ export function CheckEvidence() {
         See how women were represented, what researchers found, what remains unknown and where each
         finding came from.
       </p>
+
+      {/* Hormonal-health focus (concise; does not overwhelm the journey) */}
+      <HormonalFocus compact />
 
       {/* Evidence selectors — one compact row */}
       <EvidenceSearch filters={filters} setFilters={setFilters} onCheck={() => run(filters)} catalog={catalog} />
