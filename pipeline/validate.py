@@ -110,12 +110,12 @@ def main() -> int:
         if c.get("human_verified") and not c.get("verifier"):
             err(f"{c['comparison_id']} is human_verified with no named verifier")
 
-    # --- source links --------------------------------------------------------- #
+    # --- source links (real hostname parsing — no substring spoofing) --------- #
+    sys.path.insert(0, str(REPO / "backend"))
+    from amira import dataset as _ds  # noqa: E402
     for s in sources:
-        if not s["url"].startswith("https://"):
-            err(f"{s['source_id']} url is not https")
-        if not any(h in s["url"] for h in ALLOWED_HOSTS):
-            err(f"{s['source_id']} url is not an authoritative host: {s['url']}")
+        if not _ds.authoritative_url_ok(s["url"]):
+            err(f"{s['source_id']} url is not an authoritative https host: {s['url']}")
 
     # --- no stored maturity level --------------------------------------------- #
     blob = json.dumps({

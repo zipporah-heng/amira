@@ -252,8 +252,14 @@ def test_not_located_and_not_reported_stay_distinct():
 
 def test_research_map_renders_not_located_as_unclear():
     from pathlib import Path
-    rm = (Path(__file__).resolve().parents[2] / "ui" / "src" / "pages" / "ResearchMap.tsx"
-          ).read_text(encoding="utf-8")
-    assert 'Unclear / not located' in rm
-    assert 'did not locate sufficient evidence' in rm
-    assert '"not_located"' in rm  # state is mapped explicitly, not collapsed
+    ui = Path(__file__).resolve().parents[2] / "ui" / "src"
+    rm = (ui / "pages" / "ResearchMap.tsx").read_text(encoding="utf-8")
+    state = (ui / "evidenceState.ts").read_text(encoding="utf-8")
+    # ResearchMap routes cells through the shared, exhaustive state helper.
+    assert "toEvidenceState" in rm and "EVIDENCE_STATE" in rm
+    # The five states are distinct in the shared map and never collapsed.
+    assert 'Unclear / not located' in state and '"not_located"' in state
+    assert 'did not locate sufficient evidence' in state
+    assert 'Evidence status unavailable' in state  # absent is its own state
+    for tok in ('"reported"', '"derived"', '"not_reported"', '"not_located"', '"absent"'):
+        assert tok in state

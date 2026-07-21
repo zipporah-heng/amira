@@ -83,13 +83,15 @@ def direct_comparison_view(comparison: dict) -> dict:
     }
 
 
+def _reported_verified(trial_id: str, dimension: str) -> bool:
+    """A dimension counts as affirmatively reported only through the verified gate."""
+    v = dataset.assertion_validity(trial_id, dimension, require_verified=True)
+    return v["valid"] and v["value"] == dataset.AFFIRMATIVE
+
+
 def _efficacy_reporting_counts(medicine: str) -> Dict[str, int]:
     trials = [t for t in dataset.trials() if t["medicine"].lower() == medicine.lower()]
-    reporting = 0
-    for t in trials:
-        v, _, _ = dataset.assertion_value(t["trial_id"], "sex_specific_efficacy_reported")
-        if v == "yes":
-            reporting += 1
+    reporting = sum(1 for t in trials if _reported_verified(t["trial_id"], "sex_specific_efficacy_reported"))
     return {"n_reporting": reporting, "n_trials": len(trials)}
 
 
@@ -100,7 +102,9 @@ def effectiveness_state(medicine: str) -> dict:
     and is NEVER allowed to justify a drug-specific significance conclusion.
     """
     all_findings = dataset.findings_for(medicine, "efficacy")
-    drug_findings = [f for f in all_findings if f.get("scope", "").startswith("trial:")]
+    # Only VERIFIED, trial-scoped findings may drive a drug-specific state.
+    drug_findings = [f for f in all_findings
+                     if f.get("scope", "").startswith("trial:") and dataset.verified_evidence(f)]
     class_findings = [f for f in all_findings if f.get("scope", "").startswith("class:")]
     counts = _efficacy_reporting_counts(medicine)
 
@@ -174,17 +178,16 @@ def effectiveness_state(medicine: str) -> dict:
 
 def safety_state(medicine: str) -> dict:
     findings = dataset.findings_for(medicine, "safety")
-    drug_specific = [f for f in findings if f["scope"].startswith("trial:")]
     # A drug-specific safety CONCLUSION (significant / trend) may only come from
-    # verified, trial-scoped, medicine-specific findings. Class-level findings are
-    # contextual and must NEVER set a medicine-specific safety state.
-    sigs = [f.get("significance") for f in drug_specific if f.get("source_verified", False)]
+    # VERIFIED, trial-scoped, medicine-specific findings. Class-level and unverified
+    # findings are contextual and must NEVER set a medicine-specific safety state.
+    drug_specific = [f for f in findings
+                     if f["scope"].startswith("trial:") and dataset.verified_evidence(f)]
+    class_context = [f for f in findings if f["scope"].startswith("class:")]
+    sigs = [f.get("significance") for f in drug_specific]
 
     trials = [t for t in dataset.trials() if t["medicine"].lower() == medicine.lower()]
-    reporting = sum(
-        1 for t in trials
-        if dataset.assertion_value(t["trial_id"], "sex_specific_safety_reported")[0] == "yes"
-    )
+    reporting = sum(1 for t in trials if _reported_verified(t["trial_id"], "sex_specific_safety_reported"))
     women_only = bool(drug_specific) and all(
         f.get("population_scope") == "women_only_life_stage" for f in drug_specific
     )
@@ -251,10 +254,17 @@ def safety_state(medicine: str) -> dict:
         "n_trials": len(trials),
         "caveat": ("A trend is not a confirmed difference. Sex-specific side effects are never "
                    "inferred from pooled adverse-event data."),
-        "significant_findings": [_finding_view(f) for f in findings if f.get("significance") == "significant"],
-        "trend_findings": [_finding_view(f) for f in findings if f.get("significance") == "trend_only"],
-        "other_findings": [_finding_view(f) for f in findings
+        # A "significant"/"trend" medicine-specific finding is ONLY ever a verified,
+        # drug-specific finding. Class-level evidence is returned separately, clearly
+        # labelled, and never under a medicine-specific significant-finding heading.
+        "significant_findings": [_finding_view(f) for f in drug_specific if f.get("significance") == "significant"],
+        "trend_findings": [_finding_view(f) for f in drug_specific if f.get("significance") == "trend_only"],
+        "other_findings": [_finding_view(f) for f in drug_specific
                            if f.get("significance") not in ("significant", "trend_only")],
+        "class_context_findings": [_finding_view(f) for f in class_context],
+        "class_context_note": ("Class-level context only — describes the drug class as a whole, "
+                               "not this medicine. Never a medicine-specific finding."
+                               if class_context else None),
         "derived": True,
     }
 
@@ -266,6 +276,39 @@ def _verified_medicines_in_class(drug_class: str) -> List[str]:
     })
 
 
+def medicine_ingestion_complete(medicine: str) -> bool:
+    """Explicit completed-ingestion predicate — NOT inferred from maturity alone.
+    A medicine may enter a public ranking / 'reviewed medicines' completeness claim
+    only when, for every one of its trials: the primary source resolves and is
+    authoritative; every required dimension has an assertion (no 'absent'); there
+    are no duplicate/conflicting assertions; and the foundational enrolment evidence
+    is present and verified (reported count or percentage)."""
+    from . import exports  # local import avoids a cycle
+    trials = [t for t in dataset.trials() if t["medicine"].lower() == medicine.lower()]
+    if not trials:
+        return False
+    tids = {t["trial_id"] for t in trials}
+    for t in trials:
+        ok, _ = dataset.source_is_valid(t.get("primary_source_id"))
+        if not ok:
+            return False
+    # Required dimensions present + no conflicts (reuse the integrity validators).
+    if any(v["trial_id"] in tids for v in exports.required_assertion_violations()):
+        return False
+    if any(v.get("trial_id") in tids for v in exports.duplicate_or_conflicting_assertions()):
+        return False
+    # Foundational enrolment must be verified-reported for at least one trial.
+    if not any(
+        dataset.assertion_validity(t["trial_id"], "female_enrollment_count",
+                                   require_numeric=True)["valid"]
+        or dataset.assertion_validity(t["trial_id"], "female_enrollment_pct",
+                                      require_numeric=True)["valid"]
+        for t in trials
+    ):
+        return False
+    return True
+
+
 def class_comparison(drug_class: str) -> dict:
     """Compare only verified medicines in the class, sorted by derived maturity."""
     meds = _verified_medicines_in_class(drug_class)
@@ -273,6 +316,7 @@ def class_comparison(drug_class: str) -> dict:
     for med in meds:
         trial_ids = [t["trial_id"] for t in dataset.trials() if t["medicine"] == med]
         m = maturity.evaluate(trial_ids)
+        ingestion_ok = medicine_ingestion_complete(med)
         eff = effectiveness_state(med)
         saf = safety_state(med)
         # Key gap: highest unmet women's-evidence dimension.
@@ -295,16 +339,19 @@ def class_comparison(drug_class: str) -> dict:
             "maturity_scorable": m["scorable"],
             "maturity_display": m["display"],
             "maturity_label": m["label"],
+            "ingestion_complete": ingestion_ok,
+            # Only completed-ingestion medicines are eligible to be ranked publicly.
+            "rankable": bool(m["scorable"] and ingestion_ok),
             "effectiveness_state": eff["state"],
             "safety_state": saf["state"],
             "key_gap": gaps[0] if gaps else "None identified",
             "n_trials": len(trial_ids),
         })
-    # Scored medicines first (by maturity desc); unscored medicines listed after,
+    # Rankable (scorable AND fully ingested) first; everything else listed after,
     # explicitly NOT ranked.
-    rows.sort(key=lambda r: (not r["maturity_scorable"], -r["maturity_level"], r["medicine"]))
+    rows.sort(key=lambda r: (not r["rankable"], -r["maturity_level"], r["medicine"]))
 
-    scored = [r for r in rows if r["maturity_scorable"]]
+    scored = [r for r in rows if r["rankable"]]
     cls = drug_class.lower()
     cls_plural = cls + "s"
     if len(scored) >= 2:

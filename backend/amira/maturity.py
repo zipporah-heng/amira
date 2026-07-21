@@ -42,36 +42,20 @@ LEVEL_DESCRIPTIONS = {
 }
 
 
-def _source_ok(a: dict) -> bool:
-    """An assertion may advance maturity only with a resolvable, verified source."""
-    if not a or not a.get("source_verified", False):
-        return False
-    sid = a.get("source_id")
-    if not sid:
-        return False
-    try:
-        s = dataset.source_by_id(sid)
-    except dataset.DatasetError:
-        return False
-    return str(s.get("url", "")).startswith("https://")
-
-
 def _reports(trial_id: str, dimension: str) -> bool:
-    """True only when a dimension is affirmatively reported AND the supporting
-    assertion has a `reported` basis and a verified, resolvable source. A `yes`
-    value with a `not_located`/`absent` basis, or an unverified source, never
-    advances the maturity score (fail closed)."""
-    value, basis, a = dataset.assertion_value(trial_id, dimension)
-    if a is None or basis != "reported" or value != dataset.AFFIRMATIVE:
-        return False
-    return _source_ok(a)
+    """True only when the dimension is affirmatively reported through the canonical
+    verified gate: `reported` basis, verified + authoritative + conflict-free source.
+    A `yes` with a not_located/absent basis, an unverified source, a spoofed URL, or
+    a conflicting assertion never advances the maturity score (fail closed)."""
+    v = dataset.assertion_validity(trial_id, dimension, require_verified=True)
+    return v["valid"] and v["basis"] == "reported" and v["value"] == dataset.AFFIRMATIVE
 
 
 def _has_enrollment_report(trial_id: str) -> bool:
-    """Level 1: a female count OR percentage, actually reported and verified."""
+    """Level 1: a female count OR percentage, reported through the verified gate."""
     for dim in ("female_enrollment_count", "female_enrollment_pct"):
-        value, basis, a = dataset.assertion_value(trial_id, dim)
-        if basis == "reported" and value is not None and _source_ok(a):
+        v = dataset.assertion_validity(trial_id, dim, require_verified=True, require_numeric=True)
+        if v["valid"] and v["basis"] == "reported":
             return True
     return False
 

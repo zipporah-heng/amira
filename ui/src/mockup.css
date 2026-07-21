@@ -172,3 +172,7 @@
   .filter-row { grid-template-columns: 1fr 1fr; }
   .check-page .page-q { white-space: normal; }
 }
+
+/* Research Map evidence-state cells (distinct states, never collapsed) */
+.cell.unavailable { background: var(--surface-2); color: var(--ink-3); border: 1px dashed var(--border-strong); }
+.cell.derived { background: var(--lav-50); color: var(--lav-700); }

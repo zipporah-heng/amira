@@ -52,7 +52,7 @@ Every displayed scientific claim is one row here.
 | `trial_id` | string | FK to trials |
 | `dimension` | enum | `female_enrollment_count`, `female_enrollment_pct`, `total_enrollment`, `sex_specific_efficacy_reported`, `sex_specific_safety_reported`, `menopause_status_reported`, `hormone_therapy_reported`, `pregnancy_evidence_reported` |
 | `value` | number \| enum \| null | The asserted value |
-| **`value_basis`** | enum | **`reported`** (stated verbatim in the source) · **`derived`** (computed by AMIRA) · **`not_reported`** (absent from the reviewed sources) |
+| **`value_basis`** | enum | **`reported`** (stated verbatim in the source) · **`derived`** (computed by AMIRA from verified dependencies) · **`not_reported`** (the reviewed source is silent) · **`not_located`** (the defined source set was reviewed but sufficient evidence was not located). A missing assertion entirely is the separate state **`absent`** (returned by the loader, not stored). These states are never collapsed into one another. |
 | `source_id` | string | FK to source_documents |
 | `exact_passage` | string | Verbatim supporting text |
 | `source_locator` | string | Where in the source |

@@ -141,8 +141,20 @@ def _best_basis(medicine: str, dimension: str) -> Tuple[str, List[dict]]:
 
 
 def _affirmative(medicine: str, dimension: str) -> bool:
+    """Affirmative ONLY through the verified gate: an unverified, dangling,
+    spoofed-URL, or conflicting 'yes' never advances a readiness dimension."""
     return any(
-        dataset.assertion_value(t["trial_id"], dimension)[0] == dataset.AFFIRMATIVE
+        (lambda v: v["valid"] and v["value"] == dataset.AFFIRMATIVE)(
+            dataset.assertion_validity(t["trial_id"], dimension, require_verified=True))
+        for t in _trials_for(medicine)
+    )
+
+
+def _verified_numeric(medicine: str, dimension: str) -> bool:
+    """True when at least one trial has a verified, reported numeric value."""
+    return any(
+        (lambda v: v["valid"] and v["basis"] == "reported")(
+            dataset.assertion_validity(t["trial_id"], dimension, require_numeric=True))
         for t in _trials_for(medicine)
     )
 
@@ -202,14 +214,23 @@ def _is_women_only(medicine: str) -> bool:
 # --------------------------------------------------------------------------- #
 # Per-dimension deterministic classifiers
 # --------------------------------------------------------------------------- #
+def _valid_numeric(medicine: str, dimension: str) -> bool:
+    """Any trial with a VALID (verified, conflict-free, deps-checked) numeric value,
+    of any allowed basis (reported or a properly-provenanced derived)."""
+    return any(
+        dataset.assertion_validity(t["trial_id"], dimension, require_numeric=True)["valid"]
+        for t in _trials_for(medicine)
+    )
+
+
 def _dim_included(medicine: str) -> Tuple[str, str, List[dict]]:
     count_bases = _bases(medicine, "female_enrollment_count")
     pct_bases = _bases(medicine, "female_enrollment_pct")
     recs = _collect(medicine, ["female_enrollment_count", "female_enrollment_pct"])
-    if "reported" in count_bases:
-        return STATE_COMPLETE, "An exact female participant count is reported in a retrieved source.", recs
-    if "reported" in pct_bases or "derived" in count_bases or "derived" in pct_bases:
-        return STATE_PARTIAL, "A female percentage is reported (or a count derived), but no exact reported count was located.", recs
+    if _verified_numeric(medicine, "female_enrollment_count"):
+        return STATE_COMPLETE, "An exact female participant count is reported in a verified source.", recs
+    if _verified_numeric(medicine, "female_enrollment_pct") or _valid_numeric(medicine, "female_enrollment_count") or _valid_numeric(medicine, "female_enrollment_pct"):
+        return STATE_PARTIAL, "A verified female percentage is reported (or a count validly derived), but no exact reported count was located.", recs
     if "not_located" in count_bases or "not_located" in pct_bases:
         return STATE_NOT_LOCATED, "No exact female count or percentage was located in the retrieved sources.", recs
     return STATE_NOT_REPORTED, "The reviewed sources report no female enrollment figure.", recs
@@ -230,7 +251,8 @@ def _dim_analyzed(medicine: str) -> Tuple[str, str, List[dict]]:
 
 
 def _dim_compared(medicine: str) -> Tuple[str, str, List[dict]]:
-    eff_findings = [f for f in dataset.findings_for(medicine, "efficacy") if f.get("scope", "").startswith("trial:")]
+    eff_findings = [f for f in dataset.findings_for(medicine, "efficacy")
+                    if f.get("scope", "").startswith("trial:") and dataset.verified_evidence(f)]
     recs = [_finding_record(f) for f in eff_findings]
     if _is_women_only(medicine):
         return STATE_NOT_APPLICABLE, ("This medicine's reviewed evidence is an explicitly women-only study, so a "
@@ -249,7 +271,8 @@ def _dim_compared(medicine: str) -> Tuple[str, str, List[dict]]:
 
 
 def _dim_protected(medicine: str) -> Tuple[str, str, List[dict]]:
-    saf_findings = [f for f in dataset.findings_for(medicine, "safety") if f.get("scope", "").startswith("trial:")]
+    saf_findings = [f for f in dataset.findings_for(medicine, "safety")
+                    if f.get("scope", "").startswith("trial:") and dataset.verified_evidence(f)]
     recs = _collect(medicine, ["sex_specific_safety_reported"]) + [_finding_record(f) for f in saf_findings]
     between_sex = [f for f in saf_findings
                    if f.get("significance") in ("significant", "no_significant_difference", "trend_only")

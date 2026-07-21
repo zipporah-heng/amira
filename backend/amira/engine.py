@@ -79,7 +79,15 @@ def _norm(v: Optional[str], default: str) -> str:
 
 
 def _source_links(assertion: dict) -> dict:
-    s = dataset.source_by_id(assertion["source_id"])
+    sid = assertion.get("source_id")
+    try:
+        s = dataset.source_by_id(sid)
+    except dataset.DatasetError:
+        # Fail closed, do not crash: a dangling source is surfaced as unresolved,
+        # never as a usable citation.
+        return {"source_id": sid, "title": None, "source_type": None, "publisher": None,
+                "year": None, "nct_id": None, "pmid": None, "pmcid": None,
+                "url": None, "license_note": None, "resolved": False}
     return {
         "source_id": s["source_id"],
         "title": s["title"],
@@ -91,6 +99,7 @@ def _source_links(assertion: dict) -> dict:
         "pmcid": s.get("pmcid"),
         "url": s["url"],
         "license_note": s.get("license_note"),
+        "resolved": dataset.authoritative_url_ok(s.get("url", "")),
     }
 
 
@@ -128,31 +137,32 @@ def aggregate_participants(trial_ids: List[str]) -> dict:
     estimate_components: List[dict] = []
 
     for tid in trial_ids:
-        total, t_basis, _ = dataset.assertion_value(tid, "total_enrollment")
-        if t_basis == "reported" and isinstance(total, (int, float)):
+        # Totals only through the verified projection (reported + verified + authoritative).
+        te = dataset.total_enrollment_projection(tid)
+        total = te["value"]
+        total_ok = te["coverage"] == "complete"
+        if total_ok:
             participants_total += int(total)
             trials_with_reported_total.append(tid)
         else:
             participants_basis_ok = False
             trials_without_reported_total.append(tid)
 
-        count, c_basis, _ = dataset.assertion_value(tid, "female_enrollment_count")
-        if c_basis == "reported" and isinstance(count, (int, float)):
-            women_reported += int(count)
+        cv = dataset.assertion_validity(tid, "female_enrollment_count", require_numeric=True)
+        if cv["valid"] and cv["basis"] == "reported":
+            women_reported += int(cv["value"])
             trials_with_reported_count.append(tid)
             continue
 
-        pct, p_basis, _ = dataset.assertion_value(tid, "female_enrollment_pct")
-        # Only derive a female count from a percentage when the SAME trial's total
-        # enrollment is itself evidence-supported (basis reported). Never derive a
-        # count against an unsupported total.
-        if (p_basis == "reported" and isinstance(pct, (int, float))
-                and t_basis == "reported" and isinstance(total, (int, float))):
-            est = int(round(float(pct) / 100.0 * int(total)))
+        pv = dataset.assertion_validity(tid, "female_enrollment_pct", require_numeric=True)
+        # Derive a female count from a percentage only when the percentage is a
+        # verified REPORTED value AND the SAME trial's total is verified-supported.
+        if pv["valid"] and pv["basis"] == "reported" and total_ok:
+            est = int(round(float(pv["value"]) / 100.0 * int(total)))
             estimated_extra += est
             trials_with_pct_only.append(tid)
             estimate_components.append({
-                "trial_id": tid, "reported_pct": pct, "total_enrollment": int(total),
+                "trial_id": tid, "reported_pct": pv["value"], "total_enrollment": int(total),
                 "derived_count": est,
                 "note": "Derived by AMIRA from a reported percentage; no exact count is published.",
             })
@@ -445,6 +455,9 @@ def check_evidence(condition: str, medicine: str,
     for t in matched:
         f_count, f_basis, f_a = dataset.assertion_value(t["trial_id"], "female_enrollment_count")
         p_val, p_basis, p_a = dataset.assertion_value(t["trial_id"], "female_enrollment_pct")
+        # Trusted values only through the canonical verified gate.
+        _fv = dataset.assertion_validity(t["trial_id"], "female_enrollment_count", require_numeric=True)
+        _pv = dataset.assertion_validity(t["trial_id"], "female_enrollment_pct", require_numeric=True)
         _te = dataset.total_enrollment_projection(t["trial_id"])
         row = {
             "trial_id": t["trial_id"],
@@ -459,9 +472,9 @@ def check_evidence(condition: str, medicine: str,
             "total_enrollment": _te["value"],
             "total_enrollment_basis": _te["basis"],
             "total_enrollment_state": _te["state"],
-            "female_n": f_count if f_basis == "reported" else None,
+            "female_n": _fv["value"] if (_fv["valid"] and _fv["basis"] == "reported") else None,
             "female_n_basis": f_basis,
-            "female_pct": p_val if p_basis in ("reported", "derived") else None,
+            "female_pct": _pv["value"] if _pv["valid"] else None,
             "female_pct_basis": p_basis,
             "registry_url": t["registry_url"],
             "minimum_age": t.get("minimum_age"),
@@ -519,6 +532,7 @@ def check_evidence(condition: str, medicine: str,
         "direct_comparisons": [
             clinical.direct_comparison_view(c)
             for c in dataset.direct_comparisons_for(medicine)
+            if dataset.verified_evidence(c)   # unverified comparisons never support a conclusion
         ],
         "who_was_studied": clinical.who_was_studied(trial_ids),
         "study_selection": study_selection(medicine, matched),
@@ -545,7 +559,8 @@ def _rank_of(medicine: str, comparison: dict) -> str:
     only for a scorable medicine. Rank is over scored medicines, never over unscored."""
     if not comparison["ranking"]["rankable"]:
         return ""
-    scored = [r for r in comparison["rows"] if r["maturity_scorable"]]
+    # Rank only over completed-ingestion, scorable medicines (never partial ingestion).
+    scored = [r for r in comparison["rows"] if r.get("rankable")]
     for i, r in enumerate(scored, 1):
         if r["medicine"].lower() == medicine.lower():
             return f"Evidence maturity rank: {i} of {len(scored)} reviewed {comparison['drug_class'].lower()}s"

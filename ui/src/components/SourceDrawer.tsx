@@ -30,7 +30,10 @@ export function SourceDrawer({ trial, onClose }: { trial: TrialRow; onClose: () 
             Evidence assertions ({trial.assertions.length})
           </h3>
           <p style={{ fontSize: 12.5, marginTop: 4 }}>
-            Every displayed value traces to an exact passage in a retrievable source.
+            Each assertion below carries the exact passage and source it was drawn from. A
+            value is shown as evidence-backed only when its assertion is verified against a
+            resolvable, authoritative source; otherwise its evidence state (not located / not
+            reported / evidence status unavailable) is shown instead.
           </p>
 
           {trial.assertions.map((a) => (

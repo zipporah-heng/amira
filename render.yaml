@@ -8,10 +8,15 @@ services:
     previews:
       generation: manual
     # Build the React UI, then install the Python backend. Node is available on
-    # Render's Python runtime image for the UI build step.
+    # Render's Python runtime image for the UI build step. Finally run the OFFLINE
+    # evidence-integrity validator as a DEPLOYMENT GATE: it is deterministic and
+    # network-free (reads only the committed dataset), so a corpus that fails the
+    # evidence-boundary invariants aborts the build (non-zero exit) and cannot ship
+    # as a trusted production image.
     buildCommand: >-
       cd ui && npm ci && npm run build && cd ..
       && pip install -r backend/requirements.txt
+      && python pipeline/validate.py
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --app-dir backend
     # The normalized real-evidence dataset (dataset/) and benchmark (benchmark/)
     # are committed to the repo, so deployment serves the exact verified data

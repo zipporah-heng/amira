@@ -39,7 +39,11 @@ def trial_rows() -> List[dict]:
         tid = t["trial_id"]
         f_count, f_basis, _ = dataset.assertion_value(tid, "female_enrollment_count")
         f_pct, p_basis, _ = dataset.assertion_value(tid, "female_enrollment_pct")
-        total, t_basis, _ = dataset.assertion_value(tid, "total_enrollment")
+        # Trusted values ONLY through the canonical verified gate — identical rule to
+        # the API and aggregates, so every surface makes the same trust decision.
+        te = dataset.total_enrollment_projection(tid)
+        fv = dataset.assertion_validity(tid, "female_enrollment_count", require_numeric=True)
+        pv = dataset.assertion_validity(tid, "female_enrollment_pct", require_numeric=True)
         row = {
             "trial_id": tid,
             "nct_id": t["nct_id"],
@@ -55,11 +59,11 @@ def trial_rows() -> List[dict]:
             # leaking trials.json::enrollment_actual as a normal total. Value and
             # basis stay inseparable, and this matches engine.aggregate_participants,
             # which only counts a `reported` total.
-            "total_enrollment": total if (t_basis == "reported" and isinstance(total, (int, float))) else "",
-            "total_enrollment_basis": t_basis,
-            "female_n": f_count if f_basis == "reported" else "",
+            "total_enrollment": te["value"] if te["coverage"] == "complete" else "",
+            "total_enrollment_basis": te["basis"],
+            "female_n": fv["value"] if (fv["valid"] and fv["basis"] == "reported") else "",
             "female_n_basis": f_basis,
-            "female_pct": f_pct if p_basis in ("reported", "derived") else "",
+            "female_pct": pv["value"] if pv["valid"] else "",
             "female_pct_basis": p_basis,
             "minimum_age": t.get("minimum_age"),
             "sex_eligibility": t.get("sex_eligibility"),
@@ -149,8 +153,8 @@ def _source_resolves(source_id) -> tuple:
         s = dataset.source_by_id(source_id)
     except dataset.DatasetError:
         return False, "dangling source_id"
-    if not str(s.get("url", "")).startswith("https://"):
-        return False, "source has no valid https URL"
+    if not dataset.authoritative_url_ok(s.get("url", "")):
+        return False, "source has no valid authoritative https URL"
     return True, ""
 
 

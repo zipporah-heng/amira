@@ -42,7 +42,10 @@
     "source_verified": true,
     "human_verified": false,
     "verifier": null,
-    "notes": "Derived by AMIRA as 6801/17802; not stated as a percentage in the source."
+    "notes": "Derived by AMIRA as 6801/17802; not stated as a percentage in the source.",
+    "derived_from": ["A-JUP-001", "A-JUP-002"],
+    "derivation_rule": "female_pct = 100 * female_enrollment_count / total_enrollment",
+    "derivation_version": "1.0"
   },
   {
     "assertion_id": "A-JUP-004",
@@ -507,7 +510,10 @@
     "source_verified": true,
     "human_verified": false,
     "verifier": null,
-    "notes": "Derived by AMIRA as 125/125 because the study population was women only."
+    "notes": "Derived by AMIRA as 125/125 because the study population was women only.",
+    "derived_from": ["A-HAY-002", "A-HAY-001"],
+    "derivation_rule": "female_pct = 100 * female_enrollment_count / total_enrollment",
+    "derivation_version": "1.0"
   },
   {
     "assertion_id": "A-HAY-004",
