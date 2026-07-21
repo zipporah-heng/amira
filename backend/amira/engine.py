@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional
 
-from . import clinical, dataset, maturity
+from . import clinical, dataset, flags, maturity, readiness
 
 # The five agreed clinical life stages, plus an explicit "not specified" default.
 # Age is NEVER used to infer any of these — a specific stage returns a bounded
@@ -470,6 +470,11 @@ def check_evidence(condition: str, medicine: str,
         "hormone_therapy_context": hormone_therapy_context(hormone_therapy, trial_ids),
         "sources": dataset.sources(),
         "evaluation_status": "EVALUATION PENDING",
+        # Pilot 0-100 readiness score (deterministic, feature-flagged). The maturity
+        # 1-5 level above is the scientifically implemented measure; this is a
+        # provisional completeness lens under expert review.
+        "readiness": readiness.evaluate(medicine) if flags.enable_pilot_score() else None,
+        "feature_flags": flags.snapshot(),
     }
 
 

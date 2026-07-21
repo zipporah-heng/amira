@@ -1,0 +1,159 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/zipporah-heng/amira/schema/womens_evidence_schema_v0.2.json",
+  "title": "AMIRA Women's Evidence Schema",
+  "description": "Strict, versioned contract for a single structured evidence extraction produced by AMIRA-Extract from one clinical-research passage. The LLM must return JSON conforming to this schema. Every claim carries the exact source passage it was drawn from; no field may be inferred beyond what the passage states.",
+  "version": "0.2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "medicine",
+    "condition",
+    "study_identifier",
+    "source_identifier",
+    "women_represented",
+    "evidence_state",
+    "exact_evidence_passage",
+    "source_url",
+    "extraction_model",
+    "prompt_version",
+    "schema_version",
+    "extraction_timestamp",
+    "validation_state",
+    "human_review_state"
+  ],
+  "properties": {
+    "medicine": {
+      "type": "string",
+      "description": "Generic medicine name as stated in the source."
+    },
+    "condition": {
+      "type": ["string", "null"],
+      "description": "Condition or indication represented in the passage."
+    },
+    "study_identifier": {
+      "type": "string",
+      "description": "Trial acronym or study identifier (e.g. DAPA-HF, DIG). Never a synthetic id."
+    },
+    "source_identifier": {
+      "type": "string",
+      "description": "AMIRA source id (SRC-...), NCT id, or PMID for the exact document quoted."
+    },
+    "women_represented": {
+      "type": "string",
+      "enum": ["yes", "no", "not_reported", "not_located"],
+      "description": "Whether the passage reports that women were represented in the study."
+    },
+    "women_count": {
+      "type": ["integer", "null"],
+      "description": "Exact number of women, only if stated verbatim. Null if not stated."
+    },
+    "women_percentage": {
+      "type": ["number", "null"],
+      "description": "Percentage of women, only if stated or directly derivable from stated counts."
+    },
+    "sex_specific_effectiveness": {
+      "type": "string",
+      "enum": ["reported", "not_reported", "not_located"],
+      "description": "Whether a sex-specific effectiveness outcome is reported."
+    },
+    "formal_sex_comparison": {
+      "type": "string",
+      "enum": ["reported", "not_reported", "not_located", "not_applicable"],
+      "description": "Whether a formal sex-by-treatment comparison (interaction/heterogeneity test) is reported. 'not_applicable' for an explicitly women-only study."
+    },
+    "interaction_statistic": {
+      "type": ["string", "null"],
+      "description": "Verbatim interaction/heterogeneity statistic (e.g. 'P for interaction = 0.014'). Null if none is reported."
+    },
+    "sex_specific_safety": {
+      "type": "string",
+      "enum": ["reported", "not_reported", "not_located"],
+      "description": "Whether adverse events are reported separately by sex."
+    },
+    "menopause": {
+      "type": "string",
+      "enum": ["reported", "not_reported", "not_located"],
+      "description": "Whether menopausal status is reported. NEVER inferred from age."
+    },
+    "pregnancy": {
+      "type": "string",
+      "enum": ["reported", "not_reported", "not_located"],
+      "description": "Whether pregnancy-specific evidence is reported."
+    },
+    "hormone_therapy": {
+      "type": "string",
+      "enum": ["reported", "not_reported", "not_located"],
+      "description": "Whether hormone-therapy use or criteria are reported."
+    },
+    "hormonal_variability": {
+      "type": "string",
+      "enum": ["reported", "not_reported", "not_located"],
+      "description": "Whether hormonal-variability context (cycle phase, perimenopausal transition) is reported."
+    },
+    "race_and_ethnicity": {
+      "type": "string",
+      "enum": ["reported", "not_reported", "not_located"],
+      "description": "Whether race/ethnicity composition is reported."
+    },
+    "age": {
+      "type": ["string", "null"],
+      "description": "Age eligibility or reported age, verbatim. Recorded as a fact only; never converted into a menopausal-status claim."
+    },
+    "evidence_state": {
+      "type": "string",
+      "enum": ["complete", "partial", "insufficient", "not_reported", "not_located", "excluded", "not_applicable"],
+      "description": "AMIRA evidence state for the primary claim in this passage."
+    },
+    "exact_evidence_passage": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The exact text span from the source that supports this extraction. Must appear verbatim in the stored source. The quote validator rejects any extraction whose passage cannot be matched."
+    },
+    "source_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Resolvable URL of the source document (ClinicalTrials.gov, PubMed, or PMC)."
+    },
+    "extraction_model": {
+      "type": "string",
+      "description": "Identifier of the model/provider that produced this extraction (e.g. 'recorded-corpus-v3.0.0', 'anthropic:claude-...')."
+    },
+    "prompt_version": {
+      "type": "string",
+      "description": "Version of the extraction prompt used."
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "0.2"
+    },
+    "extraction_timestamp": {
+      "type": "string",
+      "description": "ISO-8601 timestamp of when the extraction was produced."
+    },
+    "validation_state": {
+      "type": "string",
+      "enum": ["pending", "schema_valid", "quote_verified", "quarantined"],
+      "description": "Result of automated validation. 'quote_verified' means the passage was matched verbatim in the stored source; 'quarantined' means it was rejected."
+    },
+    "validation_notes": {
+      "type": ["string", "null"],
+      "description": "Human-readable explanation of the validation result (e.g. why an extraction was quarantined)."
+    },
+    "human_review_state": {
+      "type": "string",
+      "enum": ["not_reviewed", "in_review", "human_verified"],
+      "description": "Human review status. Only set to 'human_verified' when a named reviewer has signed off; a named reviewer must then be recorded."
+    },
+    "human_reviewer": {
+      "type": ["string", "null"],
+      "description": "Named human reviewer, required when human_review_state is 'human_verified'."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "human_review_state": { "const": "human_verified" } } },
+      "then": { "required": ["human_reviewer"], "properties": { "human_reviewer": { "type": "string", "minLength": 1 } } }
+    }
+  ]
+}

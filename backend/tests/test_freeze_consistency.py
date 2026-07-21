@@ -123,8 +123,11 @@ def test_headline_copy_and_maturity_not_stored_survive():
     import json
     from pathlib import Path
     ce = (Path(__file__).resolve().parents[2] / "ui" / "src" / "pages" / "CheckEvidence.tsx").read_text(encoding="utf-8")
-    assert "What does the evidence show for women?" in ce
+    # video-redesign: the product question is now the readiness framing.
+    assert "How ready is the evidence supporting" in ce
     assert "women like me" not in ce
+    # AMIRA still never claims to determine whether a medicine is safe for an individual.
+    assert "Is this safe for women?" not in ce
     blob = json.dumps(dataset.load())
     assert "\"maturity_level\"" not in blob and "\"evidence_level\"" not in blob
 
@@ -188,9 +191,9 @@ def test_brand_descriptor_is_consistent():
         text = f.read_text(encoding="utf-8")
         assert "Scientific Intelligence Platform" not in text
         assert "Women's Health Evidence Intelligence" not in text
-    # The clinician product headline is preserved.
+    # The product headline is the video-redesign readiness framing.
     ce = (ui / "pages" / "CheckEvidence.tsx").read_text(encoding="utf-8")
-    assert "What does the evidence show for women?" in ce
+    assert "How ready is the evidence supporting" in ce
 
 
 # --- Final blocker pass: bounded safety claims + provenance + states ---------- #
