@@ -28,8 +28,8 @@
 | API entry point | `GET /api/manifest`, `POST /api/check-evidence`, `GET /api/assets` (see [API & downloadable assets](#api--downloadable-assets)) |
 | Downloadable scientific assets | `GET /api/assets` · `/api/download/*.csv|.jsonl` |
 | License & limitations | [`LICENSE`](LICENSE) · [`LICENSES.md`](LICENSES.md) · [Scientific status](#scientific-status-limitations--human-review) |
-| Demo video | Not yet provided |
-| Technical video | Not yet provided |
+| Demo video | [live](https://www.loom.com/share/4400996ba53343398dfe2fb94dea64bd) |
+| Technical video | [live](https://www.loom.com/share/3e906e5632024d6d989670943082c6a3) |
 
 ---
 
