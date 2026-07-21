@@ -22,7 +22,8 @@ export function BasisBadge({ basis }: { basis: string }) {
   const map: Record<string, { cls: string; label: string; title: string }> = {
     reported: { cls: "verified", label: "Reported", title: "Stated verbatim in the cited source" },
     derived: { cls: "demo", label: "Derived", title: "Computed by AMIRA from reported values" },
-    not_reported: { cls: "asset", label: "Not reported", title: "Absent from the reviewed sources" },
+    not_reported: { cls: "asset", label: "Not reported", title: "A source was reviewed and reports none" },
+    not_located: { cls: "asset", label: "Not located", title: "No accessible source with this value was retrieved" },
   };
   const m = map[basis] || { cls: "asset", label: basis, title: "" };
   return (

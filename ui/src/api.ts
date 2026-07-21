@@ -16,7 +16,7 @@ export interface AssertionView {
   trial_id: string;
   dimension: string;
   value: unknown;
-  value_basis: "reported" | "derived" | "not_reported";
+  value_basis: "reported" | "derived" | "not_reported" | "not_located";
   exact_passage: string;
   source_locator?: string | null;
   source_verified: boolean;
@@ -270,6 +270,204 @@ export interface StudySelection {
   reconciliation: string;
 }
 
+export interface FeatureFlags {
+  pilot_score: boolean;
+  ai_extraction: boolean;
+  nhanes: boolean;
+}
+
+export interface ReadinessSourceRecord {
+  assertion_id?: string;
+  finding_id?: string;
+  trial_id?: string;
+  dimension?: string;
+  value?: unknown;
+  value_basis?: string;
+  exact_passage?: string;
+  source_id: string;
+  source_url: string;
+  pmid?: string | null;
+  nct_id?: string | null;
+  source_verified?: boolean;
+  human_verified?: boolean;
+}
+
+export interface ReadinessDimension {
+  key: string;
+  title: string;
+  question: string;
+  rule: string;
+  state: string;
+  points: number;
+  max_eligible: number;
+  reason: string;
+  source_records: ReadinessSourceRecord[];
+}
+
+export interface Readiness {
+  scored: boolean;
+  status: string;
+  rules_version: string;
+  label?: string;
+  score?: number;
+  points_earned?: number;
+  max_eligible_points?: number;
+  denominator_note?: string;
+  excluded_dimensions?: string[];
+  dimensions?: ReadinessDimension[];
+  reason?: string;
+  disclaimer?: string;
+  pilot_note?: string;
+}
+
+export interface Extraction {
+  medicine: string;
+  condition: string | null;
+  study_identifier: string;
+  source_identifier: string;
+  women_represented: string;
+  women_count: number | null;
+  women_percentage: number | null;
+  sex_specific_effectiveness: string;
+  formal_sex_comparison: string;
+  interaction_statistic: string | null;
+  sex_specific_safety: string;
+  menopause: string;
+  pregnancy: string;
+  hormone_therapy: string;
+  hormonal_variability: string;
+  race_and_ethnicity: string;
+  age: string | null;
+  evidence_state: string;
+  exact_evidence_passage: string;
+  source_url: string;
+  extraction_model: string;
+  prompt_version: string;
+  schema_version: string;
+  extraction_timestamp: string;
+  validation_state: string;
+  validation_notes: string | null;
+  human_review_state: string;
+  human_reviewer: string | null;
+}
+
+export interface ExtractResponse {
+  question: string;
+  extraction: Extraction;
+  trace: {
+    exact_passage: string;
+    source_url: string;
+    model_version: string;
+    prompt_version: string;
+    schema_version: string;
+    passage_validation: string;
+    human_review: string;
+    validation_notes: string | null;
+  };
+  score_impact: Readiness | null;
+}
+
+export interface AiPassage {
+  passage_id: string;
+  label: string;
+  medicine: string;
+  condition: string | null;
+  study_identifier: string;
+  source_identifier: string;
+  source_url: string;
+  passage: string;
+}
+
+export interface AiPipeline {
+  enabled: boolean;
+  provider: { provider: string; model: string; prompt_version: string; schema_version: string; api_key_present: boolean };
+  stages: { key: string; label: string; detail: string }[];
+  safety: string[];
+}
+
+export interface NhanesResult {
+  drug_class: string;
+  ingredients_matched: string[];
+  unweighted_users: number;
+  unweighted_denominator: number;
+  older_women_users_unweighted: number;
+  suppressed: boolean;
+  weighted_use_percent: number | null;
+  standard_error: number | null;
+  relative_standard_error: number | null;
+  suppression_reason?: string;
+  older_women_share_note?: string;
+}
+
+export interface NhanesContext {
+  enabled?: boolean;
+  available: boolean;
+  status: string;
+  cycle?: string;
+  domain?: string;
+  measure?: string;
+  weight_variable?: string;
+  design_variables?: { strata: string; psu: string };
+  variance_method?: string;
+  suppression_rule?: { min_unweighted_numerator: number; max_relative_standard_error: number; basis: string };
+  age_range_years?: [number, number];
+  unweighted_denominator_women?: number;
+  files?: { name: string; data_url: string; documentation_url: string }[];
+  retrieved_at?: string;
+  usage_boundary?: string;
+  result?: NhanesResult | null;
+  note?: string;
+}
+
+export interface AssetItem {
+  key: string;
+  title: string;
+  path: string;
+  kind: string;
+  present: boolean;
+  status?: string;
+}
+
+export interface AssetsResponse {
+  assets: AssetItem[];
+  honest_status: string[];
+  license_present: boolean;
+}
+
+export async function getAiPipeline(): Promise<AiPipeline> {
+  const r = await fetch("/api/ai/pipeline");
+  if (!r.ok) throw new Error(`Request failed (${r.status})`);
+  return r.json();
+}
+
+export async function getAiPassages(): Promise<{ passages: AiPassage[]; enabled: boolean }> {
+  const r = await fetch("/api/ai/passages");
+  if (!r.ok) throw new Error(`Request failed (${r.status})`);
+  return r.json();
+}
+
+export async function runExtraction(passageId: string): Promise<ExtractResponse> {
+  const r = await fetch("/api/ai/extract", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ passage_id: passageId }),
+  });
+  if (!r.ok) throw new Error(`Request failed (${r.status})`);
+  return r.json();
+}
+
+export async function getNhanes(drugClass: string): Promise<NhanesContext> {
+  const r = await fetch(`/api/nhanes?drug_class=${encodeURIComponent(drugClass)}`);
+  if (!r.ok) throw new Error(`Request failed (${r.status})`);
+  return r.json();
+}
+
+export async function getAssets(): Promise<AssetsResponse> {
+  const r = await fetch("/api/assets");
+  if (!r.ok) throw new Error(`Request failed (${r.status})`);
+  return r.json();
+}
+
 export interface EvidenceResponse {
   banner?: Banner;
   study_selection?: StudySelection;
@@ -295,6 +493,8 @@ export interface EvidenceResponse {
   hormone_therapy_context?: ContextBlock;
   sources: SourceLink[];
   evaluation_status?: string;
+  readiness?: Readiness | null;
+  feature_flags?: FeatureFlags;
 }
 
 export interface CheckRequest {
