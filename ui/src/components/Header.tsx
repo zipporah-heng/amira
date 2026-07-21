@@ -11,14 +11,13 @@ const NAV = [
   { to: "/amira/methodology", label: "Methodology" },
 ];
 
-/** Header: prominent AMIRA logo, functional platform navigation with an active
- *  state, and Share. On tablet/mobile the links collapse into an accessible
- *  menu (keyboard, focus, 44px targets, Escape to close). No technical status
- *  badges compete with the clinical question — that status lives in the AI
- *  evidence trace. The evidence selectors (condition/medicine) stay separate. */
+/** Header: prominent AMIRA logo and functional platform navigation with an
+ *  active state. On tablet/mobile the links collapse into an accessible menu
+ *  (keyboard, focus, 44px targets, Escape to close). No technical status badges
+ *  compete with the clinical question — that status lives in the AI evidence
+ *  trace. The evidence selectors (condition/medicine) stay separate. */
 export function Header() {
   const [open, setOpen] = useState(false);
-  const share = () => navigator.clipboard?.writeText(window.location.href);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
@@ -44,7 +43,6 @@ export function Header() {
         </nav>
 
         <div className="hdr-right">
-          <button className="share-btn hdr-share" onClick={share}>⌁ Share</button>
           <button
             className="hdr-burger"
             aria-label="Toggle navigation menu"
