@@ -10,6 +10,7 @@ interface Card {
   descriptor: string;
   bullets: string[];
   sourceUrl: string;
+  tone: "warn" | "info";
 }
 
 function currentCard(report: EvidenceResponse): Card | null {
@@ -17,6 +18,7 @@ function currentCard(report: EvidenceResponse): Card | null {
   if (!f) return null;
   const trial = f.scope.split(":", 1 + 1)[1] || "";
   const isPostHoc = /post hoc/i.test(f.interpretation || "");
+  const isSignal = f.significance === "significant";
   const bullets = [
     `${trial} trial${isPostHoc ? " post hoc analysis" : ""}`,
     f.female_estimate ? `${f.female_estimate}${f.female_ci ? ` (${f.female_ci})` : ""}` : "",
@@ -27,6 +29,8 @@ function currentCard(report: EvidenceResponse): Card | null {
     descriptor: `${isPostHoc ? "Historical post hoc mortality signal" : "Sex-specific signal"}; menopause not reported`,
     bullets,
     sourceUrl: f.source.url,
+    // A significant historical harm signal gets the pale-red warning treatment.
+    tone: isSignal ? "warn" : "info",
   };
 }
 
@@ -38,9 +42,10 @@ export function OtherEvidencePaths({ report }: { report: EvidenceResponse }) {
   const cur = currentCard(report);
   const cards: Card[] = [
     ...(cur ? [cur] : []),
-    ...others.map((p) => ({
+    ...others.map((p): Card => ({
       medicine: p.medicine, drugClass: p.drug_class,
       descriptor: p.headline, bullets: p.bullets, sourceUrl: p.source.url,
+      tone: "info",
     })),
   ];
 
@@ -52,9 +57,9 @@ export function OtherEvidencePaths({ report }: { report: EvidenceResponse }) {
       </div>
       <div className="op-grid">
         {cards.map((c) => (
-          <div className="op-card" key={c.medicine}>
+          <div className={`op-card ${c.tone}`} key={c.medicine}>
             <div className="op-title">
-              <span className="op-dot" aria-hidden>◆</span>
+              <span className="op-dot" aria-hidden>{c.tone === "warn" ? "⚠" : "◆"}</span>
               <div>
                 <div className="op-med">{c.medicine}</div>
                 {c.drugClass && <div className="op-class">{c.drugClass}</div>}

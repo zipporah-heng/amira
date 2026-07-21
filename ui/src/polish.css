@@ -69,11 +69,43 @@
 }
 @media (max-width: 680px) {
   .hdr-logo { width: 150px; }
-  .site-header-inner { padding: 12px 18px; }
+  .site-header-inner { padding: 12px 16px; gap: 10px; }
+  .hdr-tag { font-size: 10.5px; }
+  .hdr-share { display: none; }   /* keep only the menu button on mobile */
+  .hdr-right { gap: 0; }
   .check-page .page-q { font-size: 28px; }
   .rep-row { grid-template-columns: repeat(2, 1fr); }
   .filter-row { grid-template-columns: 1fr 1fr; }
   .assets6 { grid-template-columns: repeat(2, 1fr); }
   .trace5 { grid-template-columns: repeat(2, 1fr); }
   .notice-card, .representation, .ai-found, .other-paths, .nhanes-panel, .assets-section { padding: 18px 16px; }
+}
+
+/* --- Header navigation --- */
+.hdr-nav { display: flex; gap: 4px; margin-left: 18px; flex: 1; align-items: center; }
+.hdr-nav-link { font-size: 16px; font-weight: 600; color: var(--ink-2); text-decoration: none; padding: 9px 13px; border-radius: 9px; white-space: nowrap; }
+.hdr-nav-link:hover { background: var(--lav-50); color: var(--ink); text-decoration: none; }
+.hdr-nav-link.active { background: var(--lav-100); color: var(--lav-700); }
+.hdr-nav-link:focus-visible, .hdr-burger:focus-visible, .hdr-mobile-link:focus-visible, .share-btn:focus-visible {
+  outline: 3px solid var(--lav-300); outline-offset: 2px;
+}
+.hdr-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.hdr-burger { display: none; flex-direction: column; gap: 4px; background: none; border: 1px solid var(--border-strong); border-radius: 9px; width: 44px; height: 44px; align-items: center; justify-content: center; }
+.hdr-burger span { width: 20px; height: 2px; background: var(--ink-2); border-radius: 2px; }
+.hdr-mobile { display: flex; flex-direction: column; padding: 8px 20px 14px; border-top: 1px solid var(--border); background: #fff; }
+.hdr-mobile-link { font-size: 16px; font-weight: 600; color: var(--ink-2); padding: 12px 8px; min-height: 44px; display: flex; align-items: center; border-radius: 9px; text-decoration: none; }
+.hdr-mobile-link.active { color: var(--lav-700); background: var(--lav-50); }
+
+/* --- Evidence-path card treatments: pink warning vs lavender --- */
+.op-card.warn { background: #fdeef2; border: 1px solid #f0c6d3; border-left: 4px solid #d1436e; }
+.op-card.warn .op-med { color: #b23a63; }
+.op-card.warn .op-dot { color: #d1436e; }
+.op-card.info { background: linear-gradient(160deg, var(--lav-50), #fff 72%); border: 1px solid var(--lav-200); border-left: 4px solid var(--lav-500); }
+.op-card.info .op-med { color: var(--lav-700); }
+.op-card.info .op-dot { color: var(--lav-500); }
+
+/* Collapse header links into the accessible menu on tablet/mobile */
+@media (max-width: 1100px) {
+  .hdr-nav { display: none; }
+  .hdr-burger { display: flex; }
 }
