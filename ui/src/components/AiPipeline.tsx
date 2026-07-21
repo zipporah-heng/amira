@@ -7,16 +7,22 @@ import {
 /** Sections 7 & 8 — "How AMIRA found this evidence" + the controlled
  *  "Analyze an evidence passage" demonstration.
  *
- *  The pipeline is shown end to end. The demo runs a real, approved corpus
- *  passage through AMIRA-Extract, returns schema-constrained JSON, verifies the
- *  exact quote, and shows the deterministic score impact and the source. No fake
- *  confidence percentages are shown; workflow states describe provenance instead. */
+ *  Honesty rules (correction mission):
+ *   - The default provider is the offline RECORDED provider. It is labelled a
+ *     "Recorded AMIRA-Extract demonstration" — never "AI is analyzing now" or
+ *     "Live AI". The button says "Run recorded extraction".
+ *   - Provider, model, and "Live model call: No/Yes" are shown prominently.
+ *   - "Stored evidence excerpt matched" is shown (not "Exact passage verified"),
+ *     because AMIRA validates against its stored excerpt, not the full original
+ *     publication.
+ *   - No fake confidence percentages. */
 
-const WORKFLOW_STATE_META: Record<string, { label: string; tone: string }> = {
-  pending: { label: "AI extracted", tone: "neutral" },
-  schema_valid: { label: "Schema valid", tone: "neutral" },
-  quote_verified: { label: "Exact passage verified", tone: "present" },
+const MATCH_META: Record<string, { label: string; tone: string }> = {
+  source_passage_matched: { label: "Source passage matched", tone: "present" },
+  stored_excerpt_matched: { label: "Stored evidence excerpt matched", tone: "present" },
+  source_match_unavailable: { label: "Source match unavailable", tone: "unclear" },
   quarantined: { label: "Quarantined — rejected", tone: "missing" },
+  human_reviewed: { label: "Human reviewed", tone: "present" },
 };
 
 const HUMAN_STATE_META: Record<string, { label: string; tone: string }> = {
@@ -77,13 +83,17 @@ export function AiPipeline({ initialMedicine }: { initialMedicine?: string }) {
   if (!pipeline) return null;
   const ex = result?.extraction;
   const chosen = passages.find((p) => p.passage_id === selected);
+  const recorded = pipeline.provider.is_recorded;
+  const buttonLabel = running
+    ? (recorded ? "Running recorded extraction…" : "Calling live model…")
+    : (recorded ? "Run recorded extraction" : "Run live extraction");
 
   return (
     <section className="card ai-pipeline" id="ai-pipeline" style={{ marginTop: 22 }}>
       <div className="section-title">How AMIRA found this evidence</div>
-      <p className="muted" style={{ marginTop: 6, maxWidth: 680 }}>
-        Public sources in, structured and validated evidence out. The AI model extracts; a deterministic
-        engine scores. Every claim is quote-checked against its source before it is trusted.
+      <p className="muted" style={{ marginTop: 6, maxWidth: 700 }}>
+        Public sources in, structured and validated evidence out. The model extracts per passage; a
+        deterministic engine scores. Every claim is quote-checked against its stored source excerpt.
       </p>
 
       <div className="pipe-flow">
@@ -105,26 +115,30 @@ export function AiPipeline({ initialMedicine }: { initialMedicine?: string }) {
 
       {/* Section 8 — controlled demonstration */}
       <div className="demo" id="ai-demo">
-        <div className="section-title">Analyze an evidence passage</div>
-        <p className="muted" style={{ marginTop: 6 }}>
-          Run a real, approved AMIRA source passage through AMIRA-Extract. It returns schema-constrained
-          JSON, verifies the exact quote, and shows the deterministic score impact.
-        </p>
+        <div className="section-title">
+          {recorded ? "Recorded AMIRA-Extract demonstration" : "Live AMIRA-Extract"}
+        </div>
+        <p className="muted" style={{ marginTop: 6 }}>{pipeline.recorded_note}</p>
+
+        <div className="provider-panel">
+          <div><span className="pp-k">Provider</span> {pipeline.provider.provider_label}</div>
+          <div><span className="pp-k">Model</span> {pipeline.provider.model || "n/a"}</div>
+          <div><span className="pp-k">Live model call</span> {recorded ? "No" : (pipeline.provider.live_capable ? "Yes (when run)" : "Not configured")}</div>
+          <div><span className="pp-k">Schema</span> v{pipeline.provider.schema_version} · prompt {pipeline.provider.prompt_version}</div>
+        </div>
+
         <div className="demo-controls">
           <select value={selected} onChange={(e) => analyze(e.target.value)} aria-label="Choose a passage to analyze">
             {passages.map((p) => <option key={p.passage_id} value={p.passage_id}>{p.label}</option>)}
           </select>
           <button className="cta" disabled={running || !selected} onClick={() => analyze(selected)}>
-            {running ? "Analyzing…" : "Analyze passage"}
+            {buttonLabel}
           </button>
-          <span className="demo-provider">
-            provider: {pipeline.provider.provider} · prompt {pipeline.provider.prompt_version} · schema v{pipeline.provider.schema_version}
-          </span>
         </div>
 
         {chosen && (
           <div className="demo-input">
-            <div className="demo-k">Input passage · {chosen.study_identifier} · {chosen.source_identifier}</div>
+            <div className="demo-k">Input passage · {chosen.study_identifier} · {chosen.source_document_id}</div>
             <blockquote className="passage">"{chosen.passage}"</blockquote>
           </div>
         )}
@@ -134,7 +148,7 @@ export function AiPipeline({ initialMedicine }: { initialMedicine?: string }) {
             <div className="trace-head">
               <div className="trace-q"><b>Question:</b> {result.question}</div>
               <div className="trace-badges">
-                <Badge meta={WORKFLOW_STATE_META[ex.validation_state] || { label: ex.validation_state, tone: "neutral" }} />
+                <Badge meta={MATCH_META[ex.source_match_state] || { label: ex.source_match_state, tone: "neutral" }} />
                 <Badge meta={HUMAN_STATE_META[ex.human_review_state] || { label: ex.human_review_state, tone: "unclear" }} />
               </div>
             </div>
@@ -142,20 +156,22 @@ export function AiPipeline({ initialMedicine }: { initialMedicine?: string }) {
             <div className="trace-fields">
               {FIELD_ORDER.map(([k, label]) => {
                 const v = ex[k];
-                if (v === null || v === undefined || v === "") return null;
+                const shown = (v === null || v === undefined || v === "") ? "null / not reported" : String(v).replace(/_/g, " ");
                 return (
                   <div className="trace-field" key={String(k)}>
                     <span className="tf-k">{label}</span>
-                    <span className="tf-v">{String(v).replace(/_/g, " ")}</span>
+                    <span className="tf-v">{shown}</span>
                   </div>
                 );
               })}
             </div>
 
             <div className="trace-meta">
+              <span>Trial: <b>{ex.trial_id}</b></span>
+              <span>Source doc: <b>{ex.source_document_id}</b></span>
               <span>Model: <b>{ex.extraction_model}</b></span>
-              <span>Prompt: <b>{ex.prompt_version}</b></span>
-              <span>Schema: <b>v{ex.schema_version}</b></span>
+              <span>Live call: <b>{ex.live_model_call ? "Yes" : "No"}</b></span>
+              <span>Passage hash: <b>{ex.provenance.content_hash.slice(0, 16)}…</b></span>
             </div>
             {ex.validation_notes && <div className="trace-notes">{ex.validation_notes}</div>}
 
@@ -172,12 +188,10 @@ export function AiPipeline({ initialMedicine }: { initialMedicine?: string }) {
             <button className="rd-toggle" onClick={() => setShowJson((v) => !v)}>
               {showJson ? "Hide" : "Show"} structured JSON output
             </button>
-            {showJson && (
-              <pre className="json-block">{JSON.stringify(ex, null, 2)}</pre>
-            )}
+            {showJson && <pre className="json-block">{JSON.stringify(ex, null, 2)}</pre>}
 
             <div className="if-src" style={{ marginTop: 12 }}>
-              <span className="muted">Source: {ex.source_identifier}</span>
+              <span className="muted">Source: {ex.source_document_id} · matched against AMIRA's stored excerpt (not the full publication)</span>
               <a href={ex.source_url} target="_blank" rel="noopener noreferrer">Open source ↗</a>
             </div>
           </div>

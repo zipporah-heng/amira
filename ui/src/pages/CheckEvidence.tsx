@@ -7,6 +7,7 @@ import { ReadinessScore } from "../components/ReadinessScore";
 import { MaturityBreakdown } from "../components/MaturityBreakdown";
 import { Representation } from "../components/Representation";
 import { AiPipeline } from "../components/AiPipeline";
+import { OtherEvidencePaths } from "../components/OtherEvidencePaths";
 import { ClassComparison } from "../components/ClassComparison";
 import { DirectComparison } from "../components/DirectComparison";
 import { StudyTable } from "../components/StudyTable";
@@ -69,6 +70,7 @@ export function CheckEvidence() {
   const openFirstSource = () => report && report.trials[0] && setActive(report.trials[0]);
 
   const medicine = report?.banner?.medicine || filters.medicine;
+  const pilotEnabled = report?.feature_flags?.pilot_score && report?.readiness;
 
   return (
     <div>
@@ -83,9 +85,6 @@ export function CheckEvidence() {
             each finding came from.
           </p>
         </div>
-        <button className="share-btn" onClick={() => navigator.clipboard?.writeText(window.location.href)}>
-          ⌁ Share
-        </button>
       </div>
 
       {/* 1. EVIDENCE SELECTORS */}
@@ -107,19 +106,23 @@ export function CheckEvidence() {
 
       {report && report.supported && report.banner && report.totals && (
         <>
-          {/* 2. SELECTED MEDICINE */}
+          {/* 2. SELECTED MEDICINE (with real molecular structure) */}
           <SelectedMedicine report={report} onSources={openFirstSource} />
 
           {/* 3. IMPORTANT FINDING — the "so what" */}
           <ImportantFinding report={report} />
 
-          {/* 4 & 5. AMIRA EVIDENCE READINESS + TRANSPARENT SCORE BREAKDOWN */}
-          {report.readiness && (
-            <ReadinessScore readiness={report.readiness} maturity={report.maturity} onJumpMaturity={() => jump("maturity")} />
-          )}
-
-          {/* 4 (cont). Preserve the scientifically implemented 1–5 maturity ladder */}
+          {/* 4. AMIRA EVIDENCE READINESS — verified 1–5 maturity is PRIMARY */}
           {report.maturity && <div id="maturity"><MaturityBreakdown maturity={report.maturity} /></div>}
+
+          {/* 5. Experimental pilot 0–100 score — only when explicitly enabled, shown BELOW maturity */}
+          {pilotEnabled && (
+            <ReadinessScore readiness={report.readiness!} maturity={report.maturity} onJumpMaturity={() => jump("maturity")} />
+          )}
+          <div className="completeness-note">
+            This score measures the completeness of women-specific evidence. It does not measure whether
+            a medicine is better, safer or more effective.
+          </div>
 
           {/* 6. HOW WERE WOMEN REPRESENTED */}
           <Representation report={report} />
@@ -127,15 +130,20 @@ export function CheckEvidence() {
           {/* 7 & 8 (AI). HOW AMIRA FOUND THIS EVIDENCE + demonstration */}
           <AiPipeline initialMedicine={medicine} />
 
-          {/* 8 (page order). COMPARISON WITH SIMILAR MEDICINES */}
+          {/* Another <condition> evidence path — the ONLY place another medicine appears */}
+          {report.other_evidence_paths && report.other_evidence_paths.length > 0 && (
+            <OtherEvidencePaths paths={report.other_evidence_paths} condition={report.query.condition} />
+          )}
+
+          {/* Compare women's evidence across the same drug class */}
           {report.class_comparison && (
             <div id="class" style={{ marginTop: 22 }}>
               <ClassComparison data={report.class_comparison} current={report.banner.medicine} />
             </div>
           )}
 
-          {/* 9. STUDIES BEHIND THIS RESULT */}
-          <StudyTable trials={report.trials} onOpen={setActive} />
+          {/* 9. STUDIES BEHIND THIS RESULT — correct source records */}
+          {report.studies_behind && <StudyTable records={report.studies_behind} />}
 
           {/* 10. NHANES POPULATION CONTEXT */}
           <NhanesContext drugClass={report.banner.drug_class} />
@@ -144,9 +152,8 @@ export function CheckEvidence() {
           <ReusableAssets />
 
           {/* 12. EXISTING DEEPER EVIDENCE MODULES (preserved) */}
-          <details className="deeper" open>
+          <details className="deeper">
             <summary>Deeper evidence modules</summary>
-
             {report.direct_comparisons?.map((c) => (
               <div key={c.comparison_id} style={{ marginTop: 22 }}><DirectComparison data={c} /></div>
             ))}

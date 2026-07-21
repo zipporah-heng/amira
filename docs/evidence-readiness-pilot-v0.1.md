@@ -2,8 +2,11 @@
 
 **Rules version:** `0.1`
 **Status:** pilot methodology under expert review. **Not a validated score.**
+**Default:** **OFF** (`AMIRA_ENABLE_PILOT_SCORE=0`). The verified 1–5 Evidence
+Maturity level is the primary, default-visible score; this experimental 0–100
+score is shown only when explicitly enabled, and always below the maturity level.
 **Implementation:** `backend/amira/readiness.py` (deterministic).
-**Tests:** `backend/tests/test_readiness.py`.
+**Tests:** `backend/tests/test_readiness.py`, `backend/tests/test_studies_and_flags.py`.
 
 ## What the score measures — and what it does not
 

@@ -323,8 +323,12 @@ export interface Readiness {
 export interface Extraction {
   medicine: string;
   condition: string | null;
+  trial_id: string;
   study_identifier: string;
   source_identifier: string;
+  source_document_id: string;
+  passage_id: string;
+  assertion_id: string | null;
   women_represented: string;
   women_count: number | null;
   women_percentage: number | null;
@@ -339,48 +343,80 @@ export interface Extraction {
   race_and_ethnicity: string;
   age: string | null;
   evidence_state: string;
-  exact_evidence_passage: string;
+  exact_evidence_passage: string | null;
   source_url: string;
   extraction_model: string;
+  live_model_call: boolean;
   prompt_version: string;
   schema_version: string;
   extraction_timestamp: string;
   validation_state: string;
+  source_match_state: string;
   validation_notes: string | null;
   human_review_state: string;
   human_reviewer: string | null;
+  provenance: {
+    source_document_id: string;
+    source_url: string;
+    passage_index: number;
+    content_hash: string;
+    retrieval_date: string | null;
+    match_basis: string;
+  };
+}
+
+export interface ProviderConfig {
+  provider: string;
+  provider_label: string;
+  model: string;
+  is_recorded: boolean;
+  live_capable: boolean;
+  prompt_version: string;
+  schema_version: string;
+  api_key_present: boolean;
 }
 
 export interface ExtractResponse {
   question: string;
+  provider: ProviderConfig;
   extraction: Extraction;
   trace: {
-    exact_passage: string;
+    trial_id: string;
+    passage_id: string;
+    source_document_id: string;
+    exact_passage: string | null;
     source_url: string;
     model_version: string;
+    live_model_call: boolean;
     prompt_version: string;
     schema_version: string;
     passage_validation: string;
+    source_match_state: string;
     human_review: string;
     validation_notes: string | null;
+    provenance: Extraction["provenance"];
   };
   score_impact: Readiness | null;
 }
 
 export interface AiPassage {
   passage_id: string;
+  finding_id: string;
+  trial_id: string;
   label: string;
   medicine: string;
   condition: string | null;
   study_identifier: string;
   source_identifier: string;
+  source_document_id: string;
   source_url: string;
   passage: string;
 }
 
 export interface AiPipeline {
   enabled: boolean;
-  provider: { provider: string; model: string; prompt_version: string; schema_version: string; api_key_present: boolean };
+  provider: ProviderConfig;
+  recorded_note: string;
   stages: { key: string; label: string; detail: string }[];
   safety: string[];
 }
@@ -468,7 +504,34 @@ export async function getAssets(): Promise<AssetsResponse> {
   return r.json();
 }
 
+export interface StudyRecord {
+  trial_id: string;
+  study: string;
+  year: number | string | null;
+  women: string;
+  women_basis: string;
+  sex_outcomes: string;
+  menopause: string;
+  hormone_therapy: string;
+  study_type: string;
+  source_label: string;
+  source_url: string;
+  record_kind: "trial_registry_record" | "analysis_publication" | "primary_publication";
+}
+
+export interface EvidencePath {
+  medicine: string;
+  drug_class: string | null;
+  headline: string;
+  bullets: string[];
+  significance: string | null;
+  boundary: string;
+  source: { title: string; url: string; pmid: string | null; source_type: string };
+}
+
 export interface EvidenceResponse {
+  studies_behind?: StudyRecord[];
+  other_evidence_paths?: EvidencePath[];
   banner?: Banner;
   study_selection?: StudySelection;
   effectiveness?: EffectivenessState;

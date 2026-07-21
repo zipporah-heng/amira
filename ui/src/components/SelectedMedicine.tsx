@@ -1,7 +1,11 @@
+import { lazy, Suspense } from "react";
 import type { EvidenceResponse } from "../api";
 
-/** Section 2 — Selected medicine. Every value comes from the API; nothing is
- *  hard-coded in React. */
+// The 3D viewer is a separate lazy chunk so it never blocks evidence content.
+const MoleculeViewer = lazy(() => import("./MoleculeViewer"));
+
+/** Section 2 — Selected medicine, with the real molecular structure on the right.
+ *  Every value comes from the API; nothing is hard-coded in React. */
 export function SelectedMedicine({ report, onSources }: {
   report: EvidenceResponse;
   onSources: () => void;
@@ -14,40 +18,48 @@ export function SelectedMedicine({ report, onSources }: {
 
   return (
     <section className="card selected-medicine" id="selected-medicine" style={{ marginTop: 22 }}>
-      <div className="section-title">Selected medicine</div>
       <div className="sm-grid">
-        <div className="sm-id">
-          <div className="pill-icon" aria-hidden>💊</div>
-          <div>
-            <div className="med-name">{b.medicine}</div>
-            <div className="med-brand">{b.drug_class}</div>
-            <div className="med-facts">
-              <span><span className="mf-k">Represented use:</span> {b.indication || "—"}</span>
-              <span><span className="mf-k">Condition:</span> {report.query.condition}</span>
+        <div className="sm-main">
+          <div className="section-title">Selected medicine</div>
+          <div className="sm-id">
+            <div className="pill-icon" aria-hidden>💊</div>
+            <div>
+              <div className="med-name">{b.medicine}</div>
+              <div className="med-brand">{b.drug_class}</div>
+              <div className="med-facts">
+                <span><span className="mf-k">Represented use:</span> {b.indication || "—"}</span>
+                <span><span className="mf-k">Condition:</span> {report.query.condition}</span>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="sm-stats">
-          <div className="sm-stat">
-            <div className="sm-num">{studies}</div>
-            <div className="sm-lab">stud{studies === 1 ? "y" : "ies"} reviewed</div>
-          </div>
-          <div className="sm-stat">
-            <div className="sm-num">{womenReported > 0 ? womenReported.toLocaleString() : "—"}</div>
-            <div className="sm-lab">
-              women explicitly reported
-              {!womenCoverage && womenReported > 0 && (
-                <span title="Exact count available for a subset of studies"> (subtotal)</span>
-              )}
+          <div className="sm-stats">
+            <div className="sm-stat">
+              <div className="sm-num">{studies}</div>
+              <div className="sm-lab">stud{studies === 1 ? "y" : "ies"} reviewed</div>
+            </div>
+            <div className="sm-stat">
+              <div className="sm-num">{womenReported > 0 ? womenReported.toLocaleString() : "—"}</div>
+              <div className="sm-lab">
+                women explicitly reported
+                {!womenCoverage && womenReported > 0 && (
+                  <span title="Exact count available for a subset of studies"> (subtotal)</span>
+                )}
+              </div>
             </div>
           </div>
+          <div className="sm-foot">
+            <button className="linkbtn" onClick={onSources}>View original sources ↗</button>
+            <span className="muted" style={{ fontSize: 13 }}>
+              AMIRA reviews published research. It does not diagnose, prescribe, or recommend treatment.
+            </span>
+          </div>
         </div>
-      </div>
-      <div className="sm-foot">
-        <button className="linkbtn" onClick={onSources}>View original sources ↗</button>
-        <span className="muted" style={{ fontSize: 12 }}>
-          AMIRA reviews published research. It does not diagnose, prescribe, or recommend treatment.
-        </span>
+
+        <div className="sm-molecule">
+          <Suspense fallback={<div className="mol-panel mol-loading" aria-hidden>Loading structure…</div>}>
+            <MoleculeViewer medicine={b.medicine} />
+          </Suspense>
+        </div>
       </div>
     </section>
   );

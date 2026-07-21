@@ -14,6 +14,17 @@ one structured record conforming to the **Women's Evidence Schema v0.2**
 It answers one narrow question per passage: *what women's-health evidence does
 this text state, and can each field be traced to it verbatim?*
 
+## Passage-local and source-local (no cross-study leakage)
+
+Each extraction is bound to exactly one `trial_id`, one `source_document_id`, and
+one `passage_id`. **A field is never borrowed from another trial, publication, or
+passage of the same medicine.** For example, a passage from the DIG trial reports
+`women_count: null` (DIG's own abstract does not state it) and never inherits the
+DECISION trial's 284-woman count. Medicine-level synthesis happens afterwards, in
+the deterministic engines, and is kept visibly separate from extraction. A
+regression test (`test_dig_extraction_does_not_borrow_decisions_284_women`)
+enforces this.
+
 ## What it explicitly does NOT do
 
 - It does **not** calculate the readiness score or the maturity level. Those are
@@ -45,12 +56,32 @@ contribution is the schema + prompt + validator + scoring rules + evaluation —
 | `AMIRA_LLM_API_KEY` | *(unset)* | provider key, read from the environment only |
 | `AMIRA_ENABLE_AI_EXTRACTION` | `1` | feature flag for the AI module |
 
-- **`recorded` (default):** replays already-source-verified extractions from the
-  committed corpus. No network, no key, fully deterministic. This is what the
-  live demo and the offline pipeline use, so results are reproducible.
-- **`openai` / `anthropic`:** call a live model with the versioned prompt and a
-  JSON-mode / schema-constrained request. Runs only when `AMIRA_LLM_API_KEY` is
-  set. The key is never written to logs, the repository, or the browser bundle.
+- **`recorded` (default):** a **Recorded AMIRA-Extract demonstration** — it
+  replays a previously generated structured extraction from the committed corpus
+  so the pipeline can be shown without sending data to an external model. It
+  makes **no live model call** (`live_model_call: false`) and is labelled as
+  recorded everywhere in the UI (button: "Run recorded extraction"). Fully
+  deterministic and offline.
+- **`openai` / `anthropic`:** call a live model with the versioned prompt. The
+  OpenAI path uses **schema-constrained Structured Outputs** against the versioned
+  Women's Evidence Schema (not generic JSON mode). Runs only when
+  `AMIRA_LLM_API_KEY` is set; the key is never written to logs, the repository,
+  or the browser bundle. `live_model_call` is set to `true`. **If the call fails,
+  the failure is surfaced honestly (HTTP 502) — recorded output is never
+  substituted for a live result.**
+
+### Source-match honesty
+
+AMIRA stores source *excerpts*, not full retrieved documents. A verified
+extraction is therefore reported as **"Stored evidence excerpt matched"**, never
+"the whole publication was verified". The `source_match_state` field is one of:
+`source_passage_matched` (validated against retrieved full source),
+`stored_excerpt_matched` (matched AMIRA's stored excerpt — the current state),
+`source_match_unavailable`, `quarantined`, or `human_reviewed`. Each stored
+passage carries a `provenance` block (source_document_id, source_url,
+passage_index, SHA-1 content hash, retrieval_date, match_basis). Absence findings
+carry `exact_evidence_passage: null` and are labelled "Not located in reviewed
+source" — no quotation is invented to assert an absence.
 
 ## Safety and hallucination controls
 

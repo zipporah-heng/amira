@@ -441,3 +441,116 @@ blockquote.passage { margin: 10px 0 0; }
   .if-headline { font-size: 22px; }
   .rd-score-row { gap: 16px; }
 }
+
+/* ============================================================
+   Correction mission: top nav, molecule, provider honesty,
+   evidence paths, and typography minimums
+   ============================================================ */
+
+/* --- Priority 7: sticky top navigation (no sidebar) --- */
+.app { display: block; min-height: 100vh; }
+.main { flex: none; }
+.topnav {
+  position: sticky; top: 0; z-index: 30;
+  background: rgba(255,255,255,0.9); backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.topnav-inner {
+  max-width: 1280px; margin: 0 auto; padding: 10px 36px;
+  display: flex; align-items: center; gap: 22px;
+}
+.topnav-brand { display: flex; align-items: center; flex-shrink: 0; }
+.topnav-logo { height: 30px; width: auto; display: block; }
+.topnav-links { display: flex; gap: 6px; flex: 1; }
+.topnav-link {
+  font-size: 15px; font-weight: 600; color: var(--ink-2); text-decoration: none;
+  padding: 8px 13px; border-radius: 9px; transition: background .15s, color .15s;
+}
+.topnav-link:hover { background: var(--lav-50); color: var(--ink); text-decoration: none; }
+.topnav-link.active { background: var(--lav-100); color: var(--lav-700); }
+.topnav-link:focus-visible, .topnav-burger:focus-visible, .share-btn:focus-visible,
+.topnav-mobile-link:focus-visible { outline: 3px solid var(--lav-300); outline-offset: 2px; }
+.topnav-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.topnav-burger { display: none; flex-direction: column; gap: 4px; background: none; border: 1px solid var(--border-strong); border-radius: 9px; padding: 9px 8px; }
+.topnav-burger span { width: 20px; height: 2px; background: var(--ink-2); border-radius: 2px; }
+.topnav-mobile { display: none; flex-direction: column; padding: 8px 20px 14px; border-top: 1px solid var(--border); }
+.topnav-mobile-link { font-size: 16px; font-weight: 600; color: var(--ink-2); padding: 12px 8px; border-radius: 9px; text-decoration: none; }
+.topnav-mobile-link.active { color: var(--lav-700); background: var(--lav-50); }
+
+@media (max-width: 860px) {
+  .topnav-inner { padding: 10px 18px; }
+  .topnav-links { display: none; }
+  .topnav-burger { display: flex; }
+  .topnav-mobile { display: flex; }
+}
+
+/* --- Priority 9: molecule panel --- */
+.sm-grid { display: grid; grid-template-columns: 1.5fr 0.9fr; gap: 24px; align-items: stretch; }
+.sm-main { display: flex; flex-direction: column; }
+.sm-molecule { min-width: 0; }
+.mol-panel {
+  height: 100%; min-height: 260px; border-radius: 16px; overflow: hidden;
+  background: radial-gradient(120% 120% at 70% 20%, #2a1a54 0%, #241748 45%, #10203a 100%);
+  border: 1px solid var(--lav-200); display: flex; flex-direction: column;
+}
+.mol-canvas { flex: 1; width: 100%; min-height: 200px; touch-action: none; cursor: grab; display: block; }
+.mol-canvas:active { cursor: grabbing; }
+.mol-cap { padding: 10px 14px 12px; color: #d9d1f5; font-size: 12.5px; background: rgba(0,0,0,0.18); }
+.mol-cap .src-link { color: #c7b8f0; }
+.mol-note { color: #b3abd0; font-size: 12px; margin: 4px 0 6px; line-height: 1.45; }
+.mol-loading, .mol-fallback { align-items: center; justify-content: center; color: #cfc7ee; text-align: center; padding: 24px; }
+.mol-fallback-ic { font-size: 40px; opacity: .7; }
+.mol-fallback-txt { font-size: 13.5px; margin-top: 8px; }
+.pill-icon.sm { width: 42px; height: 42px; border-radius: 12px; font-size: 20px; }
+
+@media (max-width: 900px) {
+  .sm-grid { grid-template-columns: 1fr; }
+  .sm-molecule { order: -1; }
+  .mol-panel { min-height: 240px; }
+}
+
+/* --- Priority 2/3: provider honesty panel --- */
+.provider-panel {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px 20px;
+  margin-top: 14px; padding: 14px 16px; background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: 12px; font-size: 14px; color: var(--ink-2);
+}
+.pp-k { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); font-weight: 700; }
+
+/* --- Priority 5: other evidence paths --- */
+.op-head { display: flex; justify-content: space-between; gap: 14px; align-items: center; flex-wrap: wrap; }
+.op-tag { flex-shrink: 0; font-size: 11px; font-weight: 750; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; padding: 5px 11px; }
+.op-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-top: 16px; }
+.op-card { border: 1px solid var(--border); border-radius: 14px; padding: 18px; background: linear-gradient(160deg, var(--lav-50), #fff 70%); }
+.op-title { display: flex; gap: 12px; align-items: center; }
+.op-med { font-size: 18px; font-weight: 700; color: var(--ink); }
+.op-class { font-size: 13px; color: var(--ink-3); }
+.op-headline { font-size: 14px; color: var(--ink-2); margin-top: 10px; line-height: 1.5; }
+.op-bullets { margin: 12px 0 0; padding-left: 18px; display: grid; gap: 5px; }
+.op-bullets li { font-size: 14px; color: var(--ink-2); }
+.op-boundary { margin-top: 12px; font-size: 13px; font-weight: 600; color: var(--lav-700); background: var(--lav-50); border-radius: 9px; padding: 9px 12px; }
+
+/* --- studies table extras --- */
+.kind-chip { margin-left: 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-3); background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 1px 7px; }
+.muted-cell { color: var(--ink-3); }
+
+/* --- completeness note (always visible) --- */
+.completeness-note {
+  margin-top: 16px; padding: 13px 16px; background: var(--surface-2);
+  border-left: 3px solid var(--lav-500); border-radius: 8px;
+  font-size: 14px; color: var(--ink-2); line-height: 1.5; font-style: italic;
+}
+
+/* --- Priority 8: typography minimums (essential text >= 14px) --- */
+.page-q { font-size: clamp(30px, 5vw, 42px); line-height: 1.18; }
+.page-sub { font-size: 17px; }
+.muted { font-size: 14px; }
+.section-title { font-size: 14px; }
+.bc-value { font-size: 16px; }
+.bc-sub, .coverage-detail, .rep-meaning, .nh-sub, .pipe-detail, .rd-score-sub,
+.rd-q, .fc-interp, .mc-sub, .disclaimer, .test-note { font-size: 14px; }
+table.studies { font-size: 14px; }
+table.studies th { font-size: 12.5px; }
+.cta, .check-btn, .share-btn, .dl-btn, .linkbtn, .rail-link, .src-link, .rd-toggle { font-size: 15px; }
+.rd-reason, .if-interp, .trace-q, .op-bullets li, .assets-status li, .pipe-safety li { font-size: 14px; }
+.card .section-title + p, .muted { line-height: 1.55; }

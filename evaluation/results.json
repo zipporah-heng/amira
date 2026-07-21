@@ -4,7 +4,10 @@
   "run_at": "2026-07-20T18:42:00Z",
   "provider": {
     "provider": "recorded",
-    "model": "",
+    "provider_label": "Recorded corpus extraction",
+    "model": "recorded-corpus-v3.0.0",
+    "is_recorded": true,
+    "live_capable": false,
     "prompt_version": "evidence-extraction-v0.1",
     "schema_version": "0.2",
     "api_key_present": false

@@ -462,6 +462,8 @@ def check_evidence(condition: str, medicine: str,
         ],
         "who_was_studied": clinical.who_was_studied(trial_ids),
         "study_selection": study_selection(medicine, matched),
+        "studies_behind": studies_behind(medicine, matched),
+        "other_evidence_paths": other_evidence_paths(medicine, matched[0].get("condition") or condition),
         "totals": totals,
         "dimensions": dimension_summary(trial_ids),
         "evidence_gaps": evidence_gaps(trial_ids, effectiveness, safety),
@@ -626,6 +628,165 @@ def study_selection(medicine: str, matched: List[dict]) -> dict:
             f"{len(dataset.trials())} randomized studies; {len(matched)} are shown for {medicine}."
         ),
     }
+
+
+def other_evidence_paths(medicine: str, condition: str) -> List[dict]:
+    """Other medicines studied for the same condition, shown as SEPARATE evidence
+    paths — never as a head-to-head comparison or a treatment recommendation.
+
+    For Digoxin (heart failure) this surfaces Dapagliflozin as its own path, with a
+    prominent "not a head-to-head comparison" boundary."""
+    cond = (condition or "").strip().lower()
+    others = sorted({
+        t["medicine"] for t in dataset.trials()
+        if (t.get("condition") or "").strip().lower() == cond
+        and t["medicine"].strip().lower() != (medicine or "").strip().lower()
+    })
+    paths = []
+    for med in others:
+        med_trials = [t for t in dataset.trials() if t["medicine"] == med]
+        eff = [f for f in dataset.findings_for(med, "efficacy") if f["scope"].startswith("trial:")]
+        if not eff:
+            continue
+        f = eff[0]
+        trial_id = f["scope"].split(":", 1)[1]
+        c_val, c_basis, _ = dataset.assertion_value(trial_id, "female_enrollment_count")
+        p_val, p_basis, _ = dataset.assertion_value(trial_id, "female_enrollment_pct")
+        total = next((t.get("enrollment_actual") for t in med_trials if t["trial_id"] == trial_id), None)
+        bullets = []
+        if total:
+            bullets.append(f"{f['scope'].split(':',1)[1]}: {int(total):,} participants")
+        if c_basis == "reported":
+            pct = f" ({p_val}%)" if p_basis in ("reported", "derived") else ""
+            bullets.append(f"{int(c_val):,} women{pct}")
+        if f.get("female_estimate"):
+            bullets.append(f"Women {f['female_estimate']}" + (f" ({f['female_ci']})" if f.get("female_ci") else ""))
+        if f.get("male_estimate"):
+            bullets.append(f"Men {f['male_estimate']}" + (f" ({f['male_ci']})" if f.get("male_ci") else ""))
+        if f.get("comparison_p") is not None:
+            bullets.append(f"Sex-by-treatment interaction P = {f['comparison_p']}")
+        s = dataset.source_by_id(f["source_id"])
+        paths.append({
+            "medicine": med,
+            "drug_class": med_trials[0].get("drug_class"),
+            "headline": f["interpretation"].split(".")[0] + "." if f.get("interpretation") else f["endpoint"],
+            "bullets": bullets,
+            "significance": f.get("significance"),
+            "boundary": "This is not a head-to-head comparison or treatment recommendation.",
+            "source": {"title": s["title"], "url": s["url"], "pmid": s.get("pmid"),
+                       "source_type": s["source_type"]},
+        })
+    return paths
+
+
+def studies_behind(medicine: str, matched: List[dict]) -> List[dict]:
+    """Source records behind a medicine's result, one row per source DOCUMENT.
+
+    A trial can contribute more than one row — e.g. Digoxin shows the DIG registry
+    record, the 2002 sex-based DIG analysis publication, and the DECISION primary
+    report. Every row's numbers are SOURCE-LOCAL to that row's own trial; a value
+    is never borrowed from another trial (DIG never shows DECISION's 284 women)."""
+    def _women_display(trial_id: str):
+        c_val, c_basis, _ = dataset.assertion_value(trial_id, "female_enrollment_count")
+        p_val, p_basis, _ = dataset.assertion_value(trial_id, "female_enrollment_pct")
+        if c_basis == "reported":
+            pct = f" ({int(p_val)}%)" if p_basis in ("reported", "derived") and p_val is not None else ""
+            return f"{int(c_val):,}{pct}", "reported"
+        if c_basis == "not_located" or p_basis == "not_located":
+            return "Not located", "not_located"
+        return "Not reported", "not_reported"
+
+    def _dim_label(trial_id: str, dim: str):
+        v, b, _ = dataset.assertion_value(trial_id, dim)
+        if v == "yes":
+            return "Reported"
+        return "Not located" if b == "not_located" else "Not reported"
+
+    def _sex_outcomes(trial_id: str, source_id: str, is_registry: bool):
+        # A formal test, when a finding for this trial+source reports one.
+        fs = [f for f in dataset.findings()
+              if f.get("scope") == f"trial:{trial_id}" and f.get("source_id") == source_id
+              and f.get("comparison_p") is not None]
+        if fs:
+            return f"Formal interaction P={fs[0]['comparison_p']}"
+        v, b, _ = dataset.assertion_value(trial_id, "sex_specific_efficacy_reported")
+        if v == "yes":
+            role = next((t.get("evidence_role", "") for t in matched if t["trial_id"] == trial_id), "")
+            return "Reported (post hoc)" if "post_hoc" in role else "Reported"
+        return "Not located" if b == "not_located" else "Not reported"
+
+    def _years(trial: dict, source: dict, is_primary_registry: bool):
+        if is_primary_registry and (trial.get("start_date") or trial.get("completion_date")):
+            s = (trial.get("start_date") or "")[:4]
+            e = (trial.get("completion_date") or "")[:4]
+            return f"{s}–{e}" if s and e and s != e else (s or e or None)
+        return source.get("year")
+
+    def _study_type(trial: dict, source: dict, is_registry: bool):
+        phase = trial.get("study_phase")
+        if is_registry:
+            return f"{phase} RCT" if phase and phase.startswith("Phase") else (trial.get("study_type") or "Trial")
+        # A publication: post hoc analysis vs primary report.
+        role = trial.get("evidence_role", "")
+        has_posthoc_finding = any(
+            f.get("scope") == f"trial:{trial['trial_id']}" and f.get("source_id") == source["source_id"]
+            and f.get("comparison_p") is not None
+            for f in dataset.findings())
+        if "post_hoc" in role and has_posthoc_finding:
+            return "Post hoc analysis"
+        return f"{phase} RCT" if phase and phase.startswith("Phase") else "Primary publication"
+
+    rows: List[dict] = []
+    for trial in matched:
+        tid = trial["trial_id"]
+        primary_sid = trial.get("primary_source_id")
+        women_disp, women_basis = _women_display(tid)
+        seen_sources = set()
+
+        # 1) The trial's primary source record.
+        if primary_sid:
+            s = dataset.source_by_id(primary_sid)
+            is_reg = s.get("source_type") == "trial_registry_record"
+            seen_sources.add(primary_sid)
+            rows.append({
+                "trial_id": tid,
+                "study": f"{trial['display_name']} trial" if is_reg else trial["display_name"],
+                "year": _years(trial, s, is_reg),
+                "women": women_disp, "women_basis": women_basis,
+                "sex_outcomes": _sex_outcomes(tid, primary_sid, is_reg),
+                "menopause": _dim_label(tid, "menopause_status_reported"),
+                "hormone_therapy": _dim_label(tid, "hormone_therapy_reported"),
+                "study_type": _study_type(trial, s, is_reg),
+                "source_label": s.get("publisher") or ("ClinicalTrials.gov" if is_reg else "Publication"),
+                "source_url": s["url"],
+                "record_kind": "trial_registry_record" if is_reg else "primary_publication",
+            })
+
+        # 2) Additional publications that carry a sex-specific FINDING for this trial.
+        finding_sids = [f["source_id"] for f in dataset.findings()
+                        if f.get("scope") == f"trial:{tid}" and f["source_id"] not in seen_sources]
+        for sid in dict.fromkeys(finding_sids):  # ordered-unique
+            s = dataset.source_by_id(sid)
+            seen_sources.add(sid)
+            has_formal = any(
+                f.get("scope") == f"trial:{tid}" and f.get("source_id") == sid
+                and f.get("comparison_p") is not None for f in dataset.findings())
+            is_posthoc = "post_hoc" in trial.get("evidence_role", "") and has_formal
+            rows.append({
+                "trial_id": tid,
+                "study": f"Sex-based {trial['display_name']} analysis",
+                "year": s.get("year"),
+                "women": women_disp, "women_basis": women_basis,
+                "sex_outcomes": _sex_outcomes(tid, sid, False),
+                "menopause": _dim_label(tid, "menopause_status_reported"),
+                "hormone_therapy": _dim_label(tid, "hormone_therapy_reported"),
+                # A secondary publication is never itself an "RCT".
+                "study_type": "Post hoc analysis" if is_posthoc else "Sex-specific analysis",
+                "source_label": s.get("publisher") or "Publication",
+                "source_url": s["url"],
+                "record_kind": "analysis_publication",
+            })
+    return rows
 
 
 def evidence_gaps(trial_ids: List[str], effectiveness: dict, safety: dict) -> List[dict]:

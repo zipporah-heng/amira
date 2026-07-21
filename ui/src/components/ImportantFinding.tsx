@@ -44,9 +44,12 @@ function plainHeadline(f: Finding, medicine: string): string {
 function limitationChips(f: Finding): string[] {
   const chips: string[] = [];
   const interp = (f.interpretation || "").toLowerCase();
-  if (interp.includes("post hoc")) chips.push("Historical post hoc analysis");
+  if (interp.includes("post hoc")) {
+    chips.push("Historical post hoc sex-based analysis");
+    chips.push("Not a randomized comparison designed specifically for postmenopausal women");
+  }
   if (f.population_scope === "women_only_life_stage") chips.push("Women-only study — not a between-sex comparison");
-  chips.push("Not menopause-specific");
+  chips.push("Menopause and hormone therapy status not reported");
   if (f.significance === "significant") {
     chips.push("Shows an association, not proof that the medicine caused an individual outcome");
   }

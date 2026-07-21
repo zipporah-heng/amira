@@ -49,9 +49,10 @@ describe("ImportantFinding", () => {
 
   it("shows limitations so a rate is never read as a drug-caused outcome rate", () => {
     render(<ImportantFinding report={report} />);
-    expect(screen.getByText("Historical post hoc analysis")).toBeInTheDocument();
+    expect(screen.getByText("Historical post hoc sex-based analysis")).toBeInTheDocument();
+    expect(screen.getByText("Not a randomized comparison designed specifically for postmenopausal women")).toBeInTheDocument();
     expect(screen.getByText(/Shows an association, not proof/)).toBeInTheDocument();
-    expect(screen.getByText("Not menopause-specific")).toBeInTheDocument();
+    expect(screen.getByText("Menopause and hormone therapy status not reported")).toBeInTheDocument();
   });
 
   it("links to the exact source", () => {

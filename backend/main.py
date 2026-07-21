@@ -163,16 +163,24 @@ def get_readiness(medicine: str = "Rosuvastatin"):
 def get_ai_pipeline():
     """The transparent AI pipeline: stages, provider config, and honest status."""
     cfg = extract.provider_config()
+    recorded_note = (
+        "Recorded AMIRA-Extract demonstration: this replays a previously generated structured "
+        "extraction so the pipeline can be demonstrated without sending data to an external model. "
+        "No live model call is made." if cfg["is_recorded"] else
+        f"Live model provider '{cfg['provider']}' is configured; extractions use schema-constrained "
+        "Structured Outputs against the versioned Women's Evidence Schema."
+    )
     return {
         **_envelope(),
         "enabled": flags.enable_ai_extraction(),
         "provider": cfg,
+        "recorded_note": recorded_note,
         "stages": [
             {"key": "sources", "label": "ClinicalTrials.gov + PubMed + PubMed Central",
              "detail": "Public trial registries and peer-reviewed publications are the only inputs."},
-            {"key": "extract", "label": "AI evidence extraction (AMIRA-Extract)",
-             "detail": f"Provider: {cfg['provider']}. Prompt {cfg['prompt_version']}. "
-                       "The model extracts structured evidence; it never scores or decides."},
+            {"key": "extract", "label": "AMIRA-Extract (structured extraction)",
+             "detail": f"Provider: {cfg['provider_label']}. Prompt {cfg['prompt_version']}. "
+                       "The model extracts structured evidence per passage; it never scores or decides."},
             {"key": "schema", "label": "Women's Evidence Schema (v0.2)",
              "detail": "Every extraction must conform to a strict, versioned JSON Schema."},
             {"key": "validate", "label": "Passage validation",
@@ -222,20 +230,38 @@ def post_ai_extract(req: ExtractRequest):
     else:
         raise HTTPException(status_code=400, detail="provide passage_id, or passage + source_identifier")
 
-    obj = extract.extract_and_validate(passage, meta)
+    cfg = extract.provider_config()
+    try:
+        obj = extract.extract_and_validate(passage, meta)
+    except extract.ProviderUnavailable as e:
+        raise HTTPException(status_code=409, detail={
+            "error": "live_provider_unavailable", "message": str(e),
+            "hint": "Set AMIRA_LLM_API_KEY, or use the recorded provider (AMIRA_LLM_PROVIDER=recorded)."})
+    except extract.LiveProviderError as e:
+        # Surface the live failure honestly — never present recorded output as live.
+        raise HTTPException(status_code=502, detail={
+            "error": "live_model_call_failed", "message": str(e),
+            "note": "The live model call failed. Recorded output is NOT substituted for a live result."})
     return {
         **_envelope(),
-        "question": "What women's-health evidence does this passage contain, and can every field be traced to it?",
+        "question": "What women's-health evidence does this passage contain, and can every field be traced to its source?",
+        "provider": cfg,
         "extraction": obj,
         "trace": {
+            "trial_id": obj["trial_id"],
+            "passage_id": obj["passage_id"],
+            "source_document_id": obj["source_document_id"],
             "exact_passage": obj["exact_evidence_passage"],
             "source_url": obj["source_url"],
             "model_version": obj["extraction_model"],
+            "live_model_call": obj.get("live_model_call", False),
             "prompt_version": obj["prompt_version"],
             "schema_version": obj["schema_version"],
             "passage_validation": obj["validation_state"],
+            "source_match_state": obj["source_match_state"],
             "human_review": obj["human_review_state"],
             "validation_notes": obj["validation_notes"],
+            "provenance": obj["provenance"],
         },
         "score_impact": readiness.evaluate(meta.get("medicine") or "") if flags.enable_pilot_score() else None,
     }

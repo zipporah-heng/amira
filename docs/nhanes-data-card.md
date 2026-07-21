@@ -61,16 +61,51 @@ value is ever shown to fill a card.
 
 ## Results in the committed cache (cycle 2017–2018)
 
-| Drug class | Unweighted users | Weighted use % (SE) | Shown? |
-| ---------- | ---------------- | ------------------- | ------ |
-| Statin | 559 | 15.08% (0.99) | ✅ shown |
-| Angiotensin receptor blocker | 245 | 6.81% (0.59) | ✅ shown |
-| Cardiac glycoside (digoxin) | 7 | — | 🔒 suppressed |
-| SGLT2 inhibitor (dapagliflozin) | 7 | — | 🔒 suppressed |
+Denominator: **3,016** adult women (unweighted). Age range 18–80.
+
+| Drug class | Unweighted users | Weighted use % | SE (pct pts) | RSE | Shown? |
+| ---------- | ---------------- | -------------- | ------------ | --- | ------ |
+| Statin | 559 | 15.08% | 1.008 | 0.067 | ✅ shown |
+| Angiotensin receptor blocker | 245 | 6.81% | 0.595 | 0.087 | ✅ shown |
+| Cardiac glycoside (digoxin) | 7 | — | — | — | 🔒 suppressed |
+| SGLT2 inhibitor (dapagliflozin) | 7 | — | — | — | 🔒 suppressed |
 
 The digoxin and SGLT2 classes are correctly suppressed: their NHANES samples are
 far too small for a stable population estimate. This is the honest, intended
 behaviour — it demonstrates the suppression rule rather than inventing a number.
+
+**Rounding rule.** The committed JSON stores `standard_error` rounded to 3
+decimal places (percentage points) and `weighted_use_percent` to 2. The UI
+displays those stored values verbatim — e.g. the statin SE is **1.008**
+everywhere. No location rounds differently.
+
+## Reconciliation: preliminary 11.8% / 5.3% vs committed 15.08% / 6.81%
+
+An early exploratory calculation reported statin use ≈ **11.8%** and ARB use ≈
+**5.3%**. The committed pipeline reports **15.08%** and **6.81%**. The difference
+is entirely the **denominator (survey domain)**, not the medication mapping or
+the weights:
+
+- The preliminary pass divided by **all female respondents (n = 4,697, ages
+  0–80)** — including girls, who essentially never take these medicines. Those
+  zero-use children inflate the denominator and pull the prevalence down.
+- The committed pipeline restricts the domain to **adult women aged ≥ 18
+  (n = 3,016)**, which is the population for whom prescription use is meaningful.
+
+Same numerator (users identified by the same ingredient-name mapping), smaller
+and more appropriate denominator ⇒ higher, correct adult-women prevalence. The
+ingredient lists, weight (`WTINT2YR`), and design variables were identical in
+both passes.
+
+## Missing-data treatment
+
+- Respondents missing the interview weight or design variables are retained with
+  their reported values; NHANES public-use files carry these for all
+  interview-eligible respondents, so no imputation is performed.
+- A respondent with no matching prescription record contributes 0 to the
+  numerator (a genuine non-user), not a missing value.
+- Suppressed cells store `null` for the estimate and SE — never 0, and never a
+  placeholder — with an explicit `suppression_reason`.
 
 ## Reproducibility
 

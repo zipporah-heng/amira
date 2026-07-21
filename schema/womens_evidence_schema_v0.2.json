@@ -2,15 +2,18 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/zipporah-heng/amira/schema/womens_evidence_schema_v0.2.json",
   "title": "AMIRA Women's Evidence Schema",
-  "description": "Strict, versioned contract for a single structured evidence extraction produced by AMIRA-Extract from one clinical-research passage. The LLM must return JSON conforming to this schema. Every claim carries the exact source passage it was drawn from; no field may be inferred beyond what the passage states.",
+  "description": "Strict, versioned contract for a single structured evidence extraction produced by AMIRA-Extract from ONE clinical-research passage from ONE source document. The extraction is passage-local and source-local: it must never borrow a value from another trial, publication, or passage. Every claim is bound to its provenance identifiers and carries the exact source passage it was drawn from; no field may be inferred beyond what the passage states.",
   "version": "0.2",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "medicine",
     "condition",
+    "trial_id",
     "study_identifier",
     "source_identifier",
+    "source_document_id",
+    "passage_id",
     "women_represented",
     "evidence_state",
     "exact_evidence_passage",
@@ -20,71 +23,89 @@
     "schema_version",
     "extraction_timestamp",
     "validation_state",
-    "human_review_state"
+    "source_match_state",
+    "human_review_state",
+    "provenance"
   ],
   "properties": {
     "medicine": {
       "type": "string",
-      "description": "Generic medicine name as stated in the source."
+      "description": "Generic medicine name as stated in the source (the medicine_id)."
     },
     "condition": {
       "type": ["string", "null"],
       "description": "Condition or indication represented in the passage."
     },
+    "trial_id": {
+      "type": "string",
+      "description": "AMIRA trial id the passage belongs to (e.g. DIG, DECISION). A passage from DIG must never carry DECISION's values."
+    },
     "study_identifier": {
       "type": "string",
-      "description": "Trial acronym or study identifier (e.g. DAPA-HF, DIG). Never a synthetic id."
+      "description": "Trial acronym / study identifier for display (usually equal to trial_id). Never a synthetic id."
     },
     "source_identifier": {
       "type": "string",
-      "description": "AMIRA source id (SRC-...), NCT id, or PMID for the exact document quoted."
+      "description": "AMIRA source id (SRC-...) of the exact document quoted."
+    },
+    "source_document_id": {
+      "type": "string",
+      "description": "The specific publication or registry document id the passage was extracted from (NCT id, PMID, PMCID, or SRC-... id). Binds the extraction to one document."
+    },
+    "passage_id": {
+      "type": "string",
+      "description": "AMIRA id of the exact passage extracted (finding_id or assertion_id). The extraction is local to this passage."
+    },
+    "assertion_id": {
+      "type": ["string", "null"],
+      "description": "Related evidence-assertion id, when the passage corresponds to a stored assertion."
     },
     "women_represented": {
       "type": "string",
       "enum": ["yes", "no", "not_reported", "not_located"],
-      "description": "Whether the passage reports that women were represented in the study."
+      "description": "Whether THIS passage/source reports that women were represented."
     },
     "women_count": {
       "type": ["integer", "null"],
-      "description": "Exact number of women, only if stated verbatim. Null if not stated."
+      "description": "Exact number of women, only if stated in THIS trial's source. Null if this passage/trial does not state it (never borrowed from another trial)."
     },
     "women_percentage": {
       "type": ["number", "null"],
-      "description": "Percentage of women, only if stated or directly derivable from stated counts."
+      "description": "Percentage of women for THIS trial, only if stated or directly derivable from THIS trial's stated counts."
     },
     "sex_specific_effectiveness": {
       "type": "string",
       "enum": ["reported", "not_reported", "not_located"],
-      "description": "Whether a sex-specific effectiveness outcome is reported."
+      "description": "Whether a sex-specific effectiveness outcome is reported in THIS source."
     },
     "formal_sex_comparison": {
       "type": "string",
       "enum": ["reported", "not_reported", "not_located", "not_applicable"],
-      "description": "Whether a formal sex-by-treatment comparison (interaction/heterogeneity test) is reported. 'not_applicable' for an explicitly women-only study."
+      "description": "Whether a formal sex-by-treatment comparison (interaction/heterogeneity test) is reported in THIS source. 'not_applicable' for an explicitly women-only study."
     },
     "interaction_statistic": {
       "type": ["string", "null"],
-      "description": "Verbatim interaction/heterogeneity statistic (e.g. 'P for interaction = 0.014'). Null if none is reported."
+      "description": "Verbatim interaction/heterogeneity statistic (e.g. 'P for interaction = 0.014'). Null if none is reported in this source."
     },
     "sex_specific_safety": {
       "type": "string",
       "enum": ["reported", "not_reported", "not_located"],
-      "description": "Whether adverse events are reported separately by sex."
+      "description": "Whether adverse events are reported separately by sex in THIS source."
     },
     "menopause": {
       "type": "string",
       "enum": ["reported", "not_reported", "not_located"],
-      "description": "Whether menopausal status is reported. NEVER inferred from age."
+      "description": "Whether menopausal status is reported in THIS source. NEVER inferred from age."
     },
     "pregnancy": {
       "type": "string",
       "enum": ["reported", "not_reported", "not_located"],
-      "description": "Whether pregnancy-specific evidence is reported."
+      "description": "Whether pregnancy-specific evidence is reported in THIS source."
     },
     "hormone_therapy": {
       "type": "string",
       "enum": ["reported", "not_reported", "not_located"],
-      "description": "Whether hormone-therapy use or criteria are reported."
+      "description": "Whether hormone-therapy use or criteria are reported in THIS source."
     },
     "hormonal_variability": {
       "type": "string",
@@ -106,27 +127,24 @@
       "description": "AMIRA evidence state for the primary claim in this passage."
     },
     "exact_evidence_passage": {
-      "type": "string",
-      "minLength": 1,
-      "description": "The exact text span from the source that supports this extraction. Must appear verbatim in the stored source. The quote validator rejects any extraction whose passage cannot be matched."
+      "type": ["string", "null"],
+      "description": "The exact text span from the source that supports this extraction, or null for an absence finding (where no quotation asserts the absence). When present it must appear verbatim in the stored source; the quote validator rejects any extraction whose passage cannot be matched, and must never begin mid-word."
     },
     "source_url": {
       "type": "string",
       "format": "uri",
-      "description": "Resolvable URL of the source document (ClinicalTrials.gov, PubMed, or PMC)."
+      "description": "Resolvable URL of the source document (ClinicalTrials.gov, PubMed, PMC, or the publisher)."
     },
     "extraction_model": {
       "type": "string",
-      "description": "Identifier of the model/provider that produced this extraction (e.g. 'recorded-corpus-v3.0.0', 'anthropic:claude-...')."
+      "description": "Identifier of the model/provider that produced this extraction (e.g. 'recorded-corpus-v3.0.0', 'openai:gpt-...')."
     },
-    "prompt_version": {
-      "type": "string",
-      "description": "Version of the extraction prompt used."
+    "live_model_call": {
+      "type": "boolean",
+      "description": "True only when a real external model was actually called for this extraction. The recorded provider sets this to false."
     },
-    "schema_version": {
-      "type": "string",
-      "const": "0.2"
-    },
+    "prompt_version": { "type": "string" },
+    "schema_version": { "type": "string", "const": "0.2" },
     "extraction_timestamp": {
       "type": "string",
       "description": "ISO-8601 timestamp of when the extraction was produced."
@@ -134,20 +152,43 @@
     "validation_state": {
       "type": "string",
       "enum": ["pending", "schema_valid", "quote_verified", "quarantined"],
-      "description": "Result of automated validation. 'quote_verified' means the passage was matched verbatim in the stored source; 'quarantined' means it was rejected."
+      "description": "Result of automated validation."
+    },
+    "source_match_state": {
+      "type": "string",
+      "enum": ["source_passage_matched", "stored_excerpt_matched", "source_match_unavailable", "quarantined", "human_reviewed"],
+      "description": "What the passage was matched against. 'source_passage_matched' requires validation against retrieved full source content; 'stored_excerpt_matched' means it matched AMIRA's stored excerpt (not the entire original publication)."
     },
     "validation_notes": {
       "type": ["string", "null"],
-      "description": "Human-readable explanation of the validation result (e.g. why an extraction was quarantined)."
+      "description": "Human-readable explanation of the validation / match result."
     },
     "human_review_state": {
       "type": "string",
       "enum": ["not_reviewed", "in_review", "human_verified"],
-      "description": "Human review status. Only set to 'human_verified' when a named reviewer has signed off; a named reviewer must then be recorded."
+      "description": "Human review status. Only 'human_verified' with a named reviewer."
     },
     "human_reviewer": {
       "type": ["string", "null"],
       "description": "Named human reviewer, required when human_review_state is 'human_verified'."
+    },
+    "provenance": {
+      "type": "object",
+      "description": "Binding of the extraction to a single passage in a single source document.",
+      "additionalProperties": false,
+      "required": ["source_document_id", "source_url", "passage_index", "content_hash", "match_basis"],
+      "properties": {
+        "source_document_id": { "type": "string" },
+        "source_url": { "type": "string" },
+        "passage_index": { "type": "integer", "description": "Index of the passage among AMIRA's stored excerpts for this source." },
+        "content_hash": { "type": "string", "description": "SHA-1 of the stored excerpt text, for tamper-evidence." },
+        "retrieval_date": { "type": ["string", "null"] },
+        "match_basis": {
+          "type": "string",
+          "enum": ["stored_excerpt", "retrieved_source", "unavailable"],
+          "description": "Whether validation was against a stored excerpt or the retrieved full source."
+        }
+      }
     }
   },
   "allOf": [

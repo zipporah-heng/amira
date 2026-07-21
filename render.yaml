@@ -27,8 +27,10 @@ services:
       # computation, AI extraction defaults to the offline `recorded` provider
       # (no API key needed), and NHANES reads a committed cache. Set any flag to
       # 0 to hide that module. See docs/open-science-assets.md.
+      # Pilot 0-100 score is OFF by default; the verified 1-5 maturity is primary.
+      # Set to "1" only to demonstrate the experimental score (labelled provisional).
       - key: AMIRA_ENABLE_PILOT_SCORE
-        value: "1"
+        value: "0"
       - key: AMIRA_ENABLE_AI_EXTRACTION
         value: "1"
       - key: AMIRA_ENABLE_NHANES

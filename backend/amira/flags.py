@@ -36,7 +36,9 @@ def _flag(name: str, default: bool) -> bool:
 
 
 def enable_pilot_score() -> bool:
-    return _flag("AMIRA_ENABLE_PILOT_SCORE", True)
+    # OFF by default: the verified 1-5 Evidence Maturity level is the primary score.
+    # The experimental 0-100 pilot score is shown only when explicitly enabled.
+    return _flag("AMIRA_ENABLE_PILOT_SCORE", False)
 
 
 def enable_ai_extraction() -> bool:

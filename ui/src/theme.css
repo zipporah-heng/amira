@@ -10,8 +10,8 @@
   --border-strong: #ddd5f1;
 
   --ink: #1b1630;
-  --ink-2: #4a4463;
-  --ink-3: #837c9c;
+  --ink-2: #453f5e;
+  --ink-3: #6a6386;
 
   --lav-50: #f5f2fe;
   --lav-100: #ece5fc;
@@ -46,6 +46,8 @@ body {
   margin: 0;
   font-family: var(--font);
   color: var(--ink);
+  font-size: 16px;
+  line-height: 1.5;
   background:
     radial-gradient(1100px 460px at 100% -8%, #f2ecfe 0%, rgba(255,255,255,0) 55%),
     radial-gradient(820px 420px at -8% 0%, #eef7f5 0%, rgba(255,255,255,0) 48%),

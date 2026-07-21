@@ -39,12 +39,14 @@ Served live at `GET /api/assets` (only assets that actually exist are listed).
 
 | Flag | Default | Effect |
 | ---- | ------- | ------ |
-| `AMIRA_ENABLE_PILOT_SCORE` | `1` | Show the deterministic 0–100 pilot score. |
-| `AMIRA_ENABLE_AI_EXTRACTION` | `1` | Show the AI pipeline + demo (recorded provider by default). |
+| `AMIRA_ENABLE_PILOT_SCORE` | **`0` (off)** | Show the experimental 0–100 pilot score. Off by default — the verified 1–5 Evidence Maturity level is the primary score. |
+| `AMIRA_ENABLE_AI_EXTRACTION` | `1` | Show the AI pipeline + demo (offline recorded provider by default). |
 | `AMIRA_ENABLE_NHANES` | `1` | Show the NHANES population-context module. |
 
-All three default to safe behaviour with **no external service**: the pilot
-score is a pure computation, AI extraction defaults to the offline `recorded`
-provider, and NHANES reads a committed cache. If any external service is
-unavailable, the platform never shows a fabricated result — it shows an honest
+Defaults are safe with **no external service**: the verified maturity level is a
+pure computation, AI extraction defaults to the offline `recorded` provider (a
+recorded demonstration, no live model call), and NHANES reads a committed cache.
+The experimental pilot score is off by default and, when enabled, is labelled
+provisional and shown below the verified maturity level. If any external service
+is unavailable, the platform never shows a fabricated result — it shows an honest
 "not available" / "pending" state instead.

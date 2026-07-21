@@ -43,14 +43,14 @@ def main() -> int:
     failures = []
     for f in _iter_files(target):
         obj = json.loads(f.read_text(encoding="utf-8"))
-        state, notes = extract.validate(obj)
+        state, match_state, notes = extract.validate(obj)
         total += 1
-        if state == "quote_verified":
+        if state in ("quote_verified", "schema_valid"):
             verified += 1
         else:
             quarantined += 1
             failures.append((f.name, notes))
-        print(f"  {f.name:24s} -> {state}")
+        print(f"  {f.name:24s} -> {state} / {match_state}")
 
     print(f"\n{total} extraction(s): {verified} quote-verified, {quarantined} quarantined")
     if failures:
