@@ -8,6 +8,7 @@ import { OpenBenchmark } from "./pages/OpenBenchmark";
 import { Methodology } from "./pages/Methodology";
 import "./theme.css";
 import "./clinical.css";
+import "./mockup.css";
 
 const withShell = (el: React.ReactNode) => <AmiraShell>{el}</AmiraShell>;
 

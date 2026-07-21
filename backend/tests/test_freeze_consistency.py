@@ -181,11 +181,17 @@ def test_brand_descriptor_is_consistent():
     product identity is stated. The primary clinician headline is untouched."""
     from pathlib import Path
     ui = (Path(__file__).resolve().parents[2] / "ui" / "src")
-    sidebar = (ui / "components" / "Sidebar.tsx").read_text(encoding="utf-8")
-    assert "Evidence Intelligence Platform" in sidebar
-    assert "AI-powered evidence" not in sidebar
+    # The brand descriptor now lives in the header lockup (the left sidebar was
+    # removed in the visual-correction redesign).
+    header = (ui / "components" / "Header.tsx").read_text(encoding="utf-8")
+    assert "Evidence Intelligence Platform" in header
+    assert "AI-powered evidence" not in header
+    assert not (ui / "components" / "Sidebar.tsx").exists(), "the left sidebar must be gone"
     shell = (ui / "components" / "AmiraShell.tsx").read_text(encoding="utf-8")
     assert "Count women. Study women. Care for women." in shell
+    # No internal development labels on the user-facing screen.
+    ce_src = (ui / "pages" / "CheckEvidence.tsx").read_text(encoding="utf-8")
+    assert "Video-ready" not in ce_src and "cached records" not in ce_src
     # Forbidden descriptors must not appear anywhere in shipped UI source.
     for f in ui.rglob("*.tsx"):
         text = f.read_text(encoding="utf-8")

@@ -1,47 +1,41 @@
-import { useEffect, useState } from "react";
-import { getAssets, type AssetsResponse } from "../api";
+const GH = "https://github.com/zipporah-heng/amira/blob/video-redesign/";
 
-/** Section 11 — Reusable Scientific Assets. Only assets that actually exist (as
- *  reported by the API) are shown. Honest status is displayed verbatim; no open
- *  license is claimed unless a LICENSE file exists. */
+const ASSETS = [
+  { icon: "🧩", title: "Women's Evidence Schema", sub: "Versioned JSON Schema (v0.2)", href: GH + "schema/womens_evidence_schema_v0.2.json" },
+  { icon: "📝", title: "Prompt Library", sub: "Provider-agnostic extraction prompt", href: GH + "prompts/evidence_extraction_v0.1.md" },
+  { icon: "🗂️", title: "Source-linked Dataset", sub: "Trials, sources, assertions, findings", href: GH + "dataset" },
+  { icon: "🌐", title: "Benchmark Passages", sub: "Pending human review", href: GH + "benchmark/amira_benchmark.jsonl", badge: "pending review" },
+  { icon: "⚙️", title: "Evaluation Runner", sub: "Process metrics; no accuracy claimed", href: GH + "evaluation/run_extraction_evaluation.py" },
+  { icon: "📚", title: "API + Documentation", sub: "Model card, data card, methodology", href: GH + "docs/open-science-assets.md" },
+];
 
-const KIND_ICON: Record<string, string> = {
-  schema: "🧩", data: "🗂️", prompt: "📝", code: "⚙️", doc: "📄", download: "⬇️",
-};
+const ARCH = ["Clinical research", "AI extraction", "Evidence schema", "Validation", "Readiness engine", "Dashboard + Research Map + Open Assets"];
 
+/** "Reusable Scientific Assets" — six primary cards in one row + architecture
+ *  strip. Secondary assets remain reachable via methodology and downloads. No
+ *  validated/gold-benchmark or open-license claim is made. */
 export function ReusableAssets() {
-  const [data, setData] = useState<AssetsResponse | null>(null);
-
-  useEffect(() => { getAssets().then(setData).catch(() => setData(null)); }, []);
-  if (!data) return null;
-
   return (
-    <section className="card reusable-assets" id="assets" style={{ marginTop: 22 }}>
-      <div className="section-title">Reusable Scientific Assets</div>
-      <p className="muted" style={{ marginTop: 6, maxWidth: 700 }}>
-        The reusable contribution is the schema, prompts, validation, scoring rules and evaluation
-        pipeline — not one proprietary model. These are the assets researchers can build on.
-      </p>
-
-      <div className="assets-grid">
-        {data.assets.map((a) => {
-          const href = a.path.startsWith("http") ? a.path
-            : a.path.startsWith("/api/") ? a.path
-            : `https://github.com/zipporah-heng/amira/blob/video-redesign/${a.path.replace(/\/$/, "")}`;
-          return (
-            <a className="asset-tile" key={a.key} href={href} target="_blank" rel="noopener noreferrer">
-              <div className="asset-tile-ic" aria-hidden>{KIND_ICON[a.kind] || "•"}</div>
-              <div className="asset-tile-title">{a.title}</div>
-              <div className="asset-tile-path">{a.path}</div>
-              {a.status && <span className="asset-tile-status">{a.status.replace(/_/g, " ")}</span>}
-            </a>
-          );
-        })}
+    <section className="card assets-section" id="assets" style={{ marginTop: 18 }}>
+      <h2 className="assets-h">Reusable Scientific Assets</h2>
+      <div className="assets6">
+        {ASSETS.map((a) => (
+          <a className="asset6" key={a.title} href={a.href} target="_blank" rel="noopener noreferrer">
+            <div className="asset6-ic" aria-hidden>{a.icon}</div>
+            <div className="asset6-title">{a.title}</div>
+            <div className="asset6-sub">{a.sub}</div>
+            {a.badge && <span className="asset6-badge">{a.badge}</span>}
+          </a>
+        ))}
       </div>
-
-      <div className="assets-status">
-        <div className="section-title">Honest status</div>
-        <ul>{data.honest_status.map((s) => <li key={s}>{s}</li>)}</ul>
+      <div className="arch-strip">
+        {ARCH.map((s, i) => (
+          <span className="arch-node" key={s}>
+            <span className="arch-ic" aria-hidden>{["🧪", "🧠", "🗂️", "✓", "⚙️", "🖥️"][i]}</span>
+            <span className="arch-lab">{s}</span>
+            {i < ARCH.length - 1 && <span className="arch-arrow" aria-hidden>→</span>}
+          </span>
+        ))}
       </div>
     </section>
   );

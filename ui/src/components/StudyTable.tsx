@@ -6,6 +6,16 @@ const KIND_LABEL: Record<string, string> = {
   primary_publication: "Publication",
 };
 
+/** Short, readable source label from the URL (keeps the table within the
+ *  container without truncation). */
+function shortSource(url: string, fallback: string): string {
+  if (/clinicaltrials\.gov/i.test(url)) return "ClinicalTrials.gov";
+  if (/pubmed\.ncbi/i.test(url)) return "PubMed";
+  if (/ncbi\.nlm\.nih\.gov\/pmc|pmc\.ncbi/i.test(url)) return "PubMed Central";
+  if (/nature\.com/i.test(url)) return "Nature";
+  return fallback.length > 20 ? fallback.slice(0, 18) + "…" : fallback;
+}
+
 /** Section 9 — Studies behind this result. One row per source DOCUMENT
  *  (registry record, linked analysis publication, or primary report). Every
  *  value is source-local to that row's own trial; each row links to its correct
@@ -43,7 +53,7 @@ export function StudyTable({ records }: { records: StudyRecord[] }) {
                 <td>
                   <a href={r.source_url} target="_blank" rel="noopener noreferrer"
                      onClick={(e) => e.stopPropagation()} className="src-link">
-                    {r.source_label} ↗
+                    {shortSource(r.source_url, r.source_label)} ↗
                   </a>
                 </td>
               </tr>

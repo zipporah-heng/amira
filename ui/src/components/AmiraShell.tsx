@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
-import { TopNav } from "./TopNav";
+import { Header } from "./Header";
 
 export function AmiraShell({ children }: { children: ReactNode }) {
   return (
     <div className="app">
-      <TopNav />
+      <Header />
       <main className="main">
         <div className="container">
           {children}
