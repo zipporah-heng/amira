@@ -1,8 +1,15 @@
 import type { EvidenceResponse } from "../api";
 
-/** "Another <condition> evidence path to review" — the selected medicine and
- *  each other same-condition medicine shown as SEPARATE evidence paths (never a
- *  head-to-head comparison, similar-medicine claim, or recommendation). */
+/** "Another <condition> evidence path to review" — shown ONLY when the SELECTED
+ *  medicine carries a significant sex-specific signal (a genuine reason to point
+ *  the reader to another evidence path, e.g. Digoxin's historical mortality
+ *  signal). It lists only the OTHER same-condition medicines as separate evidence
+ *  paths — never the selected medicine itself, never a head-to-head comparison,
+ *  similar-medicine claim, ranking, or treatment recommendation.
+ *
+ *  Conditional on the SELECTED MEDICINE, not merely on condition = heart failure:
+ *  a medicine whose own result is already a contemporary, no-significant-difference
+ *  finding (e.g. Dapagliflozin) does not surface an "other path" section at all. */
 
 interface Card {
   medicine: string;
@@ -14,41 +21,31 @@ interface Card {
   note?: string | null;
 }
 
-function currentCard(report: EvidenceResponse): Card | null {
-  const f = (report.effectiveness?.findings || []).find((x) => x.scope.startsWith("trial:"));
-  if (!f) return null;
-  const trial = f.scope.split(":", 1 + 1)[1] || "";
-  const isPostHoc = /post hoc/i.test(f.interpretation || "");
-  const isSignal = f.significance === "significant";
-  const bullets = [
-    `${trial} trial${isPostHoc ? " post hoc analysis" : ""}`,
-    f.female_estimate ? `${f.female_estimate}${f.female_ci ? ` (${f.female_ci})` : ""}` : "",
-  ].filter(Boolean);
-  return {
-    medicine: report.banner!.medicine,
-    drugClass: report.banner!.drug_class,
-    descriptor: `${isPostHoc ? "Historical post hoc mortality signal" : "Sex-specific signal"}; menopause not reported`,
-    bullets,
-    sourceUrl: f.source.url,
-    // A significant historical harm signal gets the pale-red warning treatment.
-    tone: isSignal ? "warn" : "info",
-  };
+/** True when the selected medicine has a significant, trial-scoped sex-specific
+ *  finding (effectiveness or safety) — the trigger for reviewing another path. */
+function hasSignificantSignal(report: EvidenceResponse): boolean {
+  const eff = (report.effectiveness?.findings || []).some(
+    (f) => f.scope.startsWith("trial:") && f.significance === "significant",
+  );
+  const saf = (report.safety?.significant_findings || []).some(
+    (f) => f.scope.startsWith("trial:"),
+  );
+  return eff || saf;
 }
 
 export function OtherEvidencePaths({ report }: { report: EvidenceResponse }) {
   const others = report.other_evidence_paths || [];
-  if (!others.length) return null;
+  // Only surface other paths when the SELECTED medicine has a significant signal,
+  // and only when other same-condition medicines actually exist.
+  if (!hasSignificantSignal(report) || !others.length) return null;
   const cond = (report.query.condition || "this condition").toLowerCase();
 
-  const cur = currentCard(report);
-  const cards: Card[] = [
-    ...(cur ? [cur] : []),
-    ...others.map((p): Card => ({
-      medicine: p.medicine, drugClass: p.drug_class,
-      descriptor: p.headline, bullets: p.bullets, sourceUrl: p.source.url,
-      tone: "info", note: p.interpretation_note,
-    })),
-  ];
+  // Never include the selected medicine's own card — only the OTHER paths.
+  const cards: Card[] = others.map((p): Card => ({
+    medicine: p.medicine, drugClass: p.drug_class,
+    descriptor: p.headline, bullets: p.bullets, sourceUrl: p.source.url,
+    tone: "info", note: p.interpretation_note,
+  }));
 
   return (
     <section className="card other-paths" id="other-paths" style={{ marginTop: 18 }}>

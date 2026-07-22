@@ -10,11 +10,10 @@ export interface ClassEntry {
   drug_class: string;
   medicines: string[];
   // Medicines known to AMIRA whose evidence review is incomplete (unscored). They
-  // are selectable and clearly labelled, but never counted as verified.
+  // are selectable with a CLEAN name; their incomplete status is shown separately
+  // in the result (never appended to the medicine name).
   incomplete_medicines?: string[];
 }
-
-const INCOMPLETE_SUFFIX = " · Evidence review incomplete";
 
 export interface ConditionEntry {
   condition: string;
@@ -60,15 +59,13 @@ export function EvidenceSearch({ filters, setFilters, onCheck, catalog }: {
     catalog.find((c) => c.condition === filters.condition)?.drug_classes || [];
   const classNames = classesForCondition.map((c) => c.drug_class);
 
-  // Medicine options for a class = verified medicines (label == value) followed by
-  // incomplete-review medicines (same value, but a clearly-labelled option). The
-  // selected VALUE is always the plain medicine name, so check_evidence is unchanged.
+  // Medicine options for a class = verified medicines followed by incomplete-review
+  // medicines. EVERY option shows a CLEAN name (label == value == plain medicine
+  // name); the incomplete status is surfaced separately in the result, never in the
+  // option label or the selected field.
   const medicineOptions = (cls: ClassEntry | undefined) => {
-    const verified = (cls?.medicines || []).map((m) => ({ label: m, value: m }));
-    const incomplete = (cls?.incomplete_medicines || []).map((m) => ({
-      label: `${m}${INCOMPLETE_SUFFIX}`, value: m,
-    }));
-    return [...verified, ...incomplete];
+    const names = [...(cls?.medicines || []), ...(cls?.incomplete_medicines || [])];
+    return names.map((m) => ({ label: m, value: m }));
   };
   // Prefer a verified medicine as the default; fall back to an incomplete one only
   // when a class has no verified medicine.

@@ -521,6 +521,10 @@ def check_evidence(condition: str, medicine: str,
             "medicine": medicine,
             "drug_class": drug_class,
             "indication": indication,
+            # Presentation flag: true when this medicine's evidence review is
+            # complete (integrity-checked ingestion). When false the UI shows a
+            # separate "Evidence review incomplete" status — never a fabricated score.
+            "evidence_review_complete": clinical.medicine_ingestion_complete(medicine),
             "maturity": {"level": mat["level"], "max_level": mat["max_level"],
                          "label": mat["label"], "display": mat["display"],
                          "scorable": mat["scorable"]},

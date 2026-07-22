@@ -229,6 +229,8 @@ export interface Banner {
   medicine: string;
   drug_class: string;
   indication: string | null;
+  // false when the selected medicine's evidence review is incomplete (unscored).
+  evidence_review_complete?: boolean;
   maturity: { level: number; max_level: number; label: string; display?: string; scorable?: boolean };
   effectiveness: { state: string; headline: string; evidence_level?: string };
   safety: { state: string; headline: string };
