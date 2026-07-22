@@ -222,9 +222,11 @@ def safety_state(medicine: str) -> dict:
         # placebo. No between-sex test was reported, so neither difference nor
         # equivalence may be asserted.
         state = SAF_REPORTED_NO_COMPARISON
-    elif findings:
-        # Only class-level or non-clinical-endpoint findings exist: not enough
-        # drug-specific, sex-stratified adverse-event evidence to conclude.
+    elif drug_specific or class_context:
+        # Only VERIFIED class-level or non-clinical-endpoint findings exist: not
+        # enough drug-specific, sex-stratified adverse-event evidence to conclude.
+        # An UNVERIFIED finding must never move the state off "not reported" — so
+        # this branch reads the trusted collections, never the raw findings list.
         state = SAF_INSUFFICIENT
     else:
         bases = {

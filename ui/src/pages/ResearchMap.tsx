@@ -30,14 +30,17 @@ export function ResearchMap() {
 
   if (!trials.length) return <p>Loading research map…</p>;
 
-  // Every cell resolves to one of the five canonical evidence states — never
-  // collapsed. A reported female PERCENTAGE counts as reported (not "not located"),
-  // and a wholly missing assertion is "absent", not "not reported".
+  // Every cell resolves to one of the canonical evidence states — never collapsed.
+  // When a numeric female count/percentage exists, the state comes from its OWN
+  // basis: a reported percentage stays Reported, but a DERIVED percentage renders
+  // Derived (not automatically "Reported" just because a number is present).
   const cell = (t: any, dim: string): EvidenceState => {
     if (dim === "female_enrollment") {
-      if ((t.female_n !== "" && t.female_n != null) || (t.female_pct !== "" && t.female_pct != null))
-        return "reported";
-      return toEvidenceState(t.female_n_basis);   // not_located / not_reported / absent preserved
+      if (t.female_n !== "" && t.female_n != null)
+        return toEvidenceState(t.female_n_basis);      // reported / derived per its basis
+      if (t.female_pct !== "" && t.female_pct != null)
+        return toEvidenceState(t.female_pct_basis);    // reported OR derived percentage
+      return toEvidenceState(t.female_n_basis);         // not_located / not_reported / absent / conflict / unverified
     }
     return toEvidenceState(t[dim]);
   };

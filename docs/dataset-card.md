@@ -51,8 +51,14 @@ the verified expectations and fails loudly on drift rather than serving changed 
 - **A total enrollment / female count is shown only when a `reported` assertion with a
   verified source supports it.** Raw registry `enrollment_actual` is never surfaced as an
   evidence-backed total (enforced by `pipeline/validate.py` and the evidence-integrity tests).
-- **Human verification is pending.** Every assertion is source-verified (machine-checked
-  against the retrieved source) but none carries named human sign-off yet. See
+- **Source verification is scoped to positive claims.** Positive `reported` or `derived`
+  assertions used in trusted public outputs require source verification (`source_verified`);
+  assertions representing `not_reported` or `not_located` evidence retain their explicit
+  evidence state and are **not** treated as positive verified findings. In the current
+  corpus 26 of 58 assertions are `source_verified` (the positive claims); the remaining 32
+  are silence/gap observations. No blanket "every assertion is verified" claim is made.
+- **Human verification is pending.** No assertion, finding, or comparison carries named
+  human sign-off yet (`human_verified` is `false` throughout). See
   [`VERIFICATION_WORKSHEET.md`](../VERIFICATION_WORKSHEET.md).
 - **No model evaluation has been run.** The product displays `EVALUATION PENDING`.
 

@@ -306,6 +306,30 @@ def test_C_unverified_trial_finding_fully_excluded(patch):
     assert all(r["finding_id"] != "F1" for r in exports.finding_rows())
 
 
+# C. An unverified safety finding must not change the safety STATE (not just downloads).
+def test_C_unverified_safety_finding_does_not_change_state(patch):
+    base = [A("s", "TX", "sex_specific_safety_reported", "not_reported", "not_reported")] \
+        + _fill_required("TX", exclude=["sex_specific_safety_reported"])
+    # Scenario 1: no findings -> "Sex-specific safety not reported"
+    patch([T("TX")], base, findings=[])
+    s1 = clinical.safety_state("TestMed")["state"]
+    assert s1 == clinical.SAF_NOT_REPORTED
+    # Scenario 2: one UNVERIFIED drug-specific safety finding -> unchanged
+    f_unver = {"finding_id": "F1", "medicine": "TestMed", "finding_type": "safety", "scope": "trial:TX",
+               "significance": "no_significant_difference", "endpoint": "AE", "source_id": "SRC-OK",
+               "exact_passage": "p", "source_verified": False, "comparison_p": "0.4",
+               "comparison_test": "t", "population_scope": "women_and_men"}
+    patch([T("TX")], base, findings=[f_unver])
+    s2 = clinical.safety_state("TestMed")["state"]
+    assert s2 == s1
+    # check_evidence returns the same state as clinical.safety_state.
+    api = engine.check_evidence(condition="Test condition", medicine="TestMed")
+    assert api["safety"]["state"] == s2 == s1
+    # Scenario 3: a VERIFIED relevant safety finding -> normal trusted behavior.
+    patch([T("TX")], base, findings=[{**f_unver, "finding_id": "F2", "source_verified": True}])
+    assert clinical.safety_state("TestMed")["state"] == clinical.SAF_NO_DIFF
+
+
 # C. An unverified class-level finding is never shown as class context.
 def test_C_unverified_class_finding_not_context(patch):
     cf = {"finding_id": "FC", "medicine": "TestMed", "finding_type": "safety", "scope": "class:TestClass",
