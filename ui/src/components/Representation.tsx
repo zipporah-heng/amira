@@ -60,9 +60,13 @@ export function Representation({ report }: { report: EvidenceResponse }) {
         {cards.map((c) => (
           <div className={`rep-cell ${c.tone}`} key={c.title}>
             <div className="rep-cell-title">{c.title}</div>
-            <div className="rep-cell-icon"><Icon name={c.icon} /></div>
-            <div className={`rep-check ${c.tone}`} aria-hidden>{c.tone === "yes" ? "✓" : c.tone === "limited" ? "!" : c.tone === "neutral" ? "?" : "✕"}</div>
-            <div className="rep-status">{TONE_LABEL[c.tone]}{c.sub ? ` · ${c.sub}` : ""}</div>
+            <div className={`rep-cell-icon ${c.tone}`}><Icon name={c.icon} /></div>
+            <div className={`rep-pill ${c.tone}`}>
+              <span className="rep-pill-glyph" aria-hidden>
+                {c.tone === "yes" ? "✓" : c.tone === "limited" ? "!" : c.tone === "neutral" ? "?" : "✕"}
+              </span>
+              {TONE_LABEL[c.tone]}{c.sub ? ` · ${c.sub}` : ""}
+            </div>
           </div>
         ))}
       </div>

@@ -40,9 +40,11 @@ export function AiFound({ onOpenTrace }: { onOpenTrace: () => void }) {
           <div className="pipe5">
             {STAGES.map((s, i) => (
               <div className="pipe5-step" key={s.label}>
-                <div className="pipe5-ic" aria-hidden>{s.icon}</div>
+                <div className="pipe5-ic">
+                  <span className="pipe5-num" aria-hidden>{i + 1}</span>
+                  <span className="pipe5-emoji" aria-hidden>{s.icon}</span>
+                </div>
                 <div className="pipe5-lab">{s.label}</div>
-                {i < STAGES.length - 1 && <div className="pipe5-arrow" aria-hidden>→</div>}
               </div>
             ))}
           </div>
@@ -61,13 +63,15 @@ export function AiFound({ onOpenTrace }: { onOpenTrace: () => void }) {
 
         <div className="ai-found-right">
           <div className="schema-title">Women's Evidence Schema</div>
-          <table className="schema-table">
-            <tbody>
-              {SCHEMA_ROWS.map(([field, meaning]) => (
-                <tr key={field}><td className="schema-field">{field}</td><td className="schema-meaning">{meaning}</td></tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="schema-panel">
+            <div className="schema-head"><span>Field</span><span>What it means</span></div>
+            {SCHEMA_ROWS.map(([field, meaning]) => (
+              <div className="schema-row" key={field}>
+                <span className="schema-field"><span className="schema-dot" aria-hidden />{field}</span>
+                <span className="schema-meaning">{meaning}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

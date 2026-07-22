@@ -61,51 +61,60 @@
 .mm-label { font-size: 12.5px; fill: var(--ink-3); font-weight: 650; }
 .nm-note { font-size: 13px; color: var(--ink-3); margin-top: 4px; max-width: 280px; line-height: 1.45; }
 
-/* --- Representation: 7 cards one row --- */
-.representation { padding: 18px 20px; }
-.rep-h { font-size: 21px; margin-bottom: 14px; }
-.rep-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-.rep-cell { border: 1px solid var(--border); border-radius: 13px; padding: 13px 9px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 7px; border-top: 3px solid var(--border); }
-.rep-cell.yes { border-top-color: var(--present-ink); background: #f2faf6; }
-.rep-cell.limited { border-top-color: var(--amber); background: #fdf8ec; }
-.rep-cell.missing { border-top-color: var(--missing-ink); background: #fdf0f4; }
-.rep-cell.neutral { border-top-color: var(--border-strong); background: var(--surface-2); }
-.rep-cell-title { font-size: 12.5px; font-weight: 650; color: var(--ink); min-height: 30px; display: flex; align-items: center; }
-.rep-cell-icon { height: 30px; display: grid; place-items: center; }
-.rep-icon { width: 28px; height: 28px; color: var(--ink-2); }
-.rep-cell.yes .rep-icon { color: var(--present-ink); }
-.rep-cell.limited .rep-icon { color: var(--amber); }
-.rep-cell.missing .rep-icon { color: var(--missing-ink); }
-.rep-check { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 800; }
-.rep-check.yes { background: var(--present-bg); color: var(--present-ink); }
-.rep-check.limited { background: var(--unclear-bg); color: var(--unclear-ink); }
-.rep-check.missing { background: var(--missing-bg); color: var(--missing-ink); }
-.rep-check.neutral { background: var(--surface-2); color: var(--ink-3); }
-.rep-status { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .02em; color: var(--ink-2); }
+/* --- Representation: 7 cards one row (redesigned: circular icon + status pill) --- */
+.representation { padding: 26px 28px; }
+.rep-h { font-size: 27px; font-weight: 750; letter-spacing: -0.01em; margin-bottom: 20px; }
+.rep-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 14px; align-items: stretch; }
+.rep-cell { border: 1px solid var(--border); border-radius: 16px; padding: 20px 12px 16px; background: var(--surface);
+  display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; min-height: 178px; }
+.rep-cell-title { font-size: 14px; font-weight: 650; color: var(--ink); line-height: 1.3; min-height: 36px; display: flex; align-items: center; }
+/* Larger circular icon treatment, tinted by evidence tone. */
+.rep-cell-icon { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); }
+.rep-icon { width: 30px; height: 30px; color: var(--ink-2); }
+.rep-cell-icon.yes { background: var(--present-bg); } .rep-cell-icon.yes .rep-icon { color: var(--present-ink); }
+.rep-cell-icon.limited { background: var(--unclear-bg); } .rep-cell-icon.limited .rep-icon { color: var(--unclear-ink); }
+.rep-cell-icon.missing { background: var(--missing-bg); } .rep-cell-icon.missing .rep-icon { color: var(--missing-ink); }
+.rep-cell-icon.neutral { background: var(--lav-50); } .rep-cell-icon.neutral .rep-icon { color: var(--lav-700); }
+/* Status shown as a clear pill/badge pinned near the bottom. */
+.rep-pill { margin-top: auto; display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+.rep-pill-glyph { font-weight: 900; }
+.rep-pill.yes { background: var(--present-bg); color: var(--present-ink); }
+.rep-pill.limited { background: var(--unclear-bg); color: var(--unclear-ink); }
+.rep-pill.missing { background: var(--missing-bg); color: var(--missing-ink); }
+.rep-pill.neutral { background: var(--lav-50); color: var(--lav-700); }
 
-/* --- AI found: two-column --- */
-.ai-found { padding: 18px 20px; }
-.ai-found-grid { display: grid; grid-template-columns: 1.7fr 1fr; gap: 22px; align-items: start; }
-.ai-h { font-size: 19px; margin-bottom: 14px; }
-.pipe5 { display: flex; align-items: flex-start; justify-content: space-between; gap: 2px; }
-.pipe5-step { display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; flex: 1; text-align: center; }
-.pipe5-ic { width: 46px; height: 46px; border-radius: 50%; background: var(--lav-50); border: 1px solid var(--lav-100); display: grid; place-items: center; font-size: 20px; }
-.pipe5-lab { font-size: 11.5px; color: var(--ink-2); font-weight: 600; line-height: 1.25; max-width: 92px; }
-.pipe5-arrow { position: absolute; top: 20px; right: -8px; color: var(--ink-3); font-size: 15px; }
-.trace5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 16px; }
-.trace5-card { border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
-.trace5-n { width: 20px; height: 20px; border-radius: 50%; background: var(--lav-100); color: var(--lav-700); font-size: 11px; font-weight: 700; display: grid; place-items: center; }
-.trace5-k { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-3); font-weight: 700; margin-top: 6px; }
-.trace5-v { font-size: 12px; color: var(--ink); font-weight: 600; margin-top: 3px; line-height: 1.3; }
-.trace5-v.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px; }
+/* --- AI found: two-column (redesigned pipeline + schema reference panel) --- */
+.ai-found { padding: 26px 28px; }
+.ai-found-grid { display: grid; grid-template-columns: 1.7fr 1fr; gap: 30px; align-items: start; }
+.ai-h { font-size: 24px; font-weight: 720; letter-spacing: -0.01em; margin-bottom: 24px; }
+.pipe5 { display: flex; align-items: flex-start; justify-content: space-between; gap: 4px; position: relative; }
+/* Dotted connector line running behind the circular step icons. */
+.pipe5::before { content: ""; position: absolute; top: 30px; left: 9%; right: 9%; border-top: 2px dotted var(--lav-100); z-index: 0; }
+.pipe5-step { display: flex; flex-direction: column; align-items: center; gap: 10px; flex: 1; text-align: center; position: relative; z-index: 1; }
+.pipe5-ic { position: relative; width: 60px; height: 60px; border-radius: 50%; background: var(--lav-50); border: 1px solid var(--lav-100); display: grid; place-items: center; }
+.pipe5-emoji { font-size: 26px; line-height: 1; }
+/* Visible numbered step marker 1..5. */
+.pipe5-num { position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%; background: var(--lav-700); color: #fff; font-size: 12px; font-weight: 800; display: grid; place-items: center; border: 2px solid var(--surface); }
+.pipe5-lab { font-size: 13px; color: var(--ink-2); font-weight: 650; line-height: 1.3; max-width: 104px; }
+.trace5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 26px; }
+.trace5-card { border: 1px solid var(--border); border-radius: 12px; padding: 14px 13px; background: var(--surface); display: flex; flex-direction: column; gap: 5px; min-height: 122px; }
+.trace5-n { width: 24px; height: 24px; border-radius: 50%; background: var(--lav-100); color: var(--lav-700); font-size: 12px; font-weight: 800; display: grid; place-items: center; }
+.trace5-k { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); font-weight: 700; margin-top: 4px; }
+.trace5-v { font-size: 13.5px; color: var(--ink); font-weight: 650; margin-top: 2px; line-height: 1.35; }
+/* Field name stays readable in AMIRA's UI font (no code font), tinted lavender. */
+.trace5-v.mono { font-family: inherit; color: var(--lav-700); }
 .trace5-v.present { color: var(--present-ink); } .trace5-v.unclear { color: var(--unclear-ink); }
-.trace-open { margin-top: 16px; }
-.ai-found-note { font-size: 12.5px; color: var(--ink-3); margin-top: 10px; }
-.schema-title { font-size: 15px; font-weight: 650; margin-bottom: 8px; }
-.schema-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-.schema-table td { padding: 7px 8px; border-bottom: 1px solid var(--border); }
-.schema-field { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--lav-700); white-space: nowrap; }
-.schema-meaning { color: var(--ink-2); text-align: right; }
+.trace-open { margin-top: 20px; }
+.ai-found-note { font-size: 13px; color: var(--ink-3); margin-top: 12px; }
+/* Schema reference panel — product reference, NOT a raw table; UI font throughout. */
+.schema-title { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 12px; }
+.schema-panel { border: 1px solid var(--border); border-radius: 14px; background: var(--surface); overflow: hidden; }
+.schema-head { display: grid; grid-template-columns: 1.1fr 1fr; gap: 12px; padding: 11px 16px; background: var(--surface-2); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); }
+.schema-row { display: grid; grid-template-columns: 1.1fr 1fr; gap: 12px; padding: 12px 16px; align-items: center; border-top: 1px solid var(--border); }
+.schema-field { font-family: inherit; font-size: 13.5px; font-weight: 650; color: var(--ink); display: flex; align-items: center; gap: 8px; word-break: break-word; }
+.schema-dot { width: 7px; height: 7px; border-radius: 2px; background: var(--lav-700); flex-shrink: 0; }
+.schema-meaning { font-size: 13.5px; color: var(--ink-2); line-height: 1.35; }
 
 /* --- Other evidence paths --- */
 .other-paths { padding: 18px 20px; }
@@ -179,9 +188,10 @@
   .hdr-badges { display: none; }
   .rep-row { grid-template-columns: repeat(2, 1fr); }
   .trace5 { grid-template-columns: repeat(2, 1fr); }
-  .pipe5 { flex-wrap: wrap; gap: 14px; justify-content: flex-start; }
+  .pipe5 { flex-wrap: wrap; gap: 18px 14px; justify-content: flex-start; }
   .pipe5-step { flex: 0 0 40%; }
-  .pipe5-arrow { display: none; }
+  .pipe5::before { display: none; }   /* no connector line when steps wrap */
+  .schema-head, .schema-row { grid-template-columns: 1fr 1fr; }
   .assets6 { grid-template-columns: repeat(2, 1fr); }
   .filter-row { grid-template-columns: 1fr 1fr; }
   .check-page .page-q { white-space: normal; }
