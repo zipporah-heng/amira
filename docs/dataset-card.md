@@ -59,7 +59,7 @@ the verified expectations and fails loudly on drift rather than serving changed 
   are silence/gap observations. No blanket "every assertion is verified" claim is made.
 - **Human verification is pending.** No assertion, finding, or comparison carries named
   human sign-off yet (`human_verified` is `false` throughout). See
-  [`VERIFICATION_WORKSHEET.md`](../VERIFICATION_WORKSHEET.md).
+  [Human verification status](human-verification.md).
 - **No model evaluation has been run.** The product displays `EVALUATION PENDING`.
 
 ## Intended and unintended use

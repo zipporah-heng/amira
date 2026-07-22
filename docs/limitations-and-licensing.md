@@ -19,9 +19,12 @@
    (paywalled full text), so atorvastatin is *not established / unscored*, is **not**
    listed as a verified medicine, and is not offered as a verified selector option. It is
    surfaced separately with an explicit "Incomplete evidence review" status.
-5. **Human verification pending.** All 58 assertions, 10 findings and 1 comparison are
-   source-verified by machine against the retrieved primary source; **none** carries named
-   human sign-off. `human_verified` is `false` throughout. See `VERIFICATION_WORKSHEET.md`.
+5. **Human verification pending.** The 26 positive `reported`/`derived` assertions used
+   in trusted public outputs, all 10 findings and the direct comparison require source
+   verification. The other 32 assertions preserve explicit `not_reported` or
+   `not_located` states and are not positive verified findings. **None** carries named
+   human sign-off; `human_verified` is `false` throughout. See
+   [Human verification status](human-verification.md).
 6. **No model evaluation.** `EVALUATION PENDING` is displayed; no accuracy is claimed.
 7. **Benchmark labels are rule-drafted**, pending human review.
 8. **Point-in-time snapshot.** Source cutoff 2026-07-18. Registries change; ingestion

@@ -56,7 +56,7 @@ Every displayed scientific claim is one row here.
 | `source_id` | string | FK to source_documents |
 | `exact_passage` | string | Verbatim supporting text |
 | `source_locator` | string | Where in the source |
-| `source_verified` | boolean | Value machine-checked against the retrieved source |
+| `source_verified` | boolean | For positive `reported` or `derived` assertions, the value and provenance were machine-checked against the retrieved source; explicit gap states remain `false` |
 | `human_verified` | boolean | **False until a named human signs off** |
 | `verifier` | string \| null | The human who signed off |
 | `retrieved_at` | ISO 8601 | Fetch timestamp |

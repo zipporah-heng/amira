@@ -1,10 +1,15 @@
 # AMIRA — Evidence Intelligence Platform
 
-*Count women. Study women. Care for women.*
+> **What does the evidence show for women?**
 
-> **The question AMIRA answers:** *"How ready is the evidence supporting this medicine for women?"*
+**Core principle: Counted is not the same as studied.** A trial can enroll women
+without analyzing outcomes by sex, life stage, menopause status, or hormone-therapy
+context. AMIRA makes that distinction visible and traceable to the reviewed sources.
 
-**Live application:** **https://amira-d8l6.onrender.com/amira/check-evidence**
+AMIRA is an evidence intelligence platform for researchers and clinicians. It is not
+a diagnostic or prescribing tool and does not recommend treatments.
+
+**Live demo:** **https://amira-d8l6.onrender.com/amira/check-evidence**
 
 > AMIRA addresses a specific hormonal health evidence problem: researchers cannot consistently
 > determine whether **menopause** and **hormone therapy** were represented in medication studies.
@@ -14,7 +19,7 @@
 > whether menopause and hormone-therapy information was reported, not reported, or not located,
 > and does not provide treatment recommendations.
 
-## Challenge deliverables
+## Project resources
 
 | Deliverable | Link |
 | --- | --- |
@@ -28,8 +33,6 @@
 | API entry point | `GET /api/manifest`, `POST /api/check-evidence`, `GET /api/assets` (see [API & downloadable assets](#api--downloadable-assets)) |
 | Downloadable scientific assets | `GET /api/assets` · `/api/download/*.csv|.jsonl` |
 | License & limitations | [`LICENSE`](LICENSE) · [`LICENSES.md`](LICENSES.md) · [Scientific status](#scientific-status-limitations--human-review) |
-| Demo video | [AMIRA Demo](https://www.loom.com/share/4400996ba53343398dfe2fb94dea64bd) |
-| Technical video | [AMIRA Tech Walkthrough](https://www.loom.com/share/eabc4c0a19ab4d78a7c1646e7a88ac69) |
 
 ---
 
@@ -43,6 +46,11 @@ every number came from.
 AMIRA measures **evidence completeness**. It does **not** diagnose, prescribe, recommend
 treatment, tell anyone whether a medicine is safe for them, or rank medicines by how well
 they work.
+
+The public repository follows the same path as the product:
+
+> Evidence problem → AMIRA → Clinician Interface → Research Map → Open Dataset →
+> Benchmark → Methodology
 
 ### The problem: counted is not the same as studied
 
@@ -277,14 +285,14 @@ AMIRA_LLM_PROVIDER=recorded    # recorded | openai | anthropic
 
 ```bash
 # Backend (run from backend/ so the `amira` package imports)
-cd backend && python -m pytest -q          # 127 integrity, provenance & build-guard tests
+cd backend && python -m pytest -q          # 198 integrity, provenance & build-guard tests
 
 # Dataset & extraction validation (offline, no network)
 python pipeline/validate.py                # corpus consistency + no synthetic markers
 python pipeline/validate_extractions.py    # schema + exact-quote validation
 
 # Frontend
-cd ui && npm test                          # 22 component tests
+cd ui && npm test                          # 43 component tests
 ```
 
 ## API & downloadable assets
@@ -309,14 +317,16 @@ dataset, benchmark, pipeline, evaluation runner, docs) are listed at `/api/asset
 - [Open-science assets](docs/open-science-assets.md)
 - [Inclusion / exclusion protocol](docs/inclusion-exclusion-protocol.md) · [Dataset card](docs/dataset-card.md) · [Data dictionary](docs/data-dictionary.md)
 - [Limitations and licensing](docs/limitations-and-licensing.md)
-- [Verification worksheet](VERIFICATION_WORKSHEET.md) — every assertion and finding with its source link
+- [Human verification status](docs/human-verification.md) — current review status and reproducible source queues
 
 ## Scientific status, limitations & human review
 
 AMIRA reports its own limits as plainly as its results:
 
-- **Every assertion and finding is source-verified** — machine-checked against the retrieved
-  primary source, each with an exact passage and a resolvable URL.
+- **Positive evidence is source-gated.** The 26 positive `reported`/`derived` assertions
+  used in trusted public outputs, all 10 findings, and the direct comparison require
+  source verification. The remaining 32 assertions record explicit `not_reported` or
+  `not_located` states; they are not positive verified findings.
 - **Named human sign-off is still outstanding**, so `human_verified` is `false` throughout;
   the UI shows "Human review pending". Nothing is presented as human-verified.
 - **Benchmark labels are rule-drafted** (`pending_human_review`); **no model evaluation has
