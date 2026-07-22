@@ -13,10 +13,14 @@ describe("HormonalFocus", () => {
     expect(text).toMatch(/could not be located/i);
   });
 
-  it("clarifies the Digoxin finding is sex-specific, not menopause-specific", () => {
-    render(<HormonalFocus />);
-    expect(screen.getByText(/sex-specific, not menopause-specific/i)).toBeInTheDocument();
-    expect(screen.getByText(/does not reinterpret it as hormonal evidence/i)).toBeInTheDocument();
-    expect(screen.getByText(/does not provide treatment\s+recommendations/i)).toBeInTheDocument();
+  it("uses generic guardrail copy with NO medicine-specific mention", () => {
+    const { container } = render(<HormonalFocus />);
+    const text = container.textContent || "";
+    expect(text).toMatch(/does not diagnose, prescribe, or recommend treatment/i);
+    expect(text).toMatch(/reported.*not reported.*could not be located/i);
+    // No medicine-specific copy in this shared component.
+    expect(text).not.toMatch(/digoxin/i);
+    expect(text).not.toMatch(/rosuvastatin/i);
+    expect(text).not.toMatch(/dapagliflozin/i);
   });
 });

@@ -12,6 +12,13 @@
 .hdr-logo { width: 210px; height: auto; }
 .hdr-tag { font-size: 12.5px; margin-top: 2px; }
 
+/* --- Heading width: use available horizontal space before wrapping ---
+   The base theme caps every .page-q at 760px, which forced long headings
+   (Research Map, Open Benchmark) to wrap early inside the wide container.
+   Let headings span a generous line while paragraphs stay readable. */
+.page-q { max-width: min(100%, 1040px); text-wrap: balance; }
+.page-sub { max-width: 70ch; }
+
 /* --- Typography (desktop minimums) --- */
 .check-page .page-q { font-size: clamp(30px, 3vw, 44px); }
 .check-page .page-sub { font-size: 17px; }
