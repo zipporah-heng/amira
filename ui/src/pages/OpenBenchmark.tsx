@@ -20,7 +20,7 @@ export function OpenBenchmark() {
   const pending = !evaluation || evaluation.status === "EVALUATION PENDING";
 
   return (
-    <div>
+    <div className="open-benchmark-page">
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
         <span className="eyebrow">Open AMIRA Benchmark</span>
         <AssetBadge />

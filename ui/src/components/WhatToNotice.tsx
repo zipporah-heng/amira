@@ -104,6 +104,9 @@ export function WhatToNotice({ report }: { report: EvidenceResponse }) {
         {/* RIGHT — evidence maturity */}
         <div className="notice-maturity">
           <div className="nm-head">Evidence Maturity</div>
+          {report.banner!.evidence_review_complete === false && (
+            <span className="review-status-badge" role="status">Evidence review incomplete</span>
+          )}
           <MaturityMeter level={mat.level} maxLevel={mat.max_level} label={mat.label} scored={mat.scorable !== false} />
           <p className="nm-note">This measures evidence completeness—not whether the medicine is better.</p>
         </div>

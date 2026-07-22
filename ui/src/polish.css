@@ -22,6 +22,17 @@
 .page-q { max-width: min(100%, 1320px); text-wrap: balance; }
 .page-sub { max-width: min(100%, 1120px); }
 
+/* Page-specific widths (root cause: these pages inherited only the generic caps,
+   unlike Check Evidence which sets max-width:none on its heading). Open Benchmark
+   and Methodology have long headings/subtitles, so — like .check-page — let their
+   heading use the full container (one line when the viewport is wide enough) and
+   give their intro sentence a wider cap so it uses available desktop width.
+   min(100%, X) still wraps naturally on laptop/tablet/mobile with no overflow. */
+.open-benchmark-page .page-q,
+.methodology-page .page-q { max-width: none; }
+.open-benchmark-page .page-sub,
+.methodology-page .page-sub { max-width: min(100%, 1440px); }
+
 /* --- Typography (desktop minimums) --- */
 .check-page .page-q { font-size: clamp(30px, 3vw, 44px); }
 .check-page .page-sub { font-size: 17px; }

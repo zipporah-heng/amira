@@ -51,23 +51,30 @@ describe("EvidenceSearch drug-class cascade", () => {
 });
 
 describe("EvidenceSearch incomplete-review medicine (Atorvastatin)", () => {
-  it("offers Atorvastatin in the selector, labelled 'Evidence review incomplete'", () => {
+  it("offers Atorvastatin with a CLEAN name (no status appended)", () => {
     render(<Harness initial={{ condition: "Cardiovascular disease prevention", drugClass: "Statin", medicine: "Rosuvastatin" }} />);
     const medicine = screen.getByLabelText("Medicine") as HTMLSelectElement;
     const labels = within(medicine).getAllByRole("option").map((o) => o.textContent);
-    // Verified medicine is offered plainly; incomplete one is offered with a clear label.
+    // Every medicine name is clean and consistent — the incomplete status is NEVER
+    // appended to the dropdown name.
     expect(labels).toContain("Rosuvastatin");
-    expect(labels.some((l) => l === "Atorvastatin · Evidence review incomplete")).toBe(true);
+    expect(labels).toContain("Atorvastatin");
+    expect(labels.some((l) => /Evidence review incomplete/i.test(l || ""))).toBe(false);
+    // The option VALUE is the plain medicine name.
+    const atorva = within(medicine).getAllByRole("option").find((o) => o.textContent === "Atorvastatin") as HTMLOptionElement;
+    expect(atorva.value).toBe("Atorvastatin");
     // The default selection stays the VERIFIED medicine, not the incomplete one.
     expect(medicine.value).toBe("Rosuvastatin");
   });
 
-  it("selecting the labelled Atorvastatin option sets the plain medicine value", () => {
+  it("selecting Atorvastatin keeps the plain medicine name in the selected field", () => {
     render(<Harness initial={{ condition: "Cardiovascular disease prevention", drugClass: "Statin", medicine: "Rosuvastatin" }} />);
     const medicine = screen.getByLabelText("Medicine") as HTMLSelectElement;
     fireEvent.change(medicine, { target: { value: "Atorvastatin" } });
-    // The submitted value is the plain name so the API call is unchanged.
     expect(medicine.value).toBe("Atorvastatin");
+    // The selected field shows exactly "Atorvastatin" — no appended status.
+    const selectedLabel = within(medicine).getAllByRole("option").find((o) => (o as HTMLOptionElement).selected)?.textContent;
+    expect(selectedLabel).toBe("Atorvastatin");
   });
 
   it("no longer claims only verified medicines are selectable", () => {

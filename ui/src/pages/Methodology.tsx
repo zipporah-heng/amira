@@ -13,7 +13,7 @@ const MATURITY_MODEL = [
 
 export function Methodology() {
   return (
-    <div>
+    <div className="methodology-page">
       <span className="eyebrow">Methodology</span>
       <h1 className="page-q">How AMIRA works</h1>
       <p className="page-sub">

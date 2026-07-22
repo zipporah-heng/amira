@@ -48,7 +48,7 @@ describe("WhatToNotice", () => {
 
 describe("WhatToNotice — unscored medicine (Atorvastatin)", () => {
   const unscored = {
-    banner: { medicine: "Atorvastatin", drug_class: "Statin" },
+    banner: { medicine: "Atorvastatin", drug_class: "Statin", evidence_review_complete: false },
     // scorable:false -> maturity is not yet established; no numeric score exists.
     maturity: { level: 0, max_level: 5, label: "Not yet established", display: "Not yet established", scorable: false },
     effectiveness: { findings: [] },
@@ -63,6 +63,18 @@ describe("WhatToNotice — unscored medicine (Atorvastatin)", () => {
     expect(meter.getAttribute("aria-label")).toMatch(/not yet established/i);
     expect(meter.textContent || "").not.toMatch(/0\s*\/\s*5/);
     expect(container.textContent || "").toMatch(/Not yet established/);
+  });
+
+  it("shows a SEPARATE 'Evidence review incomplete' status badge", () => {
+    const { container } = render(<WhatToNotice report={unscored} />);
+    const badge = container.querySelector(".review-status-badge");
+    expect(badge).not.toBeNull();
+    expect(badge?.textContent).toBe("Evidence review incomplete");
+  });
+
+  it("does NOT show the incomplete badge for a verified medicine", () => {
+    const { container } = render(<WhatToNotice report={rosuva} />);  // no evidence_review_complete:false
+    expect(container.querySelector(".review-status-badge")).toBeNull();
   });
 });
 
