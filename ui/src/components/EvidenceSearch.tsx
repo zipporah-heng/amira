@@ -9,7 +9,12 @@ export interface Filters {
 export interface ClassEntry {
   drug_class: string;
   medicines: string[];
+  // Medicines known to AMIRA whose evidence review is incomplete (unscored). They
+  // are selectable and clearly labelled, but never counted as verified.
+  incomplete_medicines?: string[];
 }
+
+const INCOMPLETE_SUFFIX = " · Evidence review incomplete";
 
 export interface ConditionEntry {
   condition: string;
@@ -54,19 +59,34 @@ export function EvidenceSearch({ filters, setFilters, onCheck, catalog }: {
   const classesForCondition =
     catalog.find((c) => c.condition === filters.condition)?.drug_classes || [];
   const classNames = classesForCondition.map((c) => c.drug_class);
-  const medicinesForClass =
-    classesForCondition.find((c) => c.drug_class === filters.drugClass)?.medicines || [];
+
+  // Medicine options for a class = verified medicines (label == value) followed by
+  // incomplete-review medicines (same value, but a clearly-labelled option). The
+  // selected VALUE is always the plain medicine name, so check_evidence is unchanged.
+  const medicineOptions = (cls: ClassEntry | undefined) => {
+    const verified = (cls?.medicines || []).map((m) => ({ label: m, value: m }));
+    const incomplete = (cls?.incomplete_medicines || []).map((m) => ({
+      label: `${m}${INCOMPLETE_SUFFIX}`, value: m,
+    }));
+    return [...verified, ...incomplete];
+  };
+  // Prefer a verified medicine as the default; fall back to an incomplete one only
+  // when a class has no verified medicine.
+  const firstMedicine = (cls: ClassEntry | undefined) =>
+    cls?.medicines?.[0] || cls?.incomplete_medicines?.[0] || "";
+
+  const currentClass = classesForCondition.find((c) => c.drug_class === filters.drugClass);
+  const medOpts = medicineOptions(currentClass);
 
   // Cascade: changing condition resets class + medicine to that condition's first valid pair.
   const onConditionChange = (condition: string) => {
     const classes = catalog.find((c) => c.condition === condition)?.drug_classes || [];
-    const cls = classes[0]?.drug_class || "";
-    const medicine = classes[0]?.medicines[0] || "";
-    setFilters({ ...filters, condition, drugClass: cls, medicine });
+    setFilters({ ...filters, condition, drugClass: classes[0]?.drug_class || "", medicine: firstMedicine(classes[0]) });
   };
   const onClassChange = (drugClass: string) => {
-    const meds = classesForCondition.find((c) => c.drug_class === drugClass)?.medicines || [];
-    const medicine = meds.includes(filters.medicine) ? filters.medicine : (meds[0] || "");
+    const cls = classesForCondition.find((c) => c.drug_class === drugClass);
+    const values = medicineOptions(cls).map((o) => o.value);
+    const medicine = values.includes(filters.medicine) ? filters.medicine : firstMedicine(cls);
     setFilters({ ...filters, drugClass, medicine });
   };
 
@@ -81,7 +101,7 @@ export function EvidenceSearch({ filters, setFilters, onCheck, catalog }: {
           options={opt(classNames.length ? classNames : [filters.drugClass])} />
         <Field label="Medicine" icon="💊" value={filters.medicine}
           onChange={(v) => setFilters({ ...filters, medicine: v })}
-          options={opt(medicinesForClass.length ? medicinesForClass : [filters.medicine])} />
+          options={medOpts.length ? medOpts : [{ label: filters.medicine, value: filters.medicine }]} />
         <Field label="Life Stage" icon="♀" value={filters.lifeStage}
           onChange={(v) => setFilters({ ...filters, lifeStage: v })}
           options={LIFE_STAGE_OPTIONS} />
@@ -91,8 +111,10 @@ export function EvidenceSearch({ filters, setFilters, onCheck, catalog }: {
         <button className="cta check-btn" onClick={onCheck}>Check Evidence</button>
       </div>
       <div className="safety-line" style={{ marginTop: 14 }}>
-        <span>ℹ️</span> AMIRA reviews published research. It does not diagnose, prescribe, or
-        recommend treatment. Only medicines with verified evidence in AMIRA are selectable.
+        <span>ℹ️</span> AMIRA reviews published research. Medicines with completed evidence review
+        and medicines with an explicitly incomplete evidence review may appear here. Incomplete
+        evidence is clearly labelled and is not scored. It does not diagnose, prescribe, or
+        recommend treatment.
       </div>
     </div>
   );

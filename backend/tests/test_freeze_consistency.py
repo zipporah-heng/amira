@@ -85,12 +85,18 @@ def test_catalog_groups_medicines_by_class():
     body = client.get("/api/catalog").json()
     cat = body["drug_classes"]
     statin = next(c for c in cat if c["drug_class"] == "Statin")
-    # Only completed-ingestion (verified) medicines are selectable (Blocker F):
-    # Atorvastatin has not_located female enrollment -> incomplete -> not verified.
+    # `medicines` stays VERIFIED-only (Atorvastatin's female enrollment is
+    # not_located -> incomplete -> never counted as verified).
     assert set(statin["medicines"]) == {"Rosuvastatin"}
     # Incomplete medicines are discoverable but explicitly not verified.
     inc = {m for c in body["incomplete_medicines"] for m in c["medicines"]}
     assert "Atorvastatin" in inc
+    # The condition tree now exposes incomplete medicines PER CLASS so the selector
+    # can offer Atorvastatin with an explicit incomplete label (without verifying it).
+    cvd = next(c for c in body["conditions"] if c["condition"] == "Cardiovascular disease prevention")
+    tree_statin = next(dc for dc in cvd["drug_classes"] if dc["drug_class"] == "Statin")
+    assert tree_statin["medicines"] == ["Rosuvastatin"]
+    assert tree_statin["incomplete_medicines"] == ["Atorvastatin"]
     # Every catalog medicine actually has an ingested trial.
     ingested = {t["medicine"] for t in dataset.trials()}
     for c in cat:
