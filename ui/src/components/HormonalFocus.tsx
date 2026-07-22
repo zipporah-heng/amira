@@ -1,7 +1,7 @@
 /** The hormonal-health focus statement, shown near the top of the app and the
  *  Methodology page (identical wording lives in the README). It states AMIRA's
- *  specific problem and its guardrails: the Digoxin finding is sex-specific, not
- *  menopause-specific, and AMIRA never reinterprets it as hormonal evidence. */
+ *  specific problem and its guardrails in GENERIC terms — no medicine-specific
+ *  copy lives in this shared component. */
 export function HormonalFocus({ compact = false }: { compact?: boolean }) {
   return (
     <aside className={`hormonal-focus${compact ? " compact" : ""}`} aria-label="Hormonal health focus">
@@ -12,10 +12,9 @@ export function HormonalFocus({ compact = false }: { compact?: boolean }) {
         while preserving what was <strong>not reported</strong> or <strong>could not be located</strong>.
       </p>
       <p className="hf-note">
-        The Digoxin mortality finding is <strong>sex-specific, not menopause-specific</strong> — AMIRA
-        does not reinterpret it as hormonal evidence. AMIRA identifies whether menopause and hormone
-        therapy information was reported, not reported, or not located, and does not provide treatment
-        recommendations.
+        AMIRA shows what published research reports about women, including whether menopause and
+        hormone therapy were <strong>reported</strong>, <strong>not reported</strong>, or{" "}
+        <strong>could not be located</strong>. It does not diagnose, prescribe, or recommend treatment.
       </p>
     </aside>
   );

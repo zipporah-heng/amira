@@ -45,21 +45,25 @@ export function ResearchMap() {
     return toEvidenceState(t[dim]);
   };
 
-  // Group by condition -> drug class for readability across classes.
-  const byGroup: Record<string, TrialWithMeta[]> = {};
-  for (const t of trials) {
-    const k = `${t.condition} · ${t.drug_class}`;
-    (byGroup[k] ||= []).push(t);
-  }
+  // Group by clinical CONDITION first (drug class is secondary metadata on each
+  // row), so every trial for a condition — e.g. all heart-failure trials — appears
+  // together regardless of drug class. Conditions are shown in clinical order.
+  const CONDITION_ORDER = ["Cardiovascular disease prevention", "Heart failure", "Hypertension"];
+  const byCondition: Record<string, TrialWithMeta[]> = {};
+  for (const t of trials) (byCondition[t.condition] ||= []).push(t);
+  const conditions = Object.keys(byCondition).sort((a, b) => {
+    const ia = CONDITION_ORDER.indexOf(a), ib = CONDITION_ORDER.indexOf(b);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b);
+  });
 
   return (
     <div>
       <span className="eyebrow">Research Map</span>
       <h1 className="page-q">Where is women's evidence present or missing?</h1>
       <p className="page-sub">
-        Coverage across every verified trial in AMIRA, grouped by condition and drug class.
-        Each row links to the real trial record. Additional medicines are added only after
-        ingestion and verification.
+        Coverage across every verified trial in AMIRA, grouped by clinical condition. Each row
+        links to the real trial record and notes its drug class. Additional medicines are added
+        only after ingestion and verification.
       </p>
 
       <div className="card" style={{ marginTop: 22 }}>
@@ -73,21 +77,21 @@ export function ResearchMap() {
               </tr>
             </thead>
             <tbody>
-              {Object.entries(byGroup).map(([group, rows]) => (
+              {conditions.map((condition) => (
                 <>
-                  <tr key={group}>
+                  <tr key={condition}>
                     <td colSpan={DIMS.length + 1} style={{
                       background: "var(--surface-2)", fontWeight: 700, fontSize: 12,
                       textTransform: "uppercase", letterSpacing: ".04em", color: "var(--ink-3)",
-                    }}>{group}</td>
+                    }}>{condition}</td>
                   </tr>
-                  {rows.map((t) => (
+                  {byCondition[condition].map((t) => (
                     <tr key={t.trial_id}>
                       <td className="rowlabel">
                         <a href={t.registry_url} target="_blank" rel="noopener noreferrer">
                           {t.display_name} — {t.medicine}
                         </a>
-                        <div style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 400 }}>{t.nct_id}</div>
+                        <div style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 400 }}>{t.drug_class} · {t.nct_id}</div>
                       </td>
                       {DIMS.map((d) => {
                         const meta = EVIDENCE_STATE[cell(t, d.key)];

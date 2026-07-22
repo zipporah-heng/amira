@@ -51,7 +51,7 @@ export function CheckEvidence() {
 
   return (
     <div className="check-page">
-      <h1 className="page-q">How ready is the evidence supporting {medicine} for women?</h1>
+      <h1 className="page-q">What does the evidence show about {medicine} in women?</h1>
       <p className="page-sub">
         See how women were represented, what researchers found, what remains unknown and where each
         finding came from.

@@ -21,9 +21,10 @@
 .hdr-share { margin-left: auto; }
 
 /* --- Title + controls (no oversized panel) --- */
-.check-page .page-q { font-size: clamp(26px, 3.2vw, 38px); margin: 4px 0 6px; max-width: none; }
+.check-page .page-q { font-size: clamp(26px, 3.2vw, 38px); margin: 4px 0 6px; max-width: none; text-wrap: balance; }
 .check-page .page-sub { font-size: 16px; margin-bottom: 14px; }
-@media (min-width: 1120px) { .check-page .page-q { white-space: nowrap; } }
+/* No forced single line: the dynamic medicine name can be long, so allow natural
+   wrapping (balanced) and never risk horizontal overflow on wide screens. */
 .filter-card { padding: 14px 16px; box-shadow: none; }
 .filter-row { grid-template-columns: repeat(5, 1fr) auto; }
 .filter-card .safety-line { font-size: 13px; }
@@ -39,6 +40,16 @@
 .nf-stats { font-size: 15px; color: var(--ink-2); margin-top: 12px; font-weight: 600; }
 .nf-caveat { font-size: 13px; color: var(--ink-3); margin-top: 12px; line-height: 1.5; }
 .nf-link { display: inline-block; margin-top: 14px; font-weight: 650; color: var(--red); }
+/* Tone by what the evidence MEANS — pink only for an actual adverse signal. */
+.notice-finding.warn { background: #fdeef2; border-color: #f3d3de; }
+.notice-finding.warn .nf-icon { background: #f6c9d6; color: #b23a63; }
+.notice-finding.warn .nf-eyebrow, .notice-finding.warn .nf-link { color: #b23a63; }
+.notice-finding.calm { background: #e9f6ef; border-color: #bfe3cf; }
+.notice-finding.calm .nf-icon { background: #cdeadb; color: #1d6b47; }
+.notice-finding.calm .nf-eyebrow, .notice-finding.calm .nf-link { color: #1d6b47; }
+.notice-finding.amber { background: #fff6e6; border-color: #f2dca8; }
+.notice-finding.amber .nf-icon { background: #f7e4b5; color: #8a5a00; }
+.notice-finding.amber .nf-eyebrow, .notice-finding.amber .nf-link { color: #8a5a00; }
 .notice-maturity { background: #faf8ff; border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .nm-head { font-size: 15px; font-weight: 650; color: var(--ink); }
 .maturity-meter { width: 100%; max-width: 250px; height: auto; margin: 2px 0; }
