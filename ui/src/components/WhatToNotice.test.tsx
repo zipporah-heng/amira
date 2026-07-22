@@ -46,6 +46,26 @@ describe("WhatToNotice", () => {
   });
 });
 
+describe("WhatToNotice — unscored medicine (Atorvastatin)", () => {
+  const unscored = {
+    banner: { medicine: "Atorvastatin", drug_class: "Statin" },
+    // scorable:false -> maturity is not yet established; no numeric score exists.
+    maturity: { level: 0, max_level: 5, label: "Not yet established", display: "Not yet established", scorable: false },
+    effectiveness: { findings: [] },
+    safety: { significant_findings: [] },
+  } as unknown as EvidenceResponse;
+
+  it("shows 'Not yet established' and NEVER a fabricated '0 / 5' score", () => {
+    const { container } = render(<WhatToNotice report={unscored} />);
+    const meter = container.querySelector(".maturity-meter") as SVGElement;
+    expect(meter).not.toBeNull();
+    // The meter communicates not-established via aria-label + a dash, not a score.
+    expect(meter.getAttribute("aria-label")).toMatch(/not yet established/i);
+    expect(meter.textContent || "").not.toMatch(/0\s*\/\s*5/);
+    expect(container.textContent || "").toMatch(/Not yet established/);
+  });
+});
+
 const rosuva = {
   banner: { medicine: "Rosuvastatin", drug_class: "Statin" },
   maturity: { level: 2, max_level: 5, label: "Women Analyzed", display: "2 / 5" },
