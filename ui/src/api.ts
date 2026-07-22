@@ -17,13 +17,18 @@ export interface AssertionView {
   dimension: string;
   value: unknown;
   value_basis: "reported" | "derived" | "not_reported" | "not_located";
+  // Canonical trust signals — the UI must key off these, never the raw value.
+  trusted: boolean;
+  evidence_state: string;          // reported|derived|not_reported|not_located|absent|conflict|unverified|invalid
+  trusted_value: unknown;          // the value ONLY when trusted; otherwise null
+  invalid_reason?: string | null;
   exact_passage: string;
   source_locator?: string | null;
   source_verified: boolean;
   human_verified: boolean;
   verifier?: string | null;
   notes?: string;
-  source: SourceLink;
+  source: SourceLink & { resolved?: boolean };
 }
 
 export interface TrialRow {
@@ -161,6 +166,8 @@ export interface SafetyState {
   significant_findings: Finding[];
   trend_findings: Finding[];
   other_findings: Finding[];
+  class_context_findings?: Finding[];
+  class_context_note?: string | null;
   derived: boolean;
 }
 
@@ -171,6 +178,9 @@ export interface ClassRow {
   maturity_scorable: boolean;
   maturity_display: string;
   maturity_label: string;
+  ingestion_complete?: boolean;
+  rankable?: boolean;
+  review_status?: string;
   effectiveness_state: string;
   safety_state: string;
   key_gap: string;
@@ -182,6 +192,8 @@ export interface ClassComparison {
   verified_count: number;
   scored_count: number;
   verified_medicines: string[];
+  incomplete_medicines?: { medicine: string; status: string; maturity_display: string; rankable: boolean }[];
+  medicines_in_corpus?: string[];
   ranking: { rankable: boolean; summary: string; basis: string };
   sort: string;
   rows: ClassRow[];
@@ -200,8 +212,10 @@ export interface WhoRow {
   total_participants_state?: string;
   female_n: number | null;
   female_n_basis: string;
+  female_n_state?: string;
   female_pct: number | null;
   female_pct_basis: string;
+  female_pct_state?: string;
   minimum_age: string | null;
   sex_eligibility: string | null;
   primary_endpoint: string | null;

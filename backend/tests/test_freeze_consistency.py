@@ -82,9 +82,15 @@ def test_study_selection_counts_reconcile():
 
 # 7. Drug Class filters Medicine options correctly.
 def test_catalog_groups_medicines_by_class():
-    cat = client.get("/api/catalog").json()["drug_classes"]
+    body = client.get("/api/catalog").json()
+    cat = body["drug_classes"]
     statin = next(c for c in cat if c["drug_class"] == "Statin")
-    assert set(statin["medicines"]) == {"Rosuvastatin", "Atorvastatin"}
+    # Only completed-ingestion (verified) medicines are selectable (Blocker F):
+    # Atorvastatin has not_located female enrollment -> incomplete -> not verified.
+    assert set(statin["medicines"]) == {"Rosuvastatin"}
+    # Incomplete medicines are discoverable but explicitly not verified.
+    inc = {m for c in body["incomplete_medicines"] for m in c["medicines"]}
+    assert "Atorvastatin" in inc
     # Every catalog medicine actually has an ingested trial.
     ingested = {t["medicine"] for t in dataset.trials()}
     for c in cat:

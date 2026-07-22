@@ -41,10 +41,12 @@ SAF_NOT_REPORTED = "Sex-specific safety not reported"
 
 
 def _source_link(finding: dict) -> dict:
-    s = dataset.source_by_id(finding["source_id"])
+    # Dangling-safe: a public projection must never crash because a record points at
+    # a missing source. verified findings resolve; anything else returns unresolved.
+    s = dataset.source_link_safe(finding.get("source_id"))
     return {"source_id": s["source_id"], "title": s["title"], "url": s["url"],
             "nct_id": s.get("nct_id"), "pmid": s.get("pmid"), "pmcid": s.get("pmcid"),
-            "source_type": s["source_type"]}
+            "source_type": s["source_type"], "resolved": s["resolved"]}
 
 
 def _finding_view(f: dict) -> dict:
@@ -105,7 +107,9 @@ def effectiveness_state(medicine: str) -> dict:
     # Only VERIFIED, trial-scoped findings may drive a drug-specific state.
     drug_findings = [f for f in all_findings
                      if f.get("scope", "").startswith("trial:") and dataset.verified_evidence(f)]
-    class_findings = [f for f in all_findings if f.get("scope", "").startswith("class:")]
+    # Class-level context is still evidence: it may be shown only when VERIFIED.
+    class_findings = [f for f in all_findings
+                      if f.get("scope", "").startswith("class:") and dataset.verified_evidence(f)]
     counts = _efficacy_reporting_counts(medicine)
 
     drug_sigs = {f.get("significance") for f in drug_findings}
@@ -183,7 +187,10 @@ def safety_state(medicine: str) -> dict:
     # findings are contextual and must NEVER set a medicine-specific safety state.
     drug_specific = [f for f in findings
                      if f["scope"].startswith("trial:") and dataset.verified_evidence(f)]
-    class_context = [f for f in findings if f["scope"].startswith("class:")]
+    # Class-level context appears only when VERIFIED — an unverified class finding
+    # is never surfaced as class context.
+    class_context = [f for f in findings
+                     if f["scope"].startswith("class:") and dataset.verified_evidence(f)]
     sigs = [f.get("significance") for f in drug_specific]
 
     trials = [t for t in dataset.trials() if t["medicine"].lower() == medicine.lower()]
@@ -319,16 +326,14 @@ def class_comparison(drug_class: str) -> dict:
         ingestion_ok = medicine_ingestion_complete(med)
         eff = effectiveness_state(med)
         saf = safety_state(med)
-        # Key gap: highest unmet women's-evidence dimension.
+        # Key gap: highest unmet women's-evidence dimension (verified gate only).
         gaps = []
-        if not any(dataset.assertion_value(t, "menopause_status_reported")[0] == "yes" for t in trial_ids):
+        if not any(dataset.affirmative_verified(t, "menopause_status_reported") for t in trial_ids):
             gaps.append("Menopausal status not reported")
-        if not any(dataset.assertion_value(t, "hormone_therapy_reported")[0] == "yes" for t in trial_ids):
+        if not any(dataset.affirmative_verified(t, "hormone_therapy_reported") for t in trial_ids):
             gaps.append("Hormone therapy not reported")
         if not any(
-            dataset.assertion_value(
-                t, "outcomes_stratified_by_life_stage_and_hormone_context"
-            )[0] == "yes"
+            dataset.affirmative_verified(t, "outcomes_stratified_by_life_stage_and_hormone_context")
             for t in trial_ids
         ):
             gaps.append("No joint life-stage and hormone-context analysis")
@@ -342,6 +347,8 @@ def class_comparison(drug_class: str) -> dict:
             "ingestion_complete": ingestion_ok,
             # Only completed-ingestion medicines are eligible to be ranked publicly.
             "rankable": bool(m["scorable"] and ingestion_ok),
+            # Never call an incomplete medicine "verified" — surface an explicit status.
+            "review_status": "Verified evidence review" if ingestion_ok else "Incomplete evidence review",
             "effectiveness_state": eff["state"],
             "safety_state": saf["state"],
             "key_gap": gaps[0] if gaps else "None identified",
@@ -352,39 +359,50 @@ def class_comparison(drug_class: str) -> dict:
     rows.sort(key=lambda r: (not r["rankable"], -r["maturity_level"], r["medicine"]))
 
     scored = [r for r in rows if r["rankable"]]
+    # "Verified" means completed, integrity-checked ingestion — NOT merely present in
+    # the corpus. An incomplete medicine is listed separately, never called verified.
+    verified_medicines = [r["medicine"] for r in rows if r["ingestion_complete"]]
+    incomplete_medicines = [
+        {"medicine": r["medicine"], "status": "Incomplete evidence review",
+         "maturity_display": r["maturity_display"], "rankable": False}
+        for r in rows if not r["ingestion_complete"]
+    ]
     cls = drug_class.lower()
     cls_plural = cls + "s"
     if len(scored) >= 2:
         ranking = {
             "rankable": True,
-            "summary": f"Evidence maturity rank shown for {len(scored)} of {len(meds)} reviewed {cls_plural}.",
+            "summary": f"Evidence maturity rank shown for {len(scored)} of {len(verified_medicines)} verified {cls_plural}.",
             "basis": "Based on women-specific evidence maturity, not clinical effectiveness.",
         }
     else:
         med_word = cls if len(scored) == 1 else cls_plural
-        rep_word = cls if len(meds) == 1 else cls_plural
+        rep_word = cls if len(verified_medicines) == 1 else cls_plural
         ranking = {
             "rankable": False,
             "summary": (f"{len(scored)} {med_word} currently has a verified Evidence Maturity score; "
-                        f"{len(meds)} {rep_word} currently represented in AMIRA."),
+                        f"{len(verified_medicines)} {rep_word} with completed, verified ingestion."),
             "basis": ("Medicines without enough verified evidence to establish a maturity level are "
                       "not ranked."),
         }
 
     return {
         "drug_class": drug_class,
-        "verified_count": len(meds),
-        "verified_medicines": meds,
+        "verified_count": len(verified_medicines),
+        "verified_medicines": verified_medicines,
+        "incomplete_medicines": incomplete_medicines,
+        "medicines_in_corpus": meds,
         "scored_count": len(scored),
         "ranking": ranking,
         "sort": "evidence_maturity_desc_then_unscored",
         "rows": rows,
-        "note": ("Only medicines with completed, verified evidence ingestion appear here. "
+        "note": ("Only medicines with completed, verified evidence ingestion are counted as "
+                 "verified. Medicines still under review are listed separately as incomplete. "
                  "Stronger women-specific evidence is not the same as greater effectiveness; "
                  "AMIRA does not rank medicines by clinical effectiveness."),
         "class_level_findings": [
             _finding_view(f) for f in dataset.findings()
-            if f["scope"] == f"class:{drug_class}"
+            if f["scope"] == f"class:{drug_class}" and dataset.verified_evidence(f)
         ],
     }
 
@@ -393,8 +411,11 @@ def who_was_studied(trial_ids: List[str]) -> List[dict]:
     out = []
     for tid in trial_ids:
         t = next(x for x in dataset.trials() if x["trial_id"] == tid)
-        fcount, fbasis, _ = dataset.assertion_value(tid, "female_enrollment_count")
-        fpct, pbasis, _ = dataset.assertion_value(tid, "female_enrollment_pct")
+        # Canonical verified projection — NEVER raw first-value selection. An
+        # unverified count (777), a conflicting pair (500/999) and an invalid-derived
+        # percentage (60) all fail closed to a null value + explicit state.
+        cv = dataset.evidence_projection(tid, "female_enrollment_count", require_numeric=True)
+        pv = dataset.evidence_projection(tid, "female_enrollment_pct", require_numeric=True)
         te = dataset.total_enrollment_projection(tid)
         out.append({
             "trial_id": tid, "display_name": t["display_name"], "nct_id": t["nct_id"],
@@ -403,10 +424,12 @@ def who_was_studied(trial_ids: List[str]) -> List[dict]:
             "total_participants": te["value"],
             "total_participants_basis": te["basis"],
             "total_participants_state": te["state"],
-            "female_n": fcount if fbasis == "reported" else None,
-            "female_n_basis": fbasis,
-            "female_pct": fpct if pbasis in ("reported", "derived") else None,
-            "female_pct_basis": pbasis,
+            "female_n": cv["value"] if (cv["trusted"] and cv["basis"] == "reported") else None,
+            "female_n_basis": cv["state"],
+            "female_n_state": cv["state"],
+            "female_pct": pv["value"] if pv["trusted"] else None,
+            "female_pct_basis": pv["state"],
+            "female_pct_state": pv["state"],
             "minimum_age": t.get("minimum_age"),
             "sex_eligibility": t.get("sex_eligibility"),
             "primary_endpoint": t.get("primary_endpoint"),

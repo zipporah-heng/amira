@@ -92,6 +92,9 @@ def main() -> int:
         if f.get("significance") in ("significant", "no_significant_difference"):
             if f.get("comparison_p") is None and not f.get("comparison_test"):
                 err(f"{f['finding_id']} claims '{f['significance']}' with no reported test")
+        # A public finding must be source_verified (Blocker G).
+        if not f.get("source_verified", False):
+            err(f"{f['finding_id']} is a public finding that is not source_verified")
         if f.get("human_verified") and not f.get("verifier"):
             err(f"{f['finding_id']} is human_verified with no named verifier")
 
@@ -107,6 +110,9 @@ def main() -> int:
         for index, outcome in enumerate(c.get("outcomes", []), start=1):
             if not (outcome.get("exact_passage") or "").strip():
                 err(f"{c['comparison_id']} outcome {index} has no exact_passage")
+        # A public direct comparison must be source_verified (Blocker G).
+        if not c.get("source_verified", False):
+            err(f"{c['comparison_id']} is a public direct comparison that is not source_verified")
         if c.get("human_verified") and not c.get("verifier"):
             err(f"{c['comparison_id']} is human_verified with no named verifier")
 

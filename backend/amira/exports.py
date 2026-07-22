@@ -37,13 +37,12 @@ def trial_rows() -> List[dict]:
     rows = []
     for t in dataset.trials():
         tid = t["trial_id"]
-        f_count, f_basis, _ = dataset.assertion_value(tid, "female_enrollment_count")
-        f_pct, p_basis, _ = dataset.assertion_value(tid, "female_enrollment_pct")
-        # Trusted values ONLY through the canonical verified gate — identical rule to
-        # the API and aggregates, so every surface makes the same trust decision.
+        # Trusted values + never-collapsed states ONLY through the canonical
+        # projection — identical rule to the API and aggregates, so every surface
+        # makes the same trust decision.
         te = dataset.total_enrollment_projection(tid)
-        fv = dataset.assertion_validity(tid, "female_enrollment_count", require_numeric=True)
-        pv = dataset.assertion_validity(tid, "female_enrollment_pct", require_numeric=True)
+        cv = dataset.evidence_projection(tid, "female_enrollment_count", require_numeric=True)
+        pv = dataset.evidence_projection(tid, "female_enrollment_pct", require_numeric=True)
         row = {
             "trial_id": tid,
             "nct_id": t["nct_id"],
@@ -61,10 +60,10 @@ def trial_rows() -> List[dict]:
             # which only counts a `reported` total.
             "total_enrollment": te["value"] if te["coverage"] == "complete" else "",
             "total_enrollment_basis": te["basis"],
-            "female_n": fv["value"] if (fv["valid"] and fv["basis"] == "reported") else "",
-            "female_n_basis": f_basis,
-            "female_pct": pv["value"] if pv["valid"] else "",
-            "female_pct_basis": p_basis,
+            "female_n": cv["value"] if (cv["trusted"] and cv["basis"] == "reported") else "",
+            "female_n_basis": cv["state"],
+            "female_pct": pv["value"] if pv["trusted"] else "",
+            "female_pct_basis": pv["state"],
             "minimum_age": t.get("minimum_age"),
             "sex_eligibility": t.get("sex_eligibility"),
             "start_date": t.get("start_date"),
@@ -75,11 +74,11 @@ def trial_rows() -> List[dict]:
         for dim in ("sex_specific_efficacy_reported", "sex_specific_safety_reported",
                     "menopause_status_reported", "hormone_therapy_reported",
                     "pregnancy_evidence_reported"):
-            v, b, _ = dataset.assertion_value(tid, dim)
-            # Preserve the evidence state. An absent assertion is exported as
-            # "absent" (AMIRA has no assertion) — never silently downgraded to a
-            # "not_reported" claim about the underlying literature.
-            row[dim] = v if b != "absent" else "absent"
+            # Canonical fail-closed categorical: a verified affirmative keeps its
+            # value; anything untrusted (absent/not_located/conflict/unverified/
+            # invalid) is exported as its explicit state — never silently downgraded
+            # to a "not_reported" claim about the underlying literature.
+            row[dim] = dataset.displayed_categorical(tid, dim)
         rows.append(row)
     return rows
 
@@ -161,7 +160,8 @@ def _source_resolves(source_id) -> tuple:
 def source_integrity_violations() -> List[dict]:
     """Every evidence-backed value must resolve to an existing, URL-bearing source;
     positive-evidence assertions (reported/derived) must also be source_verified.
-    Applies to trial assertions, findings, and trial primary_source_id."""
+    Applies equally to trial assertions, findings, direct comparisons, and trial
+    primary_source_id — the same verification bar for every public record."""
     out: List[dict] = []
     for a in dataset.assertions():
         ok, why = _source_resolves(a.get("source_id"))
@@ -172,10 +172,22 @@ def source_integrity_violations() -> List[dict]:
             out.append({"trial_id": a.get("trial_id"), "dimension": a.get("dimension"),
                         "assertion_id": a.get("assertion_id"),
                         "reason": "positive-evidence assertion is not source_verified"})
+    # Findings are public evidence: the source must resolve AND be verified.
     for f in dataset.findings():
         ok, why = _source_resolves(f.get("source_id"))
         if not ok:
             out.append({"finding_id": f.get("finding_id"), "reason": why})
+        elif not f.get("source_verified", False):
+            out.append({"finding_id": f.get("finding_id"),
+                        "reason": "public finding is not source_verified"})
+    # Direct comparisons drive a public arm-vs-arm view: same bar.
+    for c in dataset.direct_comparisons():
+        ok, why = _source_resolves(c.get("source_id"))
+        if not ok:
+            out.append({"comparison_id": c.get("comparison_id"), "reason": why})
+        elif not c.get("source_verified", False):
+            out.append({"comparison_id": c.get("comparison_id"),
+                        "reason": "direct comparison is not source_verified"})
     for t in dataset.trials():
         ok, why = _source_resolves(t.get("primary_source_id"))
         if not ok:
@@ -290,7 +302,10 @@ FINDING_COLUMNS = [
 def finding_rows() -> List[dict]:
     rows = []
     for f in dataset.findings():
-        s = dataset.source_by_id(f["source_id"])
+        # Fail closed: an unverified finding never enters the public download surface.
+        if not dataset.verified_evidence(f):
+            continue
+        s = dataset.source_link_safe(f["source_id"])
         rows.append({
             **{k: f.get(k, "") if f.get(k) is not None else "" for k in FINDING_COLUMNS
                if k not in ("source_url",)},

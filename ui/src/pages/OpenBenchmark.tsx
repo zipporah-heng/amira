@@ -39,8 +39,10 @@ export function OpenBenchmark() {
           <h3>The Dataset</h3>
           <p>
             Normalized trials and evidence assertions, exported from the same normalized records
-            the API serves. Every evidence-backed value is fail-closed: it appears only when a
-            supporting assertion with a verified source exists, so a value shown in one surface is
+            the API serves through one canonical verified-evidence gate. A value appears only when
+            its assertion is conflict-free, carries a supported basis, and resolves to a verified
+            authoritative source; otherwise its evidence state (not reported / not located /
+            unavailable / conflicting / unverified) is shown instead. A value in one surface is
             never stronger than the evidence behind it.
           </p>
           <div className="code-cols">

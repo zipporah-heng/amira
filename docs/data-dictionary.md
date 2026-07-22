@@ -67,6 +67,24 @@ Every displayed scientific claim is one row here.
 bases, the API returns the reported subtotal *and* a separately-labelled estimate. See
 `count_basis_warning` in the API response.
 
+### Displayed evidence state (what the surfaces actually emit)
+
+Every public surface reads through one canonical projection
+(`dataset.evidence_projection`), so the emitted **state** is one of eight values that are
+never collapsed: the four stored bases above, plus `absent`, and three runtime
+fail-closed states —
+
+- **`conflict`** — more than one assertion exists for the (trial, dimension); no single
+  value is trusted.
+- **`unverified`** — a positive (`reported`/`derived`) value whose source is not
+  `source_verified` or does not resolve to an authoritative `https` host.
+- **`invalid`** — the assertion carries an unsupported/unknown basis.
+
+A stored `reported`/`derived` value is emitted as a number/`yes` **only** when it is
+conflict-free, source-verified, authoritative, and (for `derived`) has valid
+dependencies. Otherwise the surface emits the state token and withholds the value. The
+`female_n_basis` / `female_pct_basis` fields carry this state, not the raw stored basis.
+
 ## `manifest.json`
 
 `dataset_version`, `source_cutoff`, `generated_at`, `commit_hash`, `corpus`, `counts`,

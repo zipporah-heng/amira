@@ -126,12 +126,14 @@ def evaluate(trial_ids: List[str]) -> Dict:
                 _, basis, a = dataset.assertion_value(tid, dim)
                 if a is None:
                     continue
-                s = dataset.source_by_id(a["source_id"])
+                # Dangling-safe: a derived value whose dependency points at a missing
+                # source must NOT crash check_evidence while building this trace.
+                s = dataset.source_link_safe(a["source_id"])
                 ev.append({
                     "trial_id": tid, "dimension": dim,
                     "value": a["value"], "value_basis": basis,
                     "passage": a["exact_passage"], "source_url": s["url"],
-                    "source_id": s["source_id"],
+                    "source_id": s["source_id"], "source_resolved": s["resolved"],
                     "pmid": s.get("pmid"), "nct_id": s.get("nct_id"),
                     "assertion_id": a["assertion_id"],
                 })

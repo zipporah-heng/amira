@@ -11,6 +11,18 @@ describe("evidence state mapping (exhaustive, never collapsed)", () => {
     expect(toEvidenceState("absent")).toBe("absent");
   });
 
+  it("maps unverified/conflict/invalid to their own states, never not_reported", () => {
+    expect(toEvidenceState("unverified")).toBe("unverified");
+    expect(toEvidenceState("conflict")).toBe("conflict");
+    expect(toEvidenceState("invalid")).toBe("invalid");
+    // an unknown affirmative-looking token still falls back to not_reported…
+    expect(toEvidenceState("no")).toBe("not_reported");
+    // …but the explicit fail-closed states are NEVER collapsed to it.
+    for (const s of ["unverified", "conflict", "invalid", "absent", "not_located"] as const) {
+      expect(EVIDENCE_STATE[s].label).not.toBe(EVIDENCE_STATE.not_reported.label);
+    }
+  });
+
   it("never collapses absent or not_located into 'Not reported'", () => {
     expect(EVIDENCE_STATE.absent.label).toBe("Evidence status unavailable");
     expect(EVIDENCE_STATE.not_located.label).toBe("Unclear / not located");
@@ -19,8 +31,10 @@ describe("evidence state mapping (exhaustive, never collapsed)", () => {
     expect(EVIDENCE_STATE.not_located.label).not.toBe(EVIDENCE_STATE.not_reported.label);
   });
 
-  it("gives each of the five states a distinct tone", () => {
-    const tones = Object.values(EVIDENCE_STATE).map((m) => m.tone);
-    expect(new Set(tones).size).toBe(5);
+  it("gives every state a distinct tone and label", () => {
+    const metas = Object.values(EVIDENCE_STATE);
+    expect(new Set(metas.map((m) => m.tone)).size).toBe(metas.length);
+    expect(new Set(metas.map((m) => m.label)).size).toBe(metas.length);
+    expect(metas.length).toBe(8);
   });
 });

@@ -222,6 +222,152 @@ def test_class_safety_context_separated(patch):
     assert len(saf["class_context_findings"]) == 1
 
 
+# =========================================================================== #
+# Final closeout pass: the exact reproduced bypasses A–G + dangling-derived crash
+# =========================================================================== #
+
+# A. Unverified female count (777) is never trusted on ANY public surface.
+def test_A_unverified_female_count_suppressed_everywhere(patch):
+    patch([T("TX")], [A("fc", "TX", "female_enrollment_count", 777, "reported", verified=False)]
+          + _fill_required("TX", exclude=["female_enrollment_count"]))
+    api = engine.check_evidence(condition="Test condition", medicine="TestMed")
+    ws = next(w for w in api["who_was_studied"] if w["trial_id"] == "TX")
+    assert ws["female_n"] is None and ws["female_n_state"] == "unverified"
+    row = next(r for r in api["trials"] if r["trial_id"] == "TX")
+    assert row["female_n"] is None and row["female_n_basis"] == "unverified"
+    csv_row = next(r for r in csv.DictReader(io.StringIO(exports.trials_csv())) if r["trial_id"] == "TX")
+    jrow = next(json.loads(l) for l in exports.trials_jsonl().splitlines()
+                if l.strip() and json.loads(l)["trial_id"] == "TX")
+    assert csv_row["female_n"] == "" and jrow["female_n"] == ""
+    # Source Drawer: the 777 assertion is visible but explicitly NOT trusted.
+    av = next(a for a in row["assertions"] if a["dimension"] == "female_enrollment_count")
+    assert av["trusted"] is False and av["trusted_value"] is None and av["value"] == 777
+
+
+# A. Conflicting female counts (500/999): the first value never wins.
+def test_A_conflicting_female_count_no_first_value(patch):
+    patch([T("TX")], [
+        A("c1", "TX", "female_enrollment_count", 500, "reported"),
+        A("c2", "TX", "female_enrollment_count", 999, "reported"),
+    ] + _fill_required("TX", exclude=["female_enrollment_count"]))
+    api = engine.check_evidence(condition="Test condition", medicine="TestMed")
+    ws = next(w for w in api["who_was_studied"] if w["trial_id"] == "TX")
+    assert ws["female_n"] is None and ws["female_n_state"] == "conflict"
+    row = next(r for r in api["trials"] if r["trial_id"] == "TX")
+    fcs = [a for a in row["assertions"] if a["dimension"] == "female_enrollment_count"]
+    assert fcs and all(a["trusted"] is False and a["trusted_value"] is None for a in fcs)
+    assert 500 not in (ws["female_n"], row["female_n"])
+
+
+# A. Invalid derived female percentage (60) never trusted in who_was_studied.
+def test_A_invalid_derived_pct_suppressed(patch):
+    patch([T("TX")], [
+        A("dep", "TX", "female_enrollment_count", None, "not_reported"),
+        A("der", "TX", "female_enrollment_pct", 60.0, "derived",
+          extra={"derived_from": ["dep"], "derivation_rule": "x", "derivation_version": "1.0"}),
+    ] + _fill_required("TX", exclude=["female_enrollment_count"]))
+    api = engine.check_evidence(condition="Test condition", medicine="TestMed")
+    ws = next(w for w in api["who_was_studied"] if w["trial_id"] == "TX")
+    assert ws["female_pct"] is None
+
+
+# B. An unverified categorical "yes" changes no public conclusion or copy.
+def test_B_unverified_categorical_yes_changes_nothing(patch):
+    patch([T("TX")], [A("m", "TX", "menopause_status_reported", "yes", "reported", verified=False)]
+          + _fill_required("TX", exclude=["menopause_status_reported"]))
+    api = engine.check_evidence(condition="Test condition", medicine="TestMed")
+    dim = next(d for d in api["dimensions"] if d["dimension"] == "menopause_status_reported")
+    assert dim["n_reporting"] == 0
+    assert api["life_stage_context"]["trials_reporting_menopausal_status"] == []
+    gap = next(g for g in api["evidence_gaps"] if g["dimension"] == "menopause_status_reported")
+    assert gap["n_reporting"] == 0
+    row = next(r for r in api["trials"] if r["trial_id"] == "TX")
+    assert row["menopause_status_reported"] == "unverified"   # never rendered as reported
+
+
+# B. A "yes" with a dangling source never counts as affirmative.
+def test_B_dangling_source_yes_not_affirmative(patch):
+    patch([T("TX")], [A("h", "TX", "hormone_therapy_reported", "yes", "reported", sid="GONE")]
+          + _fill_required("TX", exclude=["hormone_therapy_reported"]), sources=[S("SRC-OK")])
+    assert dataset.affirmative_verified("TX", "hormone_therapy_reported") is False
+    api = engine.check_evidence(condition="Test condition", medicine="TestMed")
+    assert api["hormone_therapy_context"]["trials_reporting_hormone_therapy"] == []
+
+
+# C. An unverified trial finding alters no state and enters no public section.
+def test_C_unverified_trial_finding_fully_excluded(patch):
+    f = {"finding_id": "F1", "medicine": "TestMed", "finding_type": "safety", "scope": "trial:TX",
+         "significance": "significant", "endpoint": "AE", "source_id": "SRC-OK", "exact_passage": "p",
+         "source_verified": False, "comparison_p": "0.01", "comparison_test": "t",
+         "population_scope": "women_and_men"}
+    patch([T("TX")], _fill_required("TX"), findings=[f])
+    saf = clinical.safety_state("TestMed")
+    assert saf["state"] != clinical.SAF_SIGNIFICANT and saf["significant_findings"] == []
+    assert all(r["finding_id"] != "F1" for r in exports.finding_rows())
+
+
+# C. An unverified class-level finding is never shown as class context.
+def test_C_unverified_class_finding_not_context(patch):
+    cf = {"finding_id": "FC", "medicine": "TestMed", "finding_type": "safety", "scope": "class:TestClass",
+          "significance": "significant", "endpoint": "AE", "source_id": "SRC-OK", "exact_passage": "p",
+          "source_verified": False, "comparison_p": "0.01", "comparison_test": "t"}
+    patch([T("TX")], _fill_required("TX"), findings=[cf])
+    assert clinical.safety_state("TestMed")["class_context_findings"] == []
+    assert clinical.class_comparison("TestClass")["class_level_findings"] == []
+
+
+# D. An unsupported basis contributes no readiness/maturity/export value.
+def test_D_unsupported_basis_no_score_anywhere(patch, monkeypatch):
+    monkeypatch.setenv("AMIRA_ENABLE_PILOT_SCORE", "1")
+    patch([T("TX")], [A("fc", "TX", "female_enrollment_count", 123, "unsupported")]
+          + _fill_required("TX", exclude=["female_enrollment_count"]))
+    assert dataset.assertion_validity("TX", "female_enrollment_count", require_numeric=True)["valid"] is False
+    m = maturity.evaluate(["TX"])
+    assert m["level"] == 0 and m["scorable"] is False
+    r = readiness.evaluate("TestMed")
+    assert next(d for d in r["dimensions"] if d["key"] == "included")["points"] == 0
+    row = next(r2 for r2 in exports.trial_rows() if r2["trial_id"] == "TX")
+    assert row["female_n"] == "" and row["female_n_basis"] == "invalid"
+
+
+# F. A partial medicine is never listed as verified (class comparison + catalog).
+def test_F_partial_medicine_not_verified(patch):
+    patch([T("A1", medicine="MedA"), T("C1", medicine="MedC", cls="TestClass")], [
+        *[A(f"a{i}", "A1", d, "not_reported", "not_reported") for i, d in enumerate(REQUIRED_MIN)],
+        A("a-fc", "A1", "female_enrollment_count", 100, "reported"),
+        A("c-fc", "C1", "female_enrollment_count", 50, "reported"),   # scores but incomplete ingestion
+    ])
+    cc = clinical.class_comparison("TestClass")
+    assert "MedC" not in cc["verified_medicines"]
+    assert "MedC" in {m["medicine"] for m in cc["incomplete_medicines"]}
+
+
+# G. The deploy validator rejects an unverified finding AND an unverified comparison.
+def test_G_source_integrity_flags_unverified_finding_and_comparison(patch):
+    f = {"finding_id": "F1", "source_id": "SRC-OK", "source_verified": False,
+         "scope": "trial:TX", "exact_passage": "p"}
+    c = {"comparison_id": "C1", "trial_id": "TX", "source_id": "SRC-OK", "source_verified": False,
+         "exact_passage": "p", "outcomes": [{"exact_passage": "p"}]}
+    patch([T("TX")], _fill_required("TX"), findings=[f], comparisons=[c])
+    viol = exports.source_integrity_violations()
+    assert any(v.get("finding_id") == "F1" for v in viol)
+    assert any(v.get("comparison_id") == "C1" for v in viol)
+
+
+# Special. A dangling derived dependency must NOT crash a public endpoint.
+def test_special_dangling_derived_dependency_no_crash(patch):
+    patch([T("TX")], [
+        A("dep", "TX", "female_enrollment_count", 100, "reported", sid="DANGLING"),
+        A("der", "TX", "female_enrollment_pct", 50.0, "derived",
+          extra={"derived_from": ["dep"], "derivation_rule": "x", "derivation_version": "1.0"}),
+    ] + _fill_required("TX", exclude=["female_enrollment_count"]), sources=[S("SRC-OK")])
+    api = engine.check_evidence(condition="Test condition", medicine="TestMed")  # must not raise
+    assert api["supported"] is True
+    ws = next(w for w in api["who_was_studied"] if w["trial_id"] == "TX")
+    assert ws["female_pct"] is None                 # invalid dependency -> withheld
+    assert api["maturity"]["level"] == 0            # no maturity advancement on invalid evidence
+
+
 # 15. Real-corpus parity + frozen preservation
 def test_real_corpus_parity_and_frozen():
     api = engine.check_evidence(condition="Cardiovascular disease prevention", medicine="Rosuvastatin")

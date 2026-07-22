@@ -169,7 +169,7 @@ def _bases(medicine: str, dimension: str) -> set:
 
 
 def _record(a: dict) -> dict:
-    s = dataset.source_by_id(a["source_id"])
+    s = dataset.source_link_safe(a.get("source_id"))
     return {
         "assertion_id": a.get("assertion_id"),
         "trial_id": a.get("trial_id"),
@@ -187,7 +187,7 @@ def _record(a: dict) -> dict:
 
 
 def _finding_record(f: dict) -> dict:
-    s = dataset.source_by_id(f["source_id"])
+    s = dataset.source_link_safe(f.get("source_id"))
     return {
         "finding_id": f.get("finding_id"),
         "scope": f.get("scope"),

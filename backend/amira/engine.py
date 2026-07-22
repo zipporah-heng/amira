@@ -104,12 +104,22 @@ def _source_links(assertion: dict) -> dict:
 
 
 def _assertion_view(a: dict) -> dict:
+    # Sanitize for the Source Drawer: run the assertion through the canonical gate so
+    # an unverified, conflicting, dangling, or unsupported-basis value is never
+    # presented as trusted evidence. The raw value stays visible for transparency,
+    # but `trusted`/`evidence_state` tell the UI whether it may be shown as a value.
+    proj = dataset.evidence_projection(a["trial_id"], a["dimension"])
     return {
         "assertion_id": a["assertion_id"],
         "trial_id": a["trial_id"],
         "dimension": a["dimension"],
         "value": a["value"],
         "value_basis": a["value_basis"],
+        # Canonical trust signals — the UI must key off these, not the raw value.
+        "trusted": proj["trusted"],
+        "evidence_state": proj["state"],
+        "trusted_value": a["value"] if proj["trusted"] else None,
+        "invalid_reason": proj["invalid_reason"],
         "exact_passage": a["exact_passage"],
         "source_locator": a.get("source_locator"),
         "source_verified": a.get("source_verified", False),
@@ -242,7 +252,9 @@ def dimension_summary(trial_ids: List[str]) -> List[dict]:
             value, basis, a = dataset.assertion_value(tid, dim)
             if a is None:
                 continue
-            (supporting if value == dataset.AFFIRMATIVE else absent).append(_assertion_view(a))
+            # A dimension counts as reporting ONLY through the verified gate — an
+            # unverified/conflicting/dangling "yes" is not an affirmative report.
+            (supporting if dataset.affirmative_verified(tid, dim) else absent).append(_assertion_view(a))
         out.append({
             "dimension": dim,
             "title": title,
@@ -267,7 +279,7 @@ def life_stage_context(life_stage: str, trial_ids: List[str]) -> dict:
     """
     all_reporting = [
         t for t in trial_ids
-        if dataset.assertion_value(t, "menopause_status_reported")[0] == dataset.AFFIRMATIVE
+        if dataset.affirmative_verified(t, "menopause_status_reported")
     ]
     if life_stage == "not_specified":
         reporting = all_reporting
@@ -331,7 +343,7 @@ def life_stage_context(life_stage: str, trial_ids: List[str]) -> dict:
 def hormone_therapy_context(hormone_therapy: str, trial_ids: List[str]) -> dict:
     all_reporting = [
         t for t in trial_ids
-        if dataset.assertion_value(t, "hormone_therapy_reported")[0] == dataset.AFFIRMATIVE
+        if dataset.affirmative_verified(t, "hormone_therapy_reported")
     ]
 
     def _matches(tid: str) -> bool:
@@ -453,11 +465,9 @@ def check_evidence(condition: str, medicine: str,
 
     trial_rows = []
     for t in matched:
-        f_count, f_basis, f_a = dataset.assertion_value(t["trial_id"], "female_enrollment_count")
-        p_val, p_basis, p_a = dataset.assertion_value(t["trial_id"], "female_enrollment_pct")
-        # Trusted values only through the canonical verified gate.
-        _fv = dataset.assertion_validity(t["trial_id"], "female_enrollment_count", require_numeric=True)
-        _pv = dataset.assertion_validity(t["trial_id"], "female_enrollment_pct", require_numeric=True)
+        # Trusted values + never-collapsed states ONLY through the canonical projection.
+        _cv = dataset.evidence_projection(t["trial_id"], "female_enrollment_count", require_numeric=True)
+        _pv = dataset.evidence_projection(t["trial_id"], "female_enrollment_pct", require_numeric=True)
         _te = dataset.total_enrollment_projection(t["trial_id"])
         row = {
             "trial_id": t["trial_id"],
@@ -472,10 +482,12 @@ def check_evidence(condition: str, medicine: str,
             "total_enrollment": _te["value"],
             "total_enrollment_basis": _te["basis"],
             "total_enrollment_state": _te["state"],
-            "female_n": _fv["value"] if (_fv["valid"] and _fv["basis"] == "reported") else None,
-            "female_n_basis": f_basis,
-            "female_pct": _pv["value"] if _pv["valid"] else None,
-            "female_pct_basis": p_basis,
+            "female_n": _cv["value"] if (_cv["trusted"] and _cv["basis"] == "reported") else None,
+            # Never-collapsed state — an untrusted count reports its state, not a raw
+            # basis, so the Research Map cannot render it as "reported".
+            "female_n_basis": _cv["state"],
+            "female_pct": _pv["value"] if _pv["trusted"] else None,
+            "female_pct_basis": _pv["state"],
             "registry_url": t["registry_url"],
             "minimum_age": t.get("minimum_age"),
             "assertions": [
@@ -487,10 +499,11 @@ def check_evidence(condition: str, medicine: str,
             ),
         }
         for dim, _, _ in CARD_DIMENSIONS:
-            v, b, _a = dataset.assertion_value(t["trial_id"], dim)
-            # Preserve the evidence state; NEVER collapse absent/not_located into
-            # a "not_reported" claim about the literature.
-            row[dim] = v if b not in ("absent",) else "absent"
+            # Canonical fail-closed categorical: a verified affirmative keeps its
+            # value; anything untrusted becomes its explicit, never-collapsed state
+            # (absent / not_located / conflict / unverified / invalid) — never a
+            # silent "not_reported" claim about the literature.
+            row[dim] = dataset.displayed_categorical(t["trial_id"], dim)
         trial_rows.append(row)
 
     totals = aggregate_participants(trial_ids)
@@ -720,28 +733,30 @@ def other_evidence_paths(medicine: str, condition: str) -> List[dict]:
     paths = []
     for med in others:
         med_trials = [t for t in dataset.trials() if t["medicine"] == med]
-        eff = [f for f in dataset.findings_for(med, "efficacy") if f["scope"].startswith("trial:")]
+        # Only VERIFIED, trial-scoped findings may seed another evidence path.
+        eff = [f for f in dataset.findings_for(med, "efficacy")
+               if f["scope"].startswith("trial:") and dataset.verified_evidence(f)]
         if not eff:
             continue
         f = eff[0]
         trial_id = f["scope"].split(":", 1)[1]
-        c_val, c_basis, _ = dataset.assertion_value(trial_id, "female_enrollment_count")
-        p_val, p_basis, _ = dataset.assertion_value(trial_id, "female_enrollment_pct")
+        cv = dataset.evidence_projection(trial_id, "female_enrollment_count", require_numeric=True)
+        pv = dataset.evidence_projection(trial_id, "female_enrollment_pct", require_numeric=True)
         # Assertion-backed total only (never raw enrollment_actual).
         total = dataset.total_enrollment_projection(trial_id)["value"]
         bullets = []
         if total:
             bullets.append(f"{f['scope'].split(':',1)[1]}: {int(total):,} participants")
-        if c_basis == "reported":
-            pct = f" ({p_val}%)" if p_basis in ("reported", "derived") else ""
-            bullets.append(f"{int(c_val):,} women{pct}")
+        if cv["trusted"] and cv["basis"] == "reported":
+            pct = f" ({pv['value']}%)" if pv["trusted"] else ""
+            bullets.append(f"{int(cv['value']):,} women{pct}")
         if f.get("female_estimate"):
             bullets.append(f"Women {f['female_estimate']}" + (f" ({f['female_ci']})" if f.get("female_ci") else ""))
         if f.get("male_estimate"):
             bullets.append(f"Men {f['male_estimate']}" + (f" ({f['male_ci']})" if f.get("male_ci") else ""))
         if f.get("comparison_p") is not None:
             bullets.append(f"Sex-by-treatment interaction P = {f['comparison_p']}")
-        s = dataset.source_by_id(f["source_id"])
+        s = dataset.source_link_safe(f["source_id"])
         # Full first sentence — NEVER truncated at a decimal (fixes the "HR 0." bug).
         headline = _first_sentence(f["interpretation"]) if f.get("interpretation") else f["endpoint"]
         # When the female CI crosses 1.0, the estimate is statistically inconclusive.
@@ -779,33 +794,40 @@ def studies_behind(medicine: str, matched: List[dict]) -> List[dict]:
     report. Every row's numbers are SOURCE-LOCAL to that row's own trial; a value
     is never borrowed from another trial (DIG never shows DECISION's 284 women)."""
     def _women_display(trial_id: str):
-        c_val, c_basis, _ = dataset.assertion_value(trial_id, "female_enrollment_count")
-        p_val, p_basis, _ = dataset.assertion_value(trial_id, "female_enrollment_pct")
-        if c_basis == "reported":
-            pct = f" ({int(p_val)}%)" if p_basis in ("reported", "derived") and p_val is not None else ""
-            return f"{int(c_val):,}{pct}", "reported"
-        if c_basis == "not_located" or p_basis == "not_located":
+        # Canonical projection — an unverified/conflicting count is never shown as a value.
+        cv = dataset.evidence_projection(trial_id, "female_enrollment_count", require_numeric=True)
+        pv = dataset.evidence_projection(trial_id, "female_enrollment_pct", require_numeric=True)
+        if cv["trusted"] and cv["basis"] == "reported":
+            pct = f" ({int(pv['value'])}%)" if (pv["trusted"] and pv["value"] is not None) else ""
+            return f"{int(cv['value']):,}{pct}", "reported"
+        if cv["state"] == "conflict" or pv["state"] == "conflict":
+            return "Conflicting — withheld", "conflict"
+        if cv["state"] in ("unverified", "invalid") or pv["state"] in ("unverified", "invalid"):
+            return "Unverified — withheld", "unverified"
+        if cv["state"] == "not_located" or pv["state"] == "not_located":
             return "Not located", "not_located"
         return "Not reported", "not_reported"
 
     def _dim_label(trial_id: str, dim: str):
-        v, b, _ = dataset.assertion_value(trial_id, dim)
-        if v == "yes":
+        p = dataset.evidence_projection(trial_id, dim)
+        if p["trusted"] and p["value"] == "yes":
             return "Reported"
-        return "Not located" if b == "not_located" else "Not reported"
+        return {"not_located": "Not located", "conflict": "Conflicting — withheld",
+                "unverified": "Unverified — withheld", "invalid": "Unverified — withheld",
+                "absent": "Not reported"}.get(p["state"], "Not reported")
 
     def _sex_outcomes(trial_id: str, source_id: str, is_registry: bool):
-        # A formal test, when a finding for this trial+source reports one.
+        # A formal test, when a VERIFIED finding for this trial+source reports one.
         fs = [f for f in dataset.findings()
               if f.get("scope") == f"trial:{trial_id}" and f.get("source_id") == source_id
-              and f.get("comparison_p") is not None]
+              and f.get("comparison_p") is not None and dataset.verified_evidence(f)]
         if fs:
             return f"Formal interaction P={fs[0]['comparison_p']}"
-        v, b, _ = dataset.assertion_value(trial_id, "sex_specific_efficacy_reported")
-        if v == "yes":
+        if dataset.affirmative_verified(trial_id, "sex_specific_efficacy_reported"):
             role = next((t.get("evidence_role", "") for t in matched if t["trial_id"] == trial_id), "")
             return "Reported (post hoc)" if "post_hoc" in role else "Reported"
-        return "Not located" if b == "not_located" else "Not reported"
+        p = dataset.evidence_projection(trial_id, "sex_specific_efficacy_reported")
+        return "Not located" if p["state"] == "not_located" else "Not reported"
 
     def _years(trial: dict, source: dict, is_primary_registry: bool):
         if is_primary_registry and (trial.get("start_date") or trial.get("completion_date")):
@@ -822,7 +844,7 @@ def studies_behind(medicine: str, matched: List[dict]) -> List[dict]:
         role = trial.get("evidence_role", "")
         has_posthoc_finding = any(
             f.get("scope") == f"trial:{trial['trial_id']}" and f.get("source_id") == source["source_id"]
-            and f.get("comparison_p") is not None
+            and f.get("comparison_p") is not None and dataset.verified_evidence(f)
             for f in dataset.findings())
         if "post_hoc" in role and has_posthoc_finding:
             return "Post hoc analysis"
@@ -835,9 +857,9 @@ def studies_behind(medicine: str, matched: List[dict]) -> List[dict]:
         women_disp, women_basis = _women_display(tid)
         seen_sources = set()
 
-        # 1) The trial's primary source record.
+        # 1) The trial's primary source record (dangling-safe lookup).
         if primary_sid:
-            s = dataset.source_by_id(primary_sid)
+            s = dataset.source_link_safe(primary_sid)
             is_reg = s.get("source_type") == "trial_registry_record"
             seen_sources.add(primary_sid)
             rows.append({
@@ -854,15 +876,18 @@ def studies_behind(medicine: str, matched: List[dict]) -> List[dict]:
                 "record_kind": "trial_registry_record" if is_reg else "primary_publication",
             })
 
-        # 2) Additional publications that carry a sex-specific FINDING for this trial.
+        # 2) Additional publications that carry a VERIFIED sex-specific FINDING for
+        #    this trial. Unverified findings never add a public studies-behind row.
         finding_sids = [f["source_id"] for f in dataset.findings()
-                        if f.get("scope") == f"trial:{tid}" and f["source_id"] not in seen_sources]
+                        if f.get("scope") == f"trial:{tid}" and dataset.verified_evidence(f)
+                        and f["source_id"] not in seen_sources]
         for sid in dict.fromkeys(finding_sids):  # ordered-unique
-            s = dataset.source_by_id(sid)
+            s = dataset.source_link_safe(sid)
             seen_sources.add(sid)
             has_formal = any(
                 f.get("scope") == f"trial:{tid}" and f.get("source_id") == sid
-                and f.get("comparison_p") is not None for f in dataset.findings())
+                and f.get("comparison_p") is not None and dataset.verified_evidence(f)
+                for f in dataset.findings())
             is_posthoc = "post_hoc" in trial.get("evidence_role", "") and has_formal
             rows.append({
                 "trial_id": tid,
@@ -889,7 +914,8 @@ def evidence_gaps(trial_ids: List[str], effectiveness: dict, safety: dict) -> Li
         ("hormone_therapy_reported", "Hormone therapy"),
         ("pregnancy_evidence_reported", "Pregnancy-specific evidence"),
     ]:
-        reporting = sum(1 for t in trial_ids if dataset.assertion_value(t, dim)[0] == "yes")
+        # Verified gate only: an unverified "yes" never reduces a reported gap count.
+        reporting = sum(1 for t in trial_ids if dataset.affirmative_verified(t, dim))
         gaps.append({
             "dimension": dim, "label": label,
             "n_reporting": reporting, "n_trials": len(trial_ids),

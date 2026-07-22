@@ -170,6 +170,14 @@ def assertion_value(trial_id: str, dimension: str):
 # Evidence bases that may back an exported/aggregated numeric value.
 POSITIVE_NUMERIC_BASES = ("reported", "derived")
 
+# The ONLY evidence bases AMIRA recognizes. A stored/injected value with any other
+# basis is rejected by the gate — it can never become a public value or score.
+ALLOWED_BASES = frozenset({"reported", "derived", "not_reported", "not_located"})
+# Positive bases: an affirmative/numeric value here is trusted ONLY when the source
+# is verified + authoritative. A "silence" basis (not_reported/not_located) does not
+# assert a value, so it is shown as its own state without needing source_verified.
+POSITIVE_BASES = frozenset({"reported", "derived"})
+
 # --------------------------------------------------------------------------- #
 # Authoritative-source URL validation (real parsing — no substring matching)
 # --------------------------------------------------------------------------- #
@@ -254,6 +262,12 @@ def assertion_validity(trial_id: str, dimension: str, *,
     a = found[0]
     value, basis = a["value"], a["value_basis"]
     source_id = a.get("source_id")
+    # Blocker D: an unknown/unsupported basis is never trusted. The allowed
+    # evidence states are explicit; anything else fails closed with value None,
+    # contributes zero readiness/maturity, and cannot enter ranking or a public value.
+    if basis not in ALLOWED_BASES:
+        return _invalid("invalid", f"unsupported evidence basis '{basis}'",
+                        basis=basis, source_id=source_id)
     ok, why = source_is_valid(source_id)
     if not ok:
         return _invalid(basis, why, basis=basis, source_id=source_id)
@@ -315,3 +329,73 @@ def total_enrollment_projection(trial_id: str) -> dict:
             "source_id": v["source_id"], "source_verified": v["source_verified"],
             "valid": False, "invalid_reason": v.get("invalid_reason") or "not a verified reported total",
             "coverage": "incomplete"}
+
+
+def source_link_safe(source_id) -> dict:
+    """A source dict for DISPLAY that never raises on a dangling/missing id. A public
+    endpoint must return a bounded 'unresolved' link, not crash, when a record points
+    at a source that does not exist (e.g. a derived dependency with a dangling id)."""
+    try:
+        s = source_by_id(source_id)
+    except DatasetError:
+        return {"source_id": source_id, "title": None, "source_type": None,
+                "publisher": None, "year": None, "nct_id": None, "pmid": None,
+                "pmcid": None, "url": None, "license_note": None, "resolved": False}
+    return {
+        "source_id": s["source_id"], "title": s.get("title"),
+        "source_type": s.get("source_type"), "publisher": s.get("publisher"),
+        "year": s.get("year"), "nct_id": s.get("nct_id"), "pmid": s.get("pmid"),
+        "pmcid": s.get("pmcid"), "url": s.get("url"),
+        "license_note": s.get("license_note"),
+        "resolved": authoritative_url_ok(s.get("url", "")),
+    }
+
+
+# Display states that are NEVER collapsed into one another on any public surface.
+#   reported / derived   — a verified positive value
+#   not_reported         — a reviewed source is silent
+#   not_located          — the defined source set was reviewed, evidence not found
+#   absent               — AMIRA holds no assertion at all
+#   conflict             — duplicate / conflicting assertions
+#   unverified           — a positive claim whose source is unverified / unresolvable
+#   invalid              — an unsupported/unknown basis (Blocker D)
+def evidence_projection(trial_id: str, dimension: str, *, require_numeric: bool = False) -> dict:
+    """THE canonical structured projection every public numeric/categorical surface
+    reads — there is no raw first-value selection anywhere else. Returns a trusted
+    value (or None) plus a never-collapsed display ``state``, so an unverified,
+    conflicting, dangling, or unsupported-basis value can never be presented as
+    trusted evidence."""
+    v = assertion_validity(trial_id, dimension, require_verified=True, require_numeric=require_numeric)
+    if v["valid"]:
+        return {"value": v["value"], "trusted": True, "state": v["basis"],
+                "basis": v["basis"], "source_verified": v["source_verified"],
+                "invalid_reason": None}
+    st, basis = v["state"], v["basis"]
+    if st == "absent":
+        display = "absent"
+    elif st == "conflict":
+        display = "conflict"
+    elif basis in ("not_reported", "not_located"):
+        display = basis                      # a silence/gap observation, shown as itself
+    elif basis in POSITIVE_BASES:
+        display = "unverified"               # a positive claim that failed verification
+    else:
+        display = "invalid"                  # unsupported/unknown basis
+    return {"value": None, "trusted": False, "state": display, "basis": basis,
+            "source_verified": v["source_verified"], "invalid_reason": v["invalid_reason"]}
+
+
+def affirmative_verified(trial_id: str, dimension: str) -> bool:
+    """A categorical dimension counts as affirmatively reported ONLY through the
+    verified gate: a `yes` with an unverified, dangling, spoofed-URL, conflicting,
+    or unsupported-basis assertion never counts."""
+    p = evidence_projection(trial_id, dimension)
+    return p["trusted"] and p["value"] == AFFIRMATIVE
+
+
+def displayed_categorical(trial_id: str, dimension: str):
+    """The fail-closed value emitted for a categorical dimension on API/CSV/JSONL.
+    A verified affirmative keeps its literal value; anything untrusted becomes its
+    explicit, never-collapsed state token (never silently 'not_reported')."""
+    p = evidence_projection(trial_id, dimension)
+    return p["value"] if p["trusted"] else p["state"]
