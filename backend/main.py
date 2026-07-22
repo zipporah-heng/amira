@@ -80,45 +80,50 @@ def get_manifest():
 
 @app.get("/api/catalog")
 def get_catalog():
-    """Condition -> drug class -> VERIFIED medicines, for the upfront selectors.
+    """Condition -> drug class -> medicines, for the upfront selectors.
 
-    Only medicines with completed, integrity-checked evidence ingestion
-    (``medicine_ingestion_complete``) are offered as selectable/verified. A medicine
-    still under review is never listed as verified; it is surfaced separately under
-    ``incomplete_medicines`` with an explicit status.
+    ``medicines`` lists only VERIFIED medicines (completed, integrity-checked
+    ingestion via ``medicine_ingestion_complete``). Medicines still under review are
+    listed separately per class as ``incomplete_medicines`` (and in the flat
+    top-level ``incomplete_medicines``) so the selector can offer them with an
+    explicit "incomplete" label WITHOUT ever counting them as verified.
     """
     from amira import clinical
-    # condition -> class -> set(medicines), verified only
+    # condition -> class -> {"v": verified set, "i": incomplete set}
     tree: dict = {}
     flat: dict = {}
-    incomplete: dict = {}
+    incomplete_flat: dict = {}
     for t in dataset.trials():
         cond = t.get("condition") or "Unspecified"
         cls = t.get("drug_class") or "Unclassified"
         med = t["medicine"]
+        slot = tree.setdefault(cond, {}).setdefault(cls, {"v": set(), "i": set()})
         if clinical.medicine_ingestion_complete(med):
-            tree.setdefault(cond, {}).setdefault(cls, set()).add(med)
+            slot["v"].add(med)
             flat.setdefault(cls, set()).add(med)
         else:
-            incomplete.setdefault(cls, set()).add(med)
+            slot["i"].add(med)
+            incomplete_flat.setdefault(cls, set()).add(med)
     return {
         **_envelope(),
         "conditions": [
             {"condition": cond,
              "drug_classes": [
-                 {"drug_class": cls, "medicines": sorted(meds)}
-                 for cls, meds in sorted(classes.items())
+                 {"drug_class": cls, "medicines": sorted(s["v"]),
+                  # Discoverable but explicitly NOT verified; selector labels these.
+                  "incomplete_medicines": sorted(s["i"])}
+                 for cls, s in sorted(classes.items())
              ]}
             for cond, classes in sorted(tree.items())
         ],
-        # Flat class list kept for backward compatibility.
+        # Flat class list kept for backward compatibility (verified only).
         "drug_classes": [
             {"drug_class": c, "medicines": sorted(meds)} for c, meds in sorted(flat.items())
         ],
-        # Discoverable but explicitly NOT verified — never offered as a verified choice.
+        # Discoverable but explicitly NOT verified — never counted as a verified choice.
         "incomplete_medicines": [
             {"drug_class": c, "medicines": sorted(meds), "status": "Incomplete evidence review"}
-            for c, meds in sorted(incomplete.items())
+            for c, meds in sorted(incomplete_flat.items())
         ],
     }
 
