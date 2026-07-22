@@ -22,23 +22,26 @@ function arc(fromDeg: number, toDeg: number) {
   return `M ${a.x.toFixed(2)} ${a.y.toFixed(2)} A ${R} ${R} 0 ${largeArc} 1 ${b.x.toFixed(2)} ${b.y.toFixed(2)}`;
 }
 
-export function MaturityMeter({ level, maxLevel = 5, label }: {
-  level: number; maxLevel?: number; label: string;
+export function MaturityMeter({ level, maxLevel = 5, label, scored = true }: {
+  level: number; maxLevel?: number; label: string; scored?: boolean;
 }) {
   const segments = Array.from({ length: 5 }, (_, i) => {
     const from = START - i * SEG;
     const to = from - (SEG - GAP);
-    const on = i < level;
+    const on = scored && i < level;
     return { d: arc(from, to), color: on ? ON[i] : OFF };
   });
   return (
     <svg className="maturity-meter" viewBox="0 0 220 150" role="img"
-         aria-label={`Evidence maturity ${level} of ${maxLevel}: ${label}`}>
+         aria-label={scored
+           ? `Evidence maturity ${level} of ${maxLevel}: ${label}`
+           : `Evidence maturity not yet established: ${label}`}>
       {segments.map((s, i) => (
         <path key={i} d={s.d} stroke={s.color} strokeWidth={STROKE} strokeLinecap="round" fill="none" />
       ))}
+      {/* An unscored medicine shows a dash — never a fabricated "0 / 5" score. */}
       <text x={CX} y={CY - 2} textAnchor="middle" className="mm-value">
-        {level}<tspan className="mm-den"> / {maxLevel}</tspan>
+        {scored ? <>{level}<tspan className="mm-den"> / {maxLevel}</tspan></> : "—"}
       </text>
       <text x={CX} y={CY + 26} textAnchor="middle" className="mm-label">{label}</text>
     </svg>
