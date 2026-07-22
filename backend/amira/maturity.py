@@ -43,18 +43,19 @@ LEVEL_DESCRIPTIONS = {
 
 
 def _reports(trial_id: str, dimension: str) -> bool:
-    """True only when a dimension is affirmatively reported for the trial."""
-    value, basis, _ = dataset.assertion_value(trial_id, dimension)
-    if basis == "not_reported" or basis == "absent":
-        return False
-    return value == dataset.AFFIRMATIVE
+    """True only when the dimension is affirmatively reported through the canonical
+    verified gate: `reported` basis, verified + authoritative + conflict-free source.
+    A `yes` with a not_located/absent basis, an unverified source, a spoofed URL, or
+    a conflicting assertion never advances the maturity score (fail closed)."""
+    v = dataset.assertion_validity(trial_id, dimension, require_verified=True)
+    return v["valid"] and v["basis"] == "reported" and v["value"] == dataset.AFFIRMATIVE
 
 
 def _has_enrollment_report(trial_id: str) -> bool:
-    """Level 1: a female count OR a female percentage, actually reported."""
+    """Level 1: a female count OR percentage, reported through the verified gate."""
     for dim in ("female_enrollment_count", "female_enrollment_pct"):
-        value, basis, _ = dataset.assertion_value(trial_id, dim)
-        if basis == "reported" and value is not None:
+        v = dataset.assertion_validity(trial_id, dim, require_verified=True, require_numeric=True)
+        if v["valid"] and v["basis"] == "reported":
             return True
     return False
 
@@ -92,14 +93,21 @@ def evaluate(trial_ids: List[str]) -> Dict:
     enrol_reported = level >= 1
     enrol_not_located = False
     enrol_not_reported = False
+    enrol_any_assertion = False
     for tid in trial_ids:
         for dim in ("female_enrollment_count", "female_enrollment_pct"):
             _, basis, _a = dataset.assertion_value(tid, dim)
+            if _a is not None:
+                enrol_any_assertion = True
             if basis == "not_located":
                 enrol_not_located = True
             elif basis == "not_reported":
                 enrol_not_reported = True
-    scorable = enrol_reported or not enrol_not_located
+    # Fail closed: a level is only a genuine SCORE when foundational enrolment
+    # evidence was actually reported+verified, or a reviewed source explicitly did
+    # not report it. Absent assertions (none at all) and not_located evidence are
+    # NOT scored as 0/5 — they are "not established".
+    scorable = enrol_reported or (enrol_not_reported and not enrol_not_located and enrol_any_assertion)
     status = "established" if scorable else "not_established"
 
     # Dimensions whose assertions explain each level's pass/fail.
@@ -118,12 +126,14 @@ def evaluate(trial_ids: List[str]) -> Dict:
                 _, basis, a = dataset.assertion_value(tid, dim)
                 if a is None:
                     continue
-                s = dataset.source_by_id(a["source_id"])
+                # Dangling-safe: a derived value whose dependency points at a missing
+                # source must NOT crash check_evidence while building this trace.
+                s = dataset.source_link_safe(a["source_id"])
                 ev.append({
                     "trial_id": tid, "dimension": dim,
                     "value": a["value"], "value_basis": basis,
                     "passage": a["exact_passage"], "source_url": s["url"],
-                    "source_id": s["source_id"],
+                    "source_id": s["source_id"], "source_resolved": s["resolved"],
                     "pmid": s.get("pmid"), "nct_id": s.get("nct_id"),
                     "assertion_id": a["assertion_id"],
                 })

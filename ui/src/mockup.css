@@ -172,3 +172,19 @@
   .filter-row { grid-template-columns: 1fr 1fr; }
   .check-page .page-q { white-space: normal; }
 }
+
+/* Research Map evidence-state cells (distinct states, never collapsed) */
+.cell.unavailable { background: var(--surface-2); color: var(--ink-3); border: 1px dashed var(--border-strong); }
+.cell.derived { background: var(--lav-50); color: var(--lav-700); }
+.cell.conflict { background: #fdecec; color: #9b1c1c; border: 1px solid #f2c4c4; }
+.cell.unverified { background: var(--surface-2); color: var(--ink-3); border: 1px dashed var(--border-strong); }
+.cell.invalid { background: #fdecec; color: #9b1c1c; border: 1px dashed #e6a6a6; }
+
+/* Source Drawer evidence-state chip (light theme, no dark backgrounds) */
+.ev-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px;
+  font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+.ev-chip.present { background: #e8f5ee; color: #1d6b47; }
+.ev-chip.derived { background: var(--lav-50); color: var(--lav-700); }
+.ev-chip.unclear { background: #fff6e6; color: #8a5a00; }
+.ev-chip.missing, .ev-chip.unverified, .ev-chip.unavailable { background: var(--surface-2); color: var(--ink-3); }
+.ev-chip.conflict, .ev-chip.invalid { background: #fdecec; color: #9b1c1c; }

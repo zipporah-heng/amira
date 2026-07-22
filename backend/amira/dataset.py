@@ -10,6 +10,7 @@ import json
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List
+from urllib.parse import urlparse
 
 DATASET_DIR = Path(__file__).resolve().parents[2] / "dataset"
 
@@ -164,3 +165,237 @@ def assertion_value(trial_id: str, dimension: str):
         return None, "absent", None
     a = found[0]
     return a["value"], a["value_basis"], a
+
+
+# Evidence bases that may back an exported/aggregated numeric value.
+POSITIVE_NUMERIC_BASES = ("reported", "derived")
+
+# The ONLY evidence bases AMIRA recognizes. A stored/injected value with any other
+# basis is rejected by the gate — it can never become a public value or score.
+ALLOWED_BASES = frozenset({"reported", "derived", "not_reported", "not_located"})
+# Positive bases: an affirmative/numeric value here is trusted ONLY when the source
+# is verified + authoritative. A "silence" basis (not_reported/not_located) does not
+# assert a value, so it is shown as its own state without needing source_verified.
+POSITIVE_BASES = frozenset({"reported", "derived"})
+
+# --------------------------------------------------------------------------- #
+# Authoritative-source URL validation (real parsing — no substring matching)
+# --------------------------------------------------------------------------- #
+AUTHORITATIVE_HOSTS = frozenset({
+    "clinicaltrials.gov",
+    "pubmed.ncbi.nlm.nih.gov", "ncbi.nlm.nih.gov", "www.ncbi.nlm.nih.gov",
+    "pmc.ncbi.nlm.nih.gov",
+    "nejm.org", "www.nejm.org",
+    "nature.com", "www.nature.com",
+})
+# Approved subdomain suffixes (exact-suffix match on the parsed hostname only).
+APPROVED_HOST_SUFFIXES = (".ncbi.nlm.nih.gov",)
+
+
+def authoritative_url_ok(url: str) -> bool:
+    """True only for an https URL whose PARSED hostname is an approved
+    authoritative host (exact) or an approved subdomain. No substring matching,
+    so path-based spoofs (https://evil.invalid/path/clinicaltrials.gov) and
+    suffix spoofs (https://clinicaltrials.gov.evil.invalid) are rejected."""
+    try:
+        p = urlparse(url or "")
+    except (ValueError, TypeError):
+        return False
+    if p.scheme != "https":
+        return False
+    host = (p.hostname or "").lower()
+    if not host:
+        return False
+    if host in AUTHORITATIVE_HOSTS:
+        return True
+    return any(host.endswith(sfx) for sfx in APPROVED_HOST_SUFFIXES)
+
+
+# --------------------------------------------------------------------------- #
+# THE canonical verified-evidence gate. Every trusted public / derived surface
+# must read evidence through assertion_validity — never off a raw basis check.
+# --------------------------------------------------------------------------- #
+def source_is_valid(source_id) -> tuple:
+    """(ok, reason) for a source_id: exists, resolves, authoritative https URL."""
+    if not source_id:
+        return False, "missing source_id"
+    try:
+        s = source_by_id(source_id)
+    except DatasetError:
+        return False, "dangling source_id"
+    if not authoritative_url_ok(s.get("url", "")):
+        return False, "non-authoritative or invalid source URL"
+    return True, ""
+
+
+def verified_evidence(record: dict) -> bool:
+    """Reusable predicate for an assertion OR finding: it may influence a public
+    value/conclusion only with a resolvable, authoritative, source_verified source."""
+    if not record or not record.get("source_verified", False):
+        return False
+    ok, _ = source_is_valid(record.get("source_id"))
+    return ok
+
+
+def _invalid(state: str, reason: str, basis: str = None, source_id=None) -> dict:
+    return {"value": None, "basis": basis or state, "state": state, "source_id": source_id,
+            "source_verified": False, "valid": False, "invalid_reason": reason,
+            "coverage": "incomplete"}
+
+
+def assertion_validity(trial_id: str, dimension: str, *,
+                       require_verified: bool = True, require_numeric: bool = False,
+                       _seen=None) -> dict:
+    """Canonical gate for one trial/dimension. A value is trusted (`valid: True`)
+    only when ALL hold: assertion exists; exactly one (no duplicate/conflict);
+    source_id exists, resolves, and is authoritative https; source_verified (when
+    required); value structurally valid; and — for derived values — every declared
+    dependency is itself valid (recursively). Otherwise `value` is None and
+    `invalid_reason`/`state` explain why. Fail closed."""
+    found = assertions_for(trial_id, dimension)
+    if not found:
+        return _invalid("absent", "no assertion")
+    if len(found) > 1:
+        values = {json.dumps(x.get("value"), sort_keys=True) for x in found}
+        reason = "conflicting assertions" if len(values) > 1 else "duplicate assertions"
+        return _invalid("conflict", reason)
+    a = found[0]
+    value, basis = a["value"], a["value_basis"]
+    source_id = a.get("source_id")
+    # Blocker D: an unknown/unsupported basis is never trusted. The allowed
+    # evidence states are explicit; anything else fails closed with value None,
+    # contributes zero readiness/maturity, and cannot enter ranking or a public value.
+    if basis not in ALLOWED_BASES:
+        return _invalid("invalid", f"unsupported evidence basis '{basis}'",
+                        basis=basis, source_id=source_id)
+    ok, why = source_is_valid(source_id)
+    if not ok:
+        return _invalid(basis, why, basis=basis, source_id=source_id)
+    verified = bool(a.get("source_verified", False))
+    if require_verified and not verified:
+        return _invalid(basis, "source not verified", basis=basis, source_id=source_id)
+    if basis == "derived":
+        dep_ok, dep_reason = _derived_dependencies_valid(a, _seen or set())
+        if not dep_ok:
+            return _invalid(basis, f"derived dependency invalid: {dep_reason}",
+                            basis=basis, source_id=source_id)
+    if require_numeric and not isinstance(value, (int, float)):
+        return _invalid(basis, "value is not numeric", basis=basis, source_id=source_id)
+    return {"value": value, "basis": basis, "state": basis, "source_id": source_id,
+            "source_verified": verified, "valid": True, "invalid_reason": None,
+            "coverage": "complete"}
+
+
+def _derived_dependencies_valid(a: dict, seen: set) -> tuple:
+    """Recursively verify a derived assertion's declared dependencies. A derived
+    value is never stronger than its weakest required dependency."""
+    key = a.get("assertion_id")
+    if key in seen:
+        return False, "circular dependency"
+    seen = seen | {key}
+    deps = a.get("derived_from")
+    if not deps:
+        return False, "no declared dependency provenance"
+    by_id = {x["assertion_id"]: x for x in assertions()}
+    for dep_id in deps:
+        dep = by_id.get(dep_id)
+        if dep is None:
+            return False, f"missing dependency {dep_id}"
+        v = assertion_validity(dep["trial_id"], dep["dimension"],
+                               require_verified=True, require_numeric=True, _seen=seen)
+        if not v["valid"]:
+            return False, f"{dep_id} ({v['invalid_reason']})"
+    return True, ""
+
+
+def total_enrollment_projection(trial_id: str) -> dict:
+    """THE single, verified projection for a trial's total enrollment. Read here
+    everywhere — never off raw trials.json ``enrollment_actual``.
+
+    Fail-closed AND cross-surface-consistent: a real number is returned ONLY for a
+    verified, conflict-free, ``reported`` assertion with an authoritative source. A
+    derived total is deliberately NOT trusted yet (returned as
+    ``unsupported-derived`` with value None) so every surface makes the identical
+    trust decision. Returns value|None, basis, state, source_id, source_verified,
+    valid, invalid_reason, coverage."""
+    v = assertion_validity(trial_id, "total_enrollment", require_verified=True, require_numeric=True)
+    if v["valid"] and v["basis"] == "reported":
+        return {"value": int(v["value"]), "basis": "reported", "state": "reported",
+                "source_id": v["source_id"], "source_verified": True, "valid": True,
+                "invalid_reason": None, "coverage": "complete"}
+    # Derived totals are consistently withheld until derived-total provenance is trusted.
+    state = "unsupported-derived" if v["basis"] == "derived" else v["state"]
+    return {"value": None, "basis": v["basis"], "state": state,
+            "source_id": v["source_id"], "source_verified": v["source_verified"],
+            "valid": False, "invalid_reason": v.get("invalid_reason") or "not a verified reported total",
+            "coverage": "incomplete"}
+
+
+def source_link_safe(source_id) -> dict:
+    """A source dict for DISPLAY that never raises on a dangling/missing id. A public
+    endpoint must return a bounded 'unresolved' link, not crash, when a record points
+    at a source that does not exist (e.g. a derived dependency with a dangling id)."""
+    try:
+        s = source_by_id(source_id)
+    except DatasetError:
+        return {"source_id": source_id, "title": None, "source_type": None,
+                "publisher": None, "year": None, "nct_id": None, "pmid": None,
+                "pmcid": None, "url": None, "license_note": None, "resolved": False}
+    return {
+        "source_id": s["source_id"], "title": s.get("title"),
+        "source_type": s.get("source_type"), "publisher": s.get("publisher"),
+        "year": s.get("year"), "nct_id": s.get("nct_id"), "pmid": s.get("pmid"),
+        "pmcid": s.get("pmcid"), "url": s.get("url"),
+        "license_note": s.get("license_note"),
+        "resolved": authoritative_url_ok(s.get("url", "")),
+    }
+
+
+# Display states that are NEVER collapsed into one another on any public surface.
+#   reported / derived   — a verified positive value
+#   not_reported         — a reviewed source is silent
+#   not_located          — the defined source set was reviewed, evidence not found
+#   absent               — AMIRA holds no assertion at all
+#   conflict             — duplicate / conflicting assertions
+#   unverified           — a positive claim whose source is unverified / unresolvable
+#   invalid              — an unsupported/unknown basis (Blocker D)
+def evidence_projection(trial_id: str, dimension: str, *, require_numeric: bool = False) -> dict:
+    """THE canonical structured projection every public numeric/categorical surface
+    reads — there is no raw first-value selection anywhere else. Returns a trusted
+    value (or None) plus a never-collapsed display ``state``, so an unverified,
+    conflicting, dangling, or unsupported-basis value can never be presented as
+    trusted evidence."""
+    v = assertion_validity(trial_id, dimension, require_verified=True, require_numeric=require_numeric)
+    if v["valid"]:
+        return {"value": v["value"], "trusted": True, "state": v["basis"],
+                "basis": v["basis"], "source_verified": v["source_verified"],
+                "invalid_reason": None}
+    st, basis = v["state"], v["basis"]
+    if st == "absent":
+        display = "absent"
+    elif st == "conflict":
+        display = "conflict"
+    elif basis in ("not_reported", "not_located"):
+        display = basis                      # a silence/gap observation, shown as itself
+    elif basis in POSITIVE_BASES:
+        display = "unverified"               # a positive claim that failed verification
+    else:
+        display = "invalid"                  # unsupported/unknown basis
+    return {"value": None, "trusted": False, "state": display, "basis": basis,
+            "source_verified": v["source_verified"], "invalid_reason": v["invalid_reason"]}
+
+
+def affirmative_verified(trial_id: str, dimension: str) -> bool:
+    """A categorical dimension counts as affirmatively reported ONLY through the
+    verified gate: a `yes` with an unverified, dangling, spoofed-URL, conflicting,
+    or unsupported-basis assertion never counts."""
+    p = evidence_projection(trial_id, dimension)
+    return p["trusted"] and p["value"] == AFFIRMATIVE
+
+
+def displayed_categorical(trial_id: str, dimension: str):
+    """The fail-closed value emitted for a categorical dimension on API/CSV/JSONL.
+    A verified affirmative keeps its literal value; anything untrusted becomes its
+    explicit, never-collapsed state token (never silently 'not_reported')."""
+    p = evidence_projection(trial_id, dimension)
+    return p["value"] if p["trusted"] else p["state"]

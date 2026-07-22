@@ -17,13 +17,18 @@ export interface AssertionView {
   dimension: string;
   value: unknown;
   value_basis: "reported" | "derived" | "not_reported" | "not_located";
+  // Canonical trust signals — the UI must key off these, never the raw value.
+  trusted: boolean;
+  evidence_state: string;          // reported|derived|not_reported|not_located|absent|conflict|unverified|invalid
+  trusted_value: unknown;          // the value ONLY when trusted; otherwise null
+  invalid_reason?: string | null;
   exact_passage: string;
   source_locator?: string | null;
   source_verified: boolean;
   human_verified: boolean;
   verifier?: string | null;
   notes?: string;
-  source: SourceLink;
+  source: SourceLink & { resolved?: boolean };
 }
 
 export interface TrialRow {
@@ -32,7 +37,9 @@ export interface TrialRow {
   nct_id: string | null;
   year: number | null;
   study_type: string;
-  total_enrollment: number;
+  total_enrollment: number | null;   // null when no reported total_enrollment assertion
+  total_enrollment_basis?: string;
+  total_enrollment_state?: string;
   female_n: number | null;
   female_n_basis: string;
   female_pct: number | null;
@@ -68,6 +75,9 @@ export interface Totals {
   trials_with_reported_female_count: string[];
   trials_with_percentage_only: string[];
   trials_without_female_count_or_percentage?: string[];
+  trials_with_reported_total_enrollment?: string[];
+  trials_without_reported_total_enrollment?: string[];
+  participant_total_coverage?: "complete" | "incomplete";
   women_estimated_total: number;
   women_estimated_basis: string;
   women_estimate_components: {
@@ -156,6 +166,8 @@ export interface SafetyState {
   significant_findings: Finding[];
   trend_findings: Finding[];
   other_findings: Finding[];
+  class_context_findings?: Finding[];
+  class_context_note?: string | null;
   derived: boolean;
 }
 
@@ -166,6 +178,9 @@ export interface ClassRow {
   maturity_scorable: boolean;
   maturity_display: string;
   maturity_label: string;
+  ingestion_complete?: boolean;
+  rankable?: boolean;
+  review_status?: string;
   effectiveness_state: string;
   safety_state: string;
   key_gap: string;
@@ -177,6 +192,8 @@ export interface ClassComparison {
   verified_count: number;
   scored_count: number;
   verified_medicines: string[];
+  incomplete_medicines?: { medicine: string; status: string; maturity_display: string; rankable: boolean }[];
+  medicines_in_corpus?: string[];
   ranking: { rankable: boolean; summary: string; basis: string };
   sort: string;
   rows: ClassRow[];
@@ -190,11 +207,15 @@ export interface WhoRow {
   nct_id: string | null;
   medicine: string;
   study_phase: string | null;
-  total_participants: number;
+  total_participants: number | null;
+  total_participants_basis?: string;
+  total_participants_state?: string;
   female_n: number | null;
   female_n_basis: string;
+  female_n_state?: string;
   female_pct: number | null;
   female_pct_basis: string;
+  female_pct_state?: string;
   minimum_age: string | null;
   sex_eligibility: string | null;
   primary_endpoint: string | null;

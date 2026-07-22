@@ -41,7 +41,10 @@ When sources disagree, the higher tier wins and the conflict is recorded.
    46% women, PMC8370761).
 
 A value is only ever `reported` if it appears verbatim in one of these. Anything AMIRA
-computes is `derived`. Anything absent is `not_reported` — never inferred.
+computes (from verified dependencies) is `derived`. When a reviewed source is silent the
+state is `not_reported`; when the defined source set was reviewed but sufficient evidence
+was not located it is `not_located`; when AMIRA holds no assertion at all it is `absent`.
+These states are distinct and are never inferred or collapsed into one another.
 
 ## Evidence maturity model (derived, never stored)
 

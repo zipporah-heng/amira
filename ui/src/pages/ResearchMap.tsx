@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { TrialRow } from "../api";
+import { EVIDENCE_STATE, toEvidenceState, type EvidenceState } from "../evidenceState";
 
 const DIMS = [
   { key: "female_enrollment", label: "Women counted" },
@@ -29,19 +30,19 @@ export function ResearchMap() {
 
   if (!trials.length) return <p>Loading research map…</p>;
 
-  // Evidence states are kept distinct and are never collapsed:
-  //   present      - reported in the reviewed sources
-  //   unclear      - not_located: AMIRA did not locate sufficient evidence
-  //   missing      - not_reported: a reviewed source was checked and does not report it
-  const cell = (t: any, dim: string) => {
+  // Every cell resolves to one of the canonical evidence states — never collapsed.
+  // When a numeric female count/percentage exists, the state comes from its OWN
+  // basis: a reported percentage stays Reported, but a DERIVED percentage renders
+  // Derived (not automatically "Reported" just because a number is present).
+  const cell = (t: any, dim: string): EvidenceState => {
     if (dim === "female_enrollment") {
-      if (t.female_n !== "" && t.female_n != null) return "present";
-      if (t.female_pct !== "" && t.female_pct != null) return "unclear";
-      return t.female_n_basis === "not_located" ? "unclear" : "missing";
+      if (t.female_n !== "" && t.female_n != null)
+        return toEvidenceState(t.female_n_basis);      // reported / derived per its basis
+      if (t.female_pct !== "" && t.female_pct != null)
+        return toEvidenceState(t.female_pct_basis);    // reported OR derived percentage
+      return toEvidenceState(t.female_n_basis);         // not_located / not_reported / absent / conflict / unverified
     }
-    if (t[dim] === "yes") return "present";
-    if (t[dim] === "not_located") return "unclear";
-    return "missing";
+    return toEvidenceState(t[dim]);
   };
 
   // Group by condition -> drug class for readability across classes.
@@ -89,17 +90,11 @@ export function ResearchMap() {
                         <div style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 400 }}>{t.nct_id}</div>
                       </td>
                       {DIMS.map((d) => {
-                        const state = cell(t, d.key);
+                        const meta = EVIDENCE_STATE[cell(t, d.key)];
                         return (
                           <td key={d.key}>
-                            <span className={`cell ${state}`} title={
-                              state === "present" ? "Reported in the reviewed sources"
-                                : state === "unclear"
-                                  ? "AMIRA did not locate sufficient evidence in the reviewed sources."
-                                  : "A reviewed source was checked and does not report this."}>
-                              {state === "present" ? "● Present"
-                                : state === "unclear" ? "◐ Unclear / not located"
-                                : "○ Not reported"}
+                            <span className={`cell ${meta.tone}`} title={meta.help}>
+                              {meta.glyph} {meta.label}
                             </span>
                           </td>
                         );
@@ -120,6 +115,10 @@ export function ResearchMap() {
           </div>
           <div>
             <strong>○ Not reported</strong> — a reviewed source was checked and does not report it.
+          </div>
+          <div>
+            <strong>⊘ Evidence status unavailable</strong> — AMIRA holds no assertion for this
+            dimension (absent). Distinct from "not reported".
           </div>
           <p style={{ marginTop: 8, fontStyle: "italic" }}>
             Coverage is bounded to the reviewed corpus (v{meta.v}, cutoff {meta.cutoff}). These are

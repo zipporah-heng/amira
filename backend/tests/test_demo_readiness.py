@@ -111,7 +111,9 @@ def test_catalog_condition_class_medicine_cascade():
     assert sglt2["medicines"] == ["Dapagliflozin"]
     cvd = next(c for c in cat if c["condition"] == "Cardiovascular disease prevention")
     statin = next(dc for dc in cvd["drug_classes"] if dc["drug_class"] == "Statin")
-    assert set(statin["medicines"]) == {"Rosuvastatin", "Atorvastatin"}
+    # Only completed-ingestion (verified) medicines are selectable (Blocker F).
+    # Atorvastatin is incomplete (not_located female enrollment) and is excluded.
+    assert set(statin["medicines"]) == {"Rosuvastatin"}
     # Only verified medicines appear.
     ingested = {t["medicine"] for t in dataset.trials()}
     for c in cat:

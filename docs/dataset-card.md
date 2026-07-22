@@ -1,8 +1,9 @@
 # Dataset card — AMIRA Open Women's Hormonal Evidence Dataset
 
-- **Version:** 2.0.0 · **Source cutoff:** 2026-07-18
-- **Scope:** rosuvastatin (JUPITER NCT00239681, HOPE-3 NCT00468923), atorvastatin (CARDS NCT00327418), dapagliflozin (DAPA-HF NCT03036124)
-- **Size:** 4 Phase 3 RCTs · 6 linked publications · 10 included evidence sources · 31 evidence assertions · 5 sex-specific findings · 30 benchmark passages
+- **Version:** 3.0.0 · **Source cutoff:** 2026-07-18
+- **Scope (5 medicines):** rosuvastatin (JUPITER NCT00239681, HOPE-3 NCT00468923), atorvastatin (CARDS NCT00327418), digoxin (DIG NCT00000476 + 2002 sex analysis PMID 12409542, DECISION NCT03783429), dapagliflozin (DAPA-HF NCT03036124), valsartan (postmenopausal women-only, PMC8108841)
+- **Size:** 7 randomized-study records · 15 included evidence sources · 58 evidence assertions · 10 sex-specific findings · 1 direct comparison · 20 screening decisions · 30 benchmark passages
+- These counts are generated from the corpus; reproduce with `python pipeline/validate.py` (it also runs the evidence-integrity invariants).
 
 ## Purpose
 
@@ -31,21 +32,34 @@ the verified expectations and fails loudly on drift rather than serving changed 
 | JUPITER sex-specific efficacy | reported | reported | PMID 20176986 (Circulation 2010) |
 | HOPE-3 total enrolment | 12,705 | reported | ClinicalTrials.gov + PMID 27040132 |
 | HOPE-3 women | **46% only — no exact count published** | reported (pct) | PMC8370761 |
-| Menopausal status (both trials) | not reported | not_reported | Registry + publications |
-| Hormone therapy use (both trials) | not reported | not_reported | Registry + publications |
+| Digoxin sex-based mortality (DIG) | adjusted HR 1.23 (95% CI 1.02–1.47), P=0.014 | reported | PMID 12409542 (post hoc) |
+| DAPA-HF women | 1,109 (23.4%) | reported | PMID 33787831 |
+| Valsartan menopausal status | reported (postmenopausal, women-only) | reported | PMC8108841 |
+| Valsartan hormone therapy | reported (HRT was an exclusion criterion) | reported | PMC8108841 |
+| Menopausal status (most cardiovascular/HF trials) | not reported | not_reported | Registry + publications |
 
 ## Known limitations
 
-- **Two trials.** This is a deliberately frozen corpus, not a systematic review of all
-  rosuvastatin evidence. Absence in this corpus never means absence in the literature.
+- **Small frozen corpus.** Seven randomized-study records across five medicines — not a
+  systematic review. Absence in this corpus never means absence in the literature; AMIRA
+  distinguishes `absent` / `not_located` / `not_reported` and never collapses them.
 - **HOPE-3 has no exact female count.** Any combined female figure is part reported and
   part derived, and is labelled `mixed_reported_and_derived`.
-- **No menopausal or hormonal data exists in this corpus.** AMIRA therefore cannot
-  evidence any life stage. Age eligibility is reported as a fact and is never converted
-  into a menopausal-status claim.
-- **Human verification is pending.** Every assertion is source-verified (machine-checked
-  against the retrieved source) but none carries named human sign-off yet. See
-  [`VERIFICATION_WORKSHEET.md`](../VERIFICATION_WORKSHEET.md).
+- **Hormonal data is sparse.** Only the postmenopausal, women-only valsartan study reports
+  menopausal status and hormone-therapy context; the cardiovascular/heart-failure trials do
+  not. Age eligibility is reported as a fact and is **never** converted into a menopausal-status claim.
+- **A total enrollment / female count is shown only when a `reported` assertion with a
+  verified source supports it.** Raw registry `enrollment_actual` is never surfaced as an
+  evidence-backed total (enforced by `pipeline/validate.py` and the evidence-integrity tests).
+- **Source verification is scoped to positive claims.** Positive `reported` or `derived`
+  assertions used in trusted public outputs require source verification (`source_verified`);
+  assertions representing `not_reported` or `not_located` evidence retain their explicit
+  evidence state and are **not** treated as positive verified findings. In the current
+  corpus 26 of 58 assertions are `source_verified` (the positive claims); the remaining 32
+  are silence/gap observations. No blanket "every assertion is verified" claim is made.
+- **Human verification is pending.** No assertion, finding, or comparison carries named
+  human sign-off yet (`human_verified` is `false` throughout). See
+  [Human verification status](human-verification.md).
 - **No model evaluation has been run.** The product displays `EVALUATION PENDING`.
 
 ## Intended and unintended use

@@ -991,10 +991,10 @@ def build(offline: bool = False) -> dict:
     # --- screening log -------------------------------------------------------- #
     screening = [
         {"candidate": "NCT00239681", "identifier_type": "nct", "decision": "include",
-         "reason": "Rosuvastatin RCT in the Mantis-approved frozen corpus; registry results posted.",
+         "reason": "Rosuvastatin RCT in the reviewed frozen corpus; registry results posted.",
          "screened_at": retrieved_at},
         {"candidate": "NCT00468923", "identifier_type": "nct", "decision": "include",
-         "reason": "Rosuvastatin RCT in the Mantis-approved frozen corpus.",
+         "reason": "Rosuvastatin RCT in the reviewed frozen corpus.",
          "screened_at": retrieved_at},
         {"candidate": "PMID 20176986", "identifier_type": "pmid", "decision": "include",
          "reason": "Prespecified sex-specific outcome analysis of JUPITER; supplies the "

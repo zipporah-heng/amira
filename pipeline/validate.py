@@ -92,6 +92,9 @@ def main() -> int:
         if f.get("significance") in ("significant", "no_significant_difference"):
             if f.get("comparison_p") is None and not f.get("comparison_test"):
                 err(f"{f['finding_id']} claims '{f['significance']}' with no reported test")
+        # A public finding must be source_verified (Blocker G).
+        if not f.get("source_verified", False):
+            err(f"{f['finding_id']} is a public finding that is not source_verified")
         if f.get("human_verified") and not f.get("verifier"):
             err(f"{f['finding_id']} is human_verified with no named verifier")
 
@@ -107,15 +110,18 @@ def main() -> int:
         for index, outcome in enumerate(c.get("outcomes", []), start=1):
             if not (outcome.get("exact_passage") or "").strip():
                 err(f"{c['comparison_id']} outcome {index} has no exact_passage")
+        # A public direct comparison must be source_verified (Blocker G).
+        if not c.get("source_verified", False):
+            err(f"{c['comparison_id']} is a public direct comparison that is not source_verified")
         if c.get("human_verified") and not c.get("verifier"):
             err(f"{c['comparison_id']} is human_verified with no named verifier")
 
-    # --- source links --------------------------------------------------------- #
+    # --- source links (real hostname parsing — no substring spoofing) --------- #
+    sys.path.insert(0, str(REPO / "backend"))
+    from amira import dataset as _ds  # noqa: E402
     for s in sources:
-        if not s["url"].startswith("https://"):
-            err(f"{s['source_id']} url is not https")
-        if not any(h in s["url"] for h in ALLOWED_HOSTS):
-            err(f"{s['source_id']} url is not an authoritative host: {s['url']}")
+        if not _ds.authoritative_url_ok(s["url"]):
+            err(f"{s['source_id']} url is not an authoritative https host: {s['url']}")
 
     # --- no stored maturity level --------------------------------------------- #
     blob = json.dumps({
@@ -167,6 +173,27 @@ def main() -> int:
          sum(1 for f in findings if f.get("human_verified")) + \
          sum(1 for c in comparisons if c.get("human_verified"))
     notes.append(f"human-verified records: {hv} (expected 0 until named sign-off)")
+
+    # --- export evidence-boundary invariant ------------------------------------ #
+    # AMIRA does not export an evidence-backed value unless a corresponding sourced
+    # assertion is present. Reuse the real export layer so the download surface and
+    # this check can never drift apart.
+    sys.path.insert(0, str(REPO / "backend"))
+    try:
+        from amira import exports as _exports  # noqa: E402
+        report = _exports.evidence_integrity_report()
+        for category, items in report.items():
+            for v in items:
+                loc = v.get("trial_id") or v.get("finding_id") or "?"
+                dim = v.get("dimension", "")
+                err(f"evidence integrity [{category}]: {loc} {dim} — {v.get('reason','')}".strip())
+        total = sum(len(v) for v in report.values())
+        if total == 0:
+            notes.append("evidence-integrity invariants: OK "
+                         "(required assertions, source integrity, no duplicates/conflicts, "
+                         "value equality, no unsupported exports)")
+    except Exception as e:  # pragma: no cover - import/enumeration failure is itself a failure
+        err(f"could not run evidence-integrity invariants: {e!r}")
 
     # --- report ---------------------------------------------------------------- #
     print("AMIRA offline dataset validation")

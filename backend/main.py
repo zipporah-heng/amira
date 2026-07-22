@@ -80,18 +80,27 @@ def get_manifest():
 
 @app.get("/api/catalog")
 def get_catalog():
-    """Condition -> drug class -> verified medicines, for the upfront selectors.
+    """Condition -> drug class -> VERIFIED medicines, for the upfront selectors.
 
-    Only medicines with completed, integrity-checked evidence ingestion appear here.
+    Only medicines with completed, integrity-checked evidence ingestion
+    (``medicine_ingestion_complete``) are offered as selectable/verified. A medicine
+    still under review is never listed as verified; it is surfaced separately under
+    ``incomplete_medicines`` with an explicit status.
     """
-    # condition -> class -> set(medicines)
+    from amira import clinical
+    # condition -> class -> set(medicines), verified only
     tree: dict = {}
     flat: dict = {}
+    incomplete: dict = {}
     for t in dataset.trials():
         cond = t.get("condition") or "Unspecified"
         cls = t.get("drug_class") or "Unclassified"
-        tree.setdefault(cond, {}).setdefault(cls, set()).add(t["medicine"])
-        flat.setdefault(cls, set()).add(t["medicine"])
+        med = t["medicine"]
+        if clinical.medicine_ingestion_complete(med):
+            tree.setdefault(cond, {}).setdefault(cls, set()).add(med)
+            flat.setdefault(cls, set()).add(med)
+        else:
+            incomplete.setdefault(cls, set()).add(med)
     return {
         **_envelope(),
         "conditions": [
@@ -105,6 +114,11 @@ def get_catalog():
         # Flat class list kept for backward compatibility.
         "drug_classes": [
             {"drug_class": c, "medicines": sorted(meds)} for c, meds in sorted(flat.items())
+        ],
+        # Discoverable but explicitly NOT verified — never offered as a verified choice.
+        "incomplete_medicines": [
+            {"drug_class": c, "medicines": sorted(meds), "status": "Incomplete evidence review"}
+            for c, meds in sorted(incomplete.items())
         ],
     }
 

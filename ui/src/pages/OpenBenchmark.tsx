@@ -38,8 +38,12 @@ export function OpenBenchmark() {
         <div className="dl-card">
           <h3>The Dataset</h3>
           <p>
-            Normalized trials and evidence assertions, exported from the same records the API
-            serves — so the UI, API and downloads always agree numerically.
+            Normalized trials and evidence assertions, exported from the same normalized records
+            the API serves through one canonical verified-evidence gate. A value appears only when
+            its assertion is conflict-free, carries a supported basis, and resolves to a verified
+            authoritative source; otherwise its evidence state (not reported / not located /
+            unavailable / conflicting / unverified) is shown instead. A value in one surface is
+            never stronger than the evidence behind it.
           </p>
           <div className="code-cols">
             {DATASET_COLUMNS.map((c) => <span className="code-col" key={c}>{c}</span>)}

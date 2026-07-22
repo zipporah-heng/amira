@@ -134,9 +134,19 @@ def test_maturity_never_stored_including_findings():
 def test_class_comparison_contains_only_verified_medicines():
     cc = clinical.class_comparison("Statin")
     ingested = {t["medicine"] for t in dataset.trials() if t["drug_class"] == "Statin"}
-    assert set(cc["verified_medicines"]) == ingested
+    complete = {m for m in ingested if clinical.medicine_ingestion_complete(m)}
+    incomplete = ingested - complete
+    # verified_medicines contains ONLY completed-ingestion medicines (Blocker F).
+    assert set(cc["verified_medicines"]) == complete
+    # An incomplete medicine (Atorvastatin) is never called verified; it is listed
+    # separately with an explicit "Incomplete evidence review" status.
+    assert {m["medicine"] for m in cc["incomplete_medicines"]} == incomplete
+    assert all(m["status"] == "Incomplete evidence review" for m in cc["incomplete_medicines"])
+    # rows still surface every in-corpus medicine, but incomplete ones are unrankable.
+    assert {r["medicine"] for r in cc["rows"]} == ingested
     for row in cc["rows"]:
-        assert row["medicine"] in ingested, "unverified medicine appears in class comparison"
+        if not row["ingestion_complete"]:
+            assert row["rankable"] is False
 
 
 def test_class_comparison_sorted_by_maturity_desc():

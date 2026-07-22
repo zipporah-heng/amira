@@ -82,9 +82,15 @@ def test_study_selection_counts_reconcile():
 
 # 7. Drug Class filters Medicine options correctly.
 def test_catalog_groups_medicines_by_class():
-    cat = client.get("/api/catalog").json()["drug_classes"]
+    body = client.get("/api/catalog").json()
+    cat = body["drug_classes"]
     statin = next(c for c in cat if c["drug_class"] == "Statin")
-    assert set(statin["medicines"]) == {"Rosuvastatin", "Atorvastatin"}
+    # Only completed-ingestion (verified) medicines are selectable (Blocker F):
+    # Atorvastatin has not_located female enrollment -> incomplete -> not verified.
+    assert set(statin["medicines"]) == {"Rosuvastatin"}
+    # Incomplete medicines are discoverable but explicitly not verified.
+    inc = {m for c in body["incomplete_medicines"] for m in c["medicines"]}
+    assert "Atorvastatin" in inc
     # Every catalog medicine actually has an ingested trial.
     ingested = {t["medicine"] for t in dataset.trials()}
     for c in cat:
@@ -252,8 +258,14 @@ def test_not_located_and_not_reported_stay_distinct():
 
 def test_research_map_renders_not_located_as_unclear():
     from pathlib import Path
-    rm = (Path(__file__).resolve().parents[2] / "ui" / "src" / "pages" / "ResearchMap.tsx"
-          ).read_text(encoding="utf-8")
-    assert 'Unclear / not located' in rm
-    assert 'did not locate sufficient evidence' in rm
-    assert '"not_located"' in rm  # state is mapped explicitly, not collapsed
+    ui = Path(__file__).resolve().parents[2] / "ui" / "src"
+    rm = (ui / "pages" / "ResearchMap.tsx").read_text(encoding="utf-8")
+    state = (ui / "evidenceState.ts").read_text(encoding="utf-8")
+    # ResearchMap routes cells through the shared, exhaustive state helper.
+    assert "toEvidenceState" in rm and "EVIDENCE_STATE" in rm
+    # The five states are distinct in the shared map and never collapsed.
+    assert 'Unclear / not located' in state and '"not_located"' in state
+    assert 'did not locate sufficient evidence' in state
+    assert 'Evidence status unavailable' in state  # absent is its own state
+    for tok in ('"reported"', '"derived"', '"not_reported"', '"not_located"', '"absent"'):
+        assert tok in state
