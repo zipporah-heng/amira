@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ResearchMap } from "./ResearchMap";
 
@@ -8,7 +8,9 @@ function mockTrials(trials: any[]) {
   vi.stubGlobal(
     "fetch",
     vi.fn(async () => ({
-      json: async () => ({ trials, dataset_version: "3.0.0", source_cutoff: "2026-07-18" }),
+      ok: true,
+      json: async () => ({ trials, dataset_version: "3.0.0", source_cutoff: "2026-07-18",
+        featured: [], library: [], signal_types: [], evidence_statuses: [], max_featured: 5 }),
     })) as any,
   );
 }
@@ -44,6 +46,29 @@ describe("ResearchMap female-cell evidence state", () => {
     mockTrials([baseTrial({ female_n: 1109, female_n_basis: "reported" })]);
     render(<ResearchMap />);
     expect((await screen.findAllByText(/Reported/)).length).toBeGreaterThan(0);
+  });
+});
+
+describe("ResearchMap two internal views", () => {
+  it("shows Evidence Coverage (default) and Critical Signals tabs; coverage is default", async () => {
+    mockTrials([baseTrial({ health_area: "Cardiovascular", condition: "Heart failure", medicine: "Digoxin" })]);
+    render(<ResearchMap />);
+    const coverage = await screen.findByRole("tab", { name: "Evidence Coverage" });
+    const signals = screen.getByRole("tab", { name: "Critical Signals" });
+    expect(coverage.getAttribute("aria-selected")).toBe("true");
+    expect(signals.getAttribute("aria-selected")).toBe("false");
+    // Coverage matrix visible by default.
+    expect(screen.getByText("Women's Evidence Coverage Matrix")).toBeInTheDocument();
+  });
+
+  it("switches to the Critical Signals view (coverage matrix hidden)", async () => {
+    mockTrials([baseTrial({ health_area: "Cardiovascular", condition: "Heart failure", medicine: "Digoxin" })]);
+    render(<ResearchMap />);
+    const signals = await screen.findByRole("tab", { name: "Critical Signals" });
+    fireEvent.click(signals);
+    expect(signals.getAttribute("aria-selected")).toBe("true");
+    expect(screen.queryByText("Women's Evidence Coverage Matrix")).toBeNull();
+    expect(await screen.findByText("Evidence That Changed the Story for Women")).toBeInTheDocument();
   });
 });
 
