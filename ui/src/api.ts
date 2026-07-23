@@ -35,6 +35,7 @@ export interface TrialRow {
   trial_id: string;
   display_name: string;
   nct_id: string | null;
+  health_area?: string | null;
   year: number | null;
   study_type: string;
   total_enrollment: number | null;   // null when no reported total_enrollment assertion

@@ -80,47 +80,63 @@ def get_manifest():
 
 @app.get("/api/catalog")
 def get_catalog():
-    """Condition -> drug class -> medicines, for the upfront selectors.
+    """Cascading selector catalog: Health Area -> Condition -> Drug Class -> Medicine.
 
-    ``medicines`` lists only VERIFIED medicines (completed, integrity-checked
-    ingestion via ``medicine_ingestion_complete``). Medicines still under review are
-    listed separately per class as ``incomplete_medicines`` (and in the flat
-    top-level ``incomplete_medicines``) so the selector can offer them with an
-    explicit "incomplete" label WITHOUT ever counting them as verified.
+    Built from the multi-health-area TAXONOMY (registry). A medicine's ``status`` is
+    ``verified`` ONLY when it has completed, integrity-checked ingestion
+    (``medicine_ingestion_complete`` — trial-backed). Every other registered medicine
+    is ``incomplete`` (DISCOVERED / "Evidence review incomplete"): discoverable and
+    selectable, but never counted as verified, never ranked, never scored. New
+    health areas with no ingested trials still appear so the platform can expand
+    without weakening evidence integrity.
+
+    Legacy flat ``conditions`` / ``drug_classes`` / ``incomplete_medicines`` keys are
+    retained for backward compatibility.
     """
     from amira import clinical
-    # condition -> class -> {"v": verified set, "i": incomplete set}
-    tree: dict = {}
-    flat: dict = {}
+
+    def status_of(med: str) -> str:
+        return "verified" if clinical.medicine_ingestion_complete(med) else "incomplete"
+
+    tax = dataset.taxonomy().get("health_areas", [])
+    health_areas = []
+    # Legacy flat structures (verified-only medicines + separate incomplete list).
+    legacy_conditions: dict = {}   # condition -> class -> {"v": set, "i": set}
+    flat_verified: dict = {}
     incomplete_flat: dict = {}
-    for t in dataset.trials():
-        cond = t.get("condition") or "Unspecified"
-        cls = t.get("drug_class") or "Unclassified"
-        med = t["medicine"]
-        slot = tree.setdefault(cond, {}).setdefault(cls, {"v": set(), "i": set()})
-        if clinical.medicine_ingestion_complete(med):
-            slot["v"].add(med)
-            flat.setdefault(cls, set()).add(med)
-        else:
-            slot["i"].add(med)
-            incomplete_flat.setdefault(cls, set()).add(med)
+    for ha in tax:
+        ha_conditions = []
+        for cond in ha.get("conditions", []):
+            cls_entries = []
+            for cls in cond.get("drug_classes", []):
+                meds = [{"medicine": m, "status": status_of(m)} for m in cls.get("medicines", [])]
+                cls_entries.append({"drug_class": cls["drug_class"], "medicines": meds})
+                slot = legacy_conditions.setdefault(cond["condition"], {}).setdefault(cls["drug_class"], {"v": set(), "i": set()})
+                for m in meds:
+                    (slot["v"] if m["status"] == "verified" else slot["i"]).add(m["medicine"])
+                    if m["status"] == "verified":
+                        flat_verified.setdefault(cls["drug_class"], set()).add(m["medicine"])
+                    else:
+                        incomplete_flat.setdefault(cls["drug_class"], set()).add(m["medicine"])
+            ha_conditions.append({"condition": cond["condition"], "drug_classes": cls_entries})
+        health_areas.append({"health_area": ha["health_area"], "conditions": ha_conditions})
+
     return {
         **_envelope(),
+        # PRIMARY: full health-area cascade with per-medicine verified/incomplete status.
+        "health_areas": health_areas,
+        # Legacy flat views (verified-only medicines) for backward compatibility.
         "conditions": [
             {"condition": cond,
              "drug_classes": [
-                 {"drug_class": cls, "medicines": sorted(s["v"]),
-                  # Discoverable but explicitly NOT verified; selector labels these.
-                  "incomplete_medicines": sorted(s["i"])}
+                 {"drug_class": cls, "medicines": sorted(s["v"]), "incomplete_medicines": sorted(s["i"])}
                  for cls, s in sorted(classes.items())
              ]}
-            for cond, classes in sorted(tree.items())
+            for cond, classes in sorted(legacy_conditions.items())
         ],
-        # Flat class list kept for backward compatibility (verified only).
         "drug_classes": [
-            {"drug_class": c, "medicines": sorted(meds)} for c, meds in sorted(flat.items())
+            {"drug_class": c, "medicines": sorted(meds)} for c, meds in sorted(flat_verified.items())
         ],
-        # Discoverable but explicitly NOT verified — never counted as a verified choice.
         "incomplete_medicines": [
             {"drug_class": c, "medicines": sorted(meds), "status": "Incomplete evidence review"}
             for c, meds in sorted(incomplete_flat.items())

@@ -55,7 +55,7 @@ def _ci_crosses_one(ci: Optional[str]) -> bool:
 # response unless a source actually reports menopausal status.
 LIFE_STAGES = {
     "childhood_prepubertal", "puberty_adolescence", "reproductive_years",
-    "perimenopause", "menopause_postmenopause", "not_specified",
+    "perimenopause", "menopause_postmenopause", "older_adult", "not_specified",
 }
 HORMONE_THERAPY = {"yes", "no", "any", "not_specified"}
 
@@ -438,6 +438,27 @@ def check_evidence(condition: str, medicine: str,
 
     if not matched:
         supported_meds = sorted({t["medicine"] for t in all_trials})
+        # A medicine can be REGISTERED in the multi-health-area taxonomy but not yet
+        # ingested/verified. That is an honest "evidence review incomplete" state
+        # (DISCOVERED layer) — never a fabricated result and never a 0/5 score.
+        registered = (medicine or "").strip().lower() in {m.lower() for m in dataset.taxonomy_medicines()}
+        if registered:
+            envelope.update({
+                "supported": False,
+                "bounded_response": {
+                    "status": "evidence_review_incomplete",
+                    "message": (
+                        f"'{medicine}' is registered in AMIRA but its evidence review is not yet "
+                        f"complete. No trials have been ingested, verified, and passage-checked for "
+                        f"it, so AMIRA shows no women's-evidence result, maturity level, or score. "
+                        f"This medicine is discoverable but explicitly unscored."
+                    ),
+                    "review_status": "Evidence review incomplete",
+                    "supported_medicines": supported_meds,
+                },
+                "maturity": None, "totals": None, "dimensions": [], "trials": [], "sources": [],
+            })
+            return envelope
         envelope.update({
             "supported": False,
             "bounded_response": {

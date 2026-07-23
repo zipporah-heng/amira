@@ -50,6 +50,9 @@ def trial_rows() -> List[dict]:
             "medicine": t["medicine"],
             "drug_class": t.get("drug_class"),
             "condition": t["condition"],
+            # Health Area for the Research Map hierarchy (categorization via taxonomy;
+            # not exported to CSV — not in TRIAL_COLUMNS — so the frozen CSV is unchanged).
+            "health_area": dataset.health_area_of(t["condition"]),
             "study_phase": t.get("study_phase"),
             "study_type": t["study_type"],
             # Fail-closed: an evidence-backed total is exported ONLY when a

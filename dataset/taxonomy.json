@@ -1,0 +1,114 @@
+{
+  "_note": "AMIRA multi-health-area TAXONOMY (registry only). This file categorizes medicines into Health Area -> Condition -> Drug Class -> Medicine for the cascading selector and Research Map. It is NOT evidence: it asserts no trials, counts, findings, or maturity. A medicine is 'verified' only when it has ingested, integrity-checked trials in the evidence corpus (dataset/trials.json); every medicine here without such trials is DISCOVERED / 'Evidence review incomplete' (unscored, unranked, excluded from verified_medicines). Cardiovascular conditions and drug-class names match dataset/trials.json exactly so the existing frozen evidence lines up. No women-specific, hormonal, or maturity claim is made here.",
+  "schema_version": "taxonomy-1.0",
+  "health_areas": [
+    {
+      "health_area": "Cardiovascular",
+      "conditions": [
+        {
+          "condition": "Cardiovascular disease prevention",
+          "drug_classes": [
+            { "drug_class": "Statin", "medicines": ["Rosuvastatin", "Atorvastatin"] }
+          ]
+        },
+        {
+          "condition": "Heart failure",
+          "drug_classes": [
+            { "drug_class": "SGLT2 inhibitor", "medicines": ["Dapagliflozin"] },
+            { "drug_class": "Cardiac glycoside", "medicines": ["Digoxin"] }
+          ]
+        },
+        {
+          "condition": "Hypertension",
+          "drug_classes": [
+            { "drug_class": "Angiotensin receptor blocker", "medicines": ["Valsartan"] }
+          ]
+        },
+        {
+          "condition": "Stroke prevention in atrial fibrillation",
+          "drug_classes": [
+            { "drug_class": "Anticoagulant", "medicines": ["Apixaban"] }
+          ]
+        }
+      ]
+    },
+    {
+      "health_area": "Metabolic Health",
+      "conditions": [
+        {
+          "condition": "Type 2 diabetes",
+          "drug_classes": [
+            { "drug_class": "GLP-1 receptor agonist", "medicines": ["Semaglutide", "Liraglutide"] },
+            { "drug_class": "Dual GIP/GLP-1 receptor agonist", "medicines": ["Tirzepatide"] }
+          ]
+        },
+        {
+          "condition": "Weight management",
+          "drug_classes": [
+            { "drug_class": "GLP-1 receptor agonist", "medicines": ["Semaglutide", "Liraglutide"] },
+            { "drug_class": "Dual GIP/GLP-1 receptor agonist", "medicines": ["Tirzepatide"] }
+          ]
+        }
+      ]
+    },
+    {
+      "health_area": "Bone Health",
+      "conditions": [
+        {
+          "condition": "Osteoporosis",
+          "drug_classes": [
+            { "drug_class": "Bisphosphonate", "medicines": ["Alendronate"] },
+            { "drug_class": "RANKL inhibitor", "medicines": ["Denosumab"] }
+          ]
+        }
+      ]
+    },
+    {
+      "health_area": "Hormone-related Cancer",
+      "conditions": [
+        {
+          "condition": "Breast cancer",
+          "drug_classes": [
+            { "drug_class": "Selective estrogen receptor modulator", "medicines": ["Tamoxifen"] },
+            { "drug_class": "Aromatase inhibitor", "medicines": ["Anastrozole"] }
+          ]
+        }
+      ]
+    },
+    {
+      "health_area": "Neurology",
+      "conditions": [
+        {
+          "condition": "Parkinson's disease",
+          "drug_classes": [
+            { "drug_class": "Dopaminergic therapy", "medicines": ["Carbidopa/Levodopa"] }
+          ]
+        },
+        {
+          "condition": "Alzheimer's disease",
+          "drug_classes": [
+            { "drug_class": "Amyloid beta-directed antibody", "medicines": ["Lecanemab", "Donanemab"] }
+          ]
+        }
+      ]
+    },
+    {
+      "health_area": "Neurodevelopmental Health",
+      "conditions": [
+        {
+          "condition": "ADHD",
+          "drug_classes": [
+            { "drug_class": "Stimulant", "medicines": ["Methylphenidate", "Lisdexamfetamine"] },
+            { "drug_class": "Non-stimulant", "medicines": ["Atomoxetine"] }
+          ]
+        },
+        {
+          "condition": "Irritability associated with autism",
+          "drug_classes": [
+            { "drug_class": "Atypical antipsychotic", "medicines": ["Risperidone", "Aripiprazole"] }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,87 +1,101 @@
 import { useState } from "react";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { EvidenceSearch, type Filters, type ConditionEntry } from "./EvidenceSearch";
+import { EvidenceSearch, hormonalContextOptions, hormonalContextToApi, type Filters, type HealthAreaEntry } from "./EvidenceSearch";
 
-const catalog: ConditionEntry[] = [
+const catalog: HealthAreaEntry[] = [
   {
-    condition: "Heart failure",
-    drug_classes: [
-      { drug_class: "Cardiac glycoside", medicines: ["Digoxin"] },
-      { drug_class: "SGLT2 inhibitor", medicines: ["Dapagliflozin"] },
+    health_area: "Cardiovascular",
+    conditions: [
+      { condition: "Heart failure", drug_classes: [
+        { drug_class: "SGLT2 inhibitor", medicines: [{ medicine: "Dapagliflozin", status: "verified" }] },
+        { drug_class: "Cardiac glycoside", medicines: [{ medicine: "Digoxin", status: "verified" }] },
+      ] },
+      { condition: "Cardiovascular disease prevention", drug_classes: [
+        { drug_class: "Statin", medicines: [
+          { medicine: "Rosuvastatin", status: "verified" },
+          { medicine: "Atorvastatin", status: "incomplete" },
+        ] },
+      ] },
     ],
   },
   {
-    condition: "Cardiovascular disease prevention",
-    drug_classes: [
-      // Rosuvastatin verified; Atorvastatin known but evidence review incomplete.
-      { drug_class: "Statin", medicines: ["Rosuvastatin"], incomplete_medicines: ["Atorvastatin"] },
+    health_area: "Metabolic Health",
+    conditions: [
+      { condition: "Weight management", drug_classes: [
+        { drug_class: "GLP-1 receptor agonist", medicines: [
+          { medicine: "Semaglutide", status: "incomplete" },
+          { medicine: "Liraglutide", status: "incomplete" },
+        ] },
+      ] },
     ],
   },
 ];
 
 function Harness({ initial }: { initial?: Partial<Filters> } = {}) {
   const [filters, setFilters] = useState<Filters>({
-    condition: "Heart failure", drugClass: "Cardiac glycoside", medicine: "Digoxin",
-    lifeStage: "not_specified", hormoneTherapy: "Any", ...initial,
+    healthArea: "Cardiovascular", condition: "Heart failure", drugClass: "Cardiac glycoside",
+    medicine: "Digoxin", lifeStage: "menopause_postmenopause", hormonalContext: "Any", ...initial,
   });
   return <EvidenceSearch filters={filters} setFilters={setFilters} onCheck={() => {}} catalog={catalog} />;
 }
 
-describe("EvidenceSearch drug-class cascade", () => {
-  it("exposes both drug classes and their correct medicines", () => {
+describe("EvidenceSearch — 6-level cascade with Health Area", () => {
+  it("exposes the Health Area selector as the first level", () => {
     render(<Harness />);
-    const drugClass = screen.getByLabelText("Drug Class") as HTMLSelectElement;
-    const classes = within(drugClass).getAllByRole("option").map((o) => o.textContent);
-    expect(classes).toContain("Cardiac glycoside");
-    expect(classes).toContain("SGLT2 inhibitor");
-    // Digoxin is under Cardiac glycoside by default.
-    expect((screen.getByLabelText("Medicine") as HTMLSelectElement).value).toBe("Digoxin");
+    const ha = screen.getByLabelText("Health Area") as HTMLSelectElement;
+    const areas = within(ha).getAllByRole("option").map((o) => o.textContent);
+    expect(areas).toContain("Cardiovascular");
+    expect(areas).toContain("Metabolic Health");
+    expect(ha.value).toBe("Cardiovascular");
   });
 
-  it("makes Dapagliflozin available when SGLT2 inhibitor is selected", () => {
-    render(<Harness />);
-    fireEvent.change(screen.getByLabelText("Drug Class"), { target: { value: "SGLT2 inhibitor" } });
-    const medicine = screen.getByLabelText("Medicine") as HTMLSelectElement;
-    const meds = within(medicine).getAllByRole("option").map((o) => o.textContent);
-    expect(meds).toContain("Dapagliflozin");
-    expect(meds).not.toContain("Digoxin");   // Dapagliflozin is not in the cardiac-glycoside class
-    expect(medicine.value).toBe("Dapagliflozin"); // auto-selected on class change
+  it("cascades Health Area -> Condition -> Drug Class -> Medicine, preferring a verified default", () => {
+    render(<Harness initial={{ healthArea: "Cardiovascular", condition: "Cardiovascular disease prevention", drugClass: "Statin", medicine: "Rosuvastatin" }} />);
+    const med = screen.getByLabelText("Medicine") as HTMLSelectElement;
+    const labels = within(med).getAllByRole("option").map((o) => o.textContent);
+    // Both offered with CLEAN names (no status suffix); default is the verified one.
+    expect(labels).toEqual(["Rosuvastatin", "Atorvastatin"]);
+    expect(med.value).toBe("Rosuvastatin");
+  });
+
+  it("offers an incomplete-review medicine with a clean name and plain value", () => {
+    render(<Harness initial={{ healthArea: "Metabolic Health", condition: "Weight management", drugClass: "GLP-1 receptor agonist", medicine: "Semaglutide" }} />);
+    const med = screen.getByLabelText("Medicine") as HTMLSelectElement;
+    const labels = within(med).getAllByRole("option").map((o) => o.textContent);
+    expect(labels).toEqual(["Semaglutide", "Liraglutide"]);
+    expect(labels.some((l) => /incomplete/i.test(l || ""))).toBe(false);
+    fireEvent.change(med, { target: { value: "Liraglutide" } });
+    expect(med.value).toBe("Liraglutide");
   });
 });
 
-describe("EvidenceSearch incomplete-review medicine (Atorvastatin)", () => {
-  it("offers Atorvastatin with a CLEAN name (no status appended)", () => {
-    render(<Harness initial={{ condition: "Cardiovascular disease prevention", drugClass: "Statin", medicine: "Rosuvastatin" }} />);
-    const medicine = screen.getByLabelText("Medicine") as HTMLSelectElement;
-    const labels = within(medicine).getAllByRole("option").map((o) => o.textContent);
-    // Every medicine name is clean and consistent — the incomplete status is NEVER
-    // appended to the dropdown name.
-    expect(labels).toContain("Rosuvastatin");
-    expect(labels).toContain("Atorvastatin");
-    expect(labels.some((l) => /Evidence review incomplete/i.test(l || ""))).toBe(false);
-    // The option VALUE is the plain medicine name.
-    const atorva = within(medicine).getAllByRole("option").find((o) => o.textContent === "Atorvastatin") as HTMLOptionElement;
-    expect(atorva.value).toBe("Atorvastatin");
-    // The default selection stays the VERIFIED medicine, not the incomplete one.
-    expect(medicine.value).toBe("Rosuvastatin");
+describe("Life Stage + Hormonal Context", () => {
+  it("includes the Older Adult life stage", () => {
+    render(<Harness />);
+    const ls = screen.getByLabelText("Life Stage") as HTMLSelectElement;
+    expect(within(ls).getAllByRole("option").map((o) => o.textContent)).toContain("Older Adult");
   });
 
-  it("selecting Atorvastatin keeps the plain medicine name in the selected field", () => {
-    render(<Harness initial={{ condition: "Cardiovascular disease prevention", drugClass: "Statin", medicine: "Rosuvastatin" }} />);
-    const medicine = screen.getByLabelText("Medicine") as HTMLSelectElement;
-    fireEvent.change(medicine, { target: { value: "Atorvastatin" } });
-    expect(medicine.value).toBe("Atorvastatin");
-    // The selected field shows exactly "Atorvastatin" — no appended status.
-    const selectedLabel = within(medicine).getAllByRole("option").find((o) => (o as HTMLOptionElement).selected)?.textContent;
-    expect(selectedLabel).toBe("Atorvastatin");
+  it("adapts Hormonal Context to the selected life stage (no menopause options for pediatric)", () => {
+    const peds = hormonalContextOptions("childhood_prepubertal");
+    expect(peds).toContain("Pubertal status");
+    expect(peds.some((o) => /menopaus/i.test(o))).toBe(false);
+    const meno = hormonalContextOptions("menopause_postmenopause");
+    expect(meno).toContain("Using menopausal hormone therapy");
   });
 
-  it("no longer claims only verified medicines are selectable", () => {
-    const { container } = render(<Harness />);
-    const text = container.textContent || "";
-    expect(text).not.toMatch(/Only medicines with verified evidence in AMIRA are selectable/i);
-    expect(text).toMatch(/Incomplete evidence is clearly labelled and is not scored/i);
-    expect(text).toMatch(/does not diagnose, prescribe, or recommend treatment/i);
+  it("maps only explicit MHT use/non-use to yes/no; everything else to any/not_specified", () => {
+    expect(hormonalContextToApi("Using menopausal hormone therapy")).toBe("yes");
+    expect(hormonalContextToApi("Not using menopausal hormone therapy")).toBe("no");
+    expect(hormonalContextToApi("Any")).toBe("any");
+    expect(hormonalContextToApi("Pregnancy")).toBe("not_specified");
+    expect(hormonalContextToApi("Pubertal status")).toBe("not_specified");
+  });
+
+  it("renders Hormonal Context (not the old Hormone Therapy) selector", () => {
+    render(<Harness />);
+    expect(screen.getByLabelText("Hormonal Context")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Hormone Therapy")).toBeNull();
   });
 });
