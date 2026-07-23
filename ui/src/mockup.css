@@ -212,3 +212,36 @@
 .ev-chip.unclear { background: #fff6e6; color: #8a5a00; }
 .ev-chip.missing, .ev-chip.unverified, .ev-chip.unavailable { background: var(--surface-2); color: var(--ink-3); }
 .ev-chip.conflict, .ev-chip.invalid { background: #fdecec; color: #9b1c1c; }
+
+/* --- Research Map tabs: Evidence Coverage | Critical Signals --- */
+.rm-tabs { display: inline-flex; gap: 4px; margin-top: 14px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 4px; }
+.rm-tab { border: none; background: transparent; font-size: 14px; font-weight: 650; color: var(--ink-2); padding: 8px 16px; border-radius: 9px; cursor: pointer; }
+.rm-tab.active { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+
+/* --- Critical Signals --- */
+.critical-signals { margin-top: 8px; }
+.cs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-top: 12px; }
+.cs-card { border: 1px solid var(--border); border-radius: 16px; padding: 18px; background: var(--surface); border-left: 4px solid var(--lav-700); }
+.cs-card.warn { border-left-color: #b23a63; background: #fdeef2; }
+.cs-card.calm { border-left-color: #1d6b47; }
+.cs-card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.cs-type { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; padding: 3px 9px; border-radius: 999px; background: var(--lav-50); color: var(--lav-700); }
+.cs-type.warn { background: #f6c9d6; color: #b23a63; }
+.cs-status { font-size: 11px; font-weight: 700; color: var(--ink-3); background: var(--surface-2); padding: 3px 9px; border-radius: 999px; }
+.cs-med { font-size: 13px; font-weight: 700; color: var(--ink-2); margin-top: 12px; }
+.cs-headline { font-size: 19px; font-weight: 750; color: var(--ink); line-height: 1.25; margin-top: 4px; }
+.cs-summary { font-size: 14px; font-weight: 600; color: var(--ink-2); margin-top: 10px; }
+.cs-expl { font-size: 13px; color: var(--ink-2); margin-top: 10px; line-height: 1.5; }
+.cs-cautions { font-size: 12px; color: var(--ink-3); margin-top: 10px; line-height: 1.5; }
+.cs-link { display: inline-block; margin-top: 12px; font-weight: 650; }
+.cs-link.muted, .muted { color: var(--ink-3); }
+.cs-empty { font-size: 13.5px; color: var(--ink-3); margin-top: 10px; }
+.cs-filters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px; }
+.cs-filters .field-wrap input { width: 100%; border: none; background: transparent; font: inherit; color: var(--ink); outline: none; padding: 0; }
+.cs-table td { font-size: 13px; vertical-align: top; }
+.cs-why { margin-top: 26px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface-2); padding: 18px 20px; }
+.cs-why ul { margin: 10px 0 0; padding-left: 20px; }
+.cs-why li { font-size: 14px; color: var(--ink-2); margin: 6px 0; line-height: 1.5; }
+.cs-guardrail { font-size: 13px; color: var(--ink-3); margin-top: 12px; font-style: italic; }
+@media (max-width: 900px) { .cs-filters { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .cs-filters { grid-template-columns: 1fr; } }

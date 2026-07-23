@@ -157,6 +157,16 @@ def get_trials():
     return {**_envelope(), "trials": exports.trial_rows()}
 
 
+@app.get("/api/critical-signals")
+def get_critical_signals():
+    """Critical Signals intelligence layer: clinically important sex-specific
+    findings DERIVED from canonical verified evidence. Featured cards are capped and
+    priority-ordered; the library is the scalable, filterable set. Incomplete
+    medicines contribute nothing (they have no verified findings)."""
+    from amira import signals
+    return {**_envelope(), **signals.payload()}
+
+
 @app.get("/api/evidence-assertions")
 def get_assertions():
     return {**_envelope(), "assertions": exports.assertion_rows()}

@@ -605,6 +605,47 @@ export async function checkEvidence(req: CheckRequest): Promise<EvidenceResponse
   return res.json();
 }
 
+export interface CriticalSignal {
+  signal_id: string;
+  medicine: string;
+  health_area: string | null;
+  condition: string | null;
+  drug_class: string | null;
+  trial_id: string | null;
+  finding_id: string;
+  signal_type: string;
+  headline: string;
+  summary: string;
+  clinical_significance: string;
+  evidence_status: string;
+  source_id: string;
+  source_url: string | null;
+  source_resolved: boolean;
+  exact_passage: string | null;
+  sex_specific: boolean;
+  life_stage: string;
+  life_stage_context: string;
+  hormonal_context: string;
+  human_verified: boolean;
+  cautions: string[];
+  featured: boolean;
+  featured_priority: number | null;
+}
+
+export interface CriticalSignalsResponse {
+  featured: CriticalSignal[];
+  library: CriticalSignal[];
+  signal_types: string[];
+  evidence_statuses: string[];
+  max_featured: number;
+}
+
+export async function getCriticalSignals(): Promise<CriticalSignalsResponse> {
+  const r = await fetch("/api/critical-signals");
+  if (!r.ok) throw new Error(`Request failed (${r.status})`);
+  return r.json();
+}
+
 export async function getBenchmark(): Promise<any> {
   const res = await fetch("/api/benchmark");
   if (!res.ok) throw new Error(`Request failed (${res.status})`);

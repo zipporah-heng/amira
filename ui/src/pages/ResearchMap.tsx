@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
 import type { TrialRow } from "../api";
 import { EVIDENCE_STATE, toEvidenceState, type EvidenceState } from "../evidenceState";
+import { CriticalSignals } from "../components/CriticalSignals";
 
 const DIMS = [
   { key: "female_enrollment", label: "Women counted" },
@@ -21,6 +22,8 @@ interface TrialWithMeta extends TrialRow {
 export function ResearchMap() {
   const [trials, setTrials] = useState<TrialWithMeta[]>([]);
   const [meta, setMeta] = useState<{ v?: string; cutoff?: string }>({});
+  // Two internal views inside Research Map (NOT a new top-level nav item).
+  const [view, setView] = useState<"coverage" | "signals">("coverage");
 
   useEffect(() => {
     fetch("/api/trials")
@@ -28,8 +31,6 @@ export function ResearchMap() {
       .then((d) => { setTrials(d.trials || []); setMeta({ v: d.dataset_version, cutoff: d.source_cutoff }); })
       .catch(() => setTrials([]));
   }, []);
-
-  if (!trials.length) return <p>Loading research map…</p>;
 
   // Every cell resolves to one of the canonical evidence states — never collapsed.
   // When a numeric female count/percentage exists, the state comes from its OWN
@@ -70,6 +71,19 @@ export function ResearchMap() {
     <div>
       <span className="eyebrow">Research Map</span>
       <h1 className="page-q">Where is women's evidence present or missing?</h1>
+
+      {/* Two internal Research Map views — Evidence Coverage (default) | Critical Signals. */}
+      <div className="rm-tabs" role="tablist">
+        <button className={`rm-tab ${view === "coverage" ? "active" : ""}`} role="tab"
+          aria-selected={view === "coverage"} onClick={() => setView("coverage")}>Evidence Coverage</button>
+        <button className={`rm-tab ${view === "signals" ? "active" : ""}`} role="tab"
+          aria-selected={view === "signals"} onClick={() => setView("signals")}>Critical Signals</button>
+      </div>
+
+      {view === "signals" ? <CriticalSignals /> : !trials.length ? (
+        <p style={{ marginTop: 18 }}>Loading research map…</p>
+      ) : (
+      <>
       <p className="page-sub">
         Coverage across every verified trial in AMIRA, grouped by health area and clinical
         condition. Each row links to the real trial record and notes its drug class and medicine.
@@ -156,6 +170,8 @@ export function ResearchMap() {
         This map shows evidence coverage, not clinical comparison. AMIRA does not rank medicines
         by effectiveness or safety.
       </div>
+      </>
+      )}
     </div>
   );
 }
