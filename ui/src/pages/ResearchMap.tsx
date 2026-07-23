@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import type { TrialRow } from "../api";
 import { EVIDENCE_STATE, toEvidenceState, type EvidenceState } from "../evidenceState";
 
@@ -15,6 +15,7 @@ interface TrialWithMeta extends TrialRow {
   medicine: string;
   drug_class: string;
   condition: string;
+  health_area?: string | null;
 }
 
 export function ResearchMap() {
@@ -45,13 +46,22 @@ export function ResearchMap() {
     return toEvidenceState(t[dim]);
   };
 
-  // Group by clinical CONDITION first (drug class is secondary metadata on each
-  // row), so every trial for a condition — e.g. all heart-failure trials — appears
-  // together regardless of drug class. Conditions are shown in clinical order.
+  // Group HEALTH AREA -> CONDITION -> TRIAL. Only verified, ingested trials appear
+  // here (drug class + medicine stay as secondary per-row metadata). New health
+  // areas with no ingested trials do not appear on the map until a trial is verified.
+  const HEALTH_AREA_ORDER = ["Cardiovascular", "Metabolic Health", "Bone Health",
+    "Hormone-related Cancer", "Neurology", "Neurodevelopmental Health"];
   const CONDITION_ORDER = ["Cardiovascular disease prevention", "Heart failure", "Hypertension"];
-  const byCondition: Record<string, TrialWithMeta[]> = {};
-  for (const t of trials) (byCondition[t.condition] ||= []).push(t);
-  const conditions = Object.keys(byCondition).sort((a, b) => {
+  const byArea: Record<string, Record<string, TrialWithMeta[]>> = {};
+  for (const t of trials) {
+    const ha = t.health_area || "Other";
+    ((byArea[ha] ||= {})[t.condition] ||= []).push(t);
+  }
+  const areas = Object.keys(byArea).sort((a, b) => {
+    const ia = HEALTH_AREA_ORDER.indexOf(a), ib = HEALTH_AREA_ORDER.indexOf(b);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b);
+  });
+  const conditionsIn = (ha: string) => Object.keys(byArea[ha]).sort((a, b) => {
     const ia = CONDITION_ORDER.indexOf(a), ib = CONDITION_ORDER.indexOf(b);
     return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b);
   });
@@ -61,9 +71,9 @@ export function ResearchMap() {
       <span className="eyebrow">Research Map</span>
       <h1 className="page-q">Where is women's evidence present or missing?</h1>
       <p className="page-sub">
-        Coverage across every verified trial in AMIRA, grouped by clinical condition. Each row
-        links to the real trial record and notes its drug class. Additional medicines are added
-        only after ingestion and verification.
+        Coverage across every verified trial in AMIRA, grouped by health area and clinical
+        condition. Each row links to the real trial record and notes its drug class and medicine.
+        Additional health areas and medicines are added only after ingestion and verification.
       </p>
 
       <div className="card" style={{ marginTop: 22 }}>
@@ -77,35 +87,45 @@ export function ResearchMap() {
               </tr>
             </thead>
             <tbody>
-              {conditions.map((condition) => (
-                <>
-                  <tr key={condition}>
+              {areas.map((area) => (
+                <Fragment key={area}>
+                  <tr>
                     <td colSpan={DIMS.length + 1} style={{
-                      background: "var(--surface-2)", fontWeight: 700, fontSize: 12,
-                      textTransform: "uppercase", letterSpacing: ".04em", color: "var(--ink-3)",
-                    }}>{condition}</td>
+                      background: "var(--lav-50)", fontWeight: 800, fontSize: 12.5,
+                      textTransform: "uppercase", letterSpacing: ".05em", color: "var(--lav-700)",
+                    }}>{area}</td>
                   </tr>
-                  {byCondition[condition].map((t) => (
-                    <tr key={t.trial_id}>
-                      <td className="rowlabel">
-                        <a href={t.registry_url} target="_blank" rel="noopener noreferrer">
-                          {t.display_name} — {t.medicine}
-                        </a>
-                        <div style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 400 }}>{t.drug_class} · {t.nct_id}</div>
-                      </td>
-                      {DIMS.map((d) => {
-                        const meta = EVIDENCE_STATE[cell(t, d.key)];
-                        return (
-                          <td key={d.key}>
-                            <span className={`cell ${meta.tone}`} title={meta.help}>
-                              {meta.glyph} {meta.label}
-                            </span>
+                  {conditionsIn(area).map((condition) => (
+                    <Fragment key={area + "|" + condition}>
+                      <tr>
+                        <td colSpan={DIMS.length + 1} style={{
+                          background: "var(--surface-2)", fontWeight: 700, fontSize: 12,
+                          letterSpacing: ".02em", color: "var(--ink-3)", paddingLeft: 18,
+                        }}>{condition}</td>
+                      </tr>
+                      {byArea[area][condition].map((t) => (
+                        <tr key={t.trial_id}>
+                          <td className="rowlabel">
+                            <a href={t.registry_url} target="_blank" rel="noopener noreferrer">
+                              {t.display_name} — {t.medicine}
+                            </a>
+                            <div style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 400 }}>{t.drug_class} · {t.nct_id}</div>
                           </td>
-                        );
-                      })}
-                    </tr>
+                          {DIMS.map((d) => {
+                            const meta = EVIDENCE_STATE[cell(t, d.key)];
+                            return (
+                              <td key={d.key}>
+                                <span className={`cell ${meta.tone}`} title={meta.help}>
+                                  {meta.glyph} {meta.label}
+                                </span>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </Fragment>
                   ))}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>

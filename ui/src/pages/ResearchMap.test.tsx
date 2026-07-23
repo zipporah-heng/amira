@@ -47,23 +47,22 @@ describe("ResearchMap female-cell evidence state", () => {
   });
 });
 
-describe("ResearchMap grouping by clinical condition", () => {
-  it("groups all Heart failure trials (DAPA-HF, DIG, DECISION) under one condition header", async () => {
+describe("ResearchMap grouping by Health Area -> Condition -> Trial", () => {
+  it("groups trials under a Health Area header and one Heart failure condition sub-header", async () => {
     mockTrials([
-      baseTrial({ trial_id: "DAPA-HF", display_name: "DAPA-HF", medicine: "Dapagliflozin", drug_class: "SGLT2 inhibitor", condition: "Heart failure", nct_id: "NCT03036124" }),
-      baseTrial({ trial_id: "DIG", display_name: "DIG", medicine: "Digoxin", drug_class: "Cardiac glycoside", condition: "Heart failure", nct_id: "NCT00000476" }),
-      baseTrial({ trial_id: "DECISION", display_name: "DECISION", medicine: "Digoxin", drug_class: "Cardiac glycoside", condition: "Heart failure", nct_id: "NCT03783429" }),
-      baseTrial({ trial_id: "JUPITER", display_name: "JUPITER", medicine: "Rosuvastatin", drug_class: "Statin", condition: "Cardiovascular disease prevention", nct_id: "NCT00239681" }),
+      baseTrial({ trial_id: "DAPA-HF", display_name: "DAPA-HF", medicine: "Dapagliflozin", drug_class: "SGLT2 inhibitor", condition: "Heart failure", health_area: "Cardiovascular", nct_id: "NCT03036124" }),
+      baseTrial({ trial_id: "DIG", display_name: "DIG", medicine: "Digoxin", drug_class: "Cardiac glycoside", condition: "Heart failure", health_area: "Cardiovascular", nct_id: "NCT00000476" }),
+      baseTrial({ trial_id: "DECISION", display_name: "DECISION", medicine: "Digoxin", drug_class: "Cardiac glycoside", condition: "Heart failure", health_area: "Cardiovascular", nct_id: "NCT03783429" }),
+      baseTrial({ trial_id: "JUPITER", display_name: "JUPITER", medicine: "Rosuvastatin", drug_class: "Statin", condition: "Cardiovascular disease prevention", health_area: "Cardiovascular", nct_id: "NCT00239681" }),
     ]);
     render(<ResearchMap />);
-    // Exactly one "Heart failure" condition header (not one per drug class).
-    const hf = await screen.findAllByText(/^Heart failure$/i);
-    expect(hf.length).toBe(1);
+    // Exactly one Cardiovascular health-area header, and one Heart failure sub-header.
+    expect((await screen.findAllByText(/^Cardiovascular$/i)).length).toBe(1);
+    expect(screen.getAllByText(/^Heart failure$/i).length).toBe(1);
     // All three heart-failure trials render together.
     expect(screen.getByText(/DAPA-HF — Dapagliflozin/)).toBeInTheDocument();
     expect(screen.getByText(/DIG — Digoxin/)).toBeInTheDocument();
     expect(screen.getByText(/DECISION — Digoxin/)).toBeInTheDocument();
-    // Drug class is shown as secondary metadata on the row.
     expect(screen.getAllByText(/Cardiac glycoside ·/).length).toBeGreaterThan(0);
   });
 });

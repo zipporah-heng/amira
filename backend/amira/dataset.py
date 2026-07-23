@@ -144,6 +144,51 @@ def findings_for(medicine: str, finding_type: str) -> List[dict]:
     ]
 
 
+@lru_cache(maxsize=1)
+def taxonomy() -> Dict[str, Any]:
+    """Multi-health-area TAXONOMY (registry only — NOT evidence). Categorizes
+    medicines into Health Area -> Condition -> Drug Class -> Medicine for the
+    cascading selector and Research Map. Absence of the file yields an empty tree.
+    A medicine listed here is only ever 'verified' when it also has ingested,
+    integrity-checked trials; otherwise it is DISCOVERED / evidence-review-incomplete."""
+    path = DATASET_DIR / "taxonomy.json"
+    if not path.exists():
+        return {"health_areas": []}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def health_area_of(condition: str) -> str | None:
+    """Map a condition to its Health Area via the taxonomy (categorization only)."""
+    c = (condition or "").strip().lower()
+    for ha in taxonomy().get("health_areas", []):
+        for cond in ha.get("conditions", []):
+            if (cond.get("condition") or "").strip().lower() == c:
+                return ha["health_area"]
+    return None
+
+
+def taxonomy_medicines() -> set:
+    """Every medicine registered in the taxonomy (verified or incomplete)."""
+    out = set()
+    for ha in taxonomy().get("health_areas", []):
+        for cond in ha.get("conditions", []):
+            for cls in cond.get("drug_classes", []):
+                out.update(cls.get("medicines", []))
+    return out
+
+
+def taxonomy_conditions_for(medicine: str) -> list:
+    """The (health_area, condition, drug_class) paths a medicine appears under."""
+    m = (medicine or "").strip().lower()
+    paths = []
+    for ha in taxonomy().get("health_areas", []):
+        for cond in ha.get("conditions", []):
+            for cls in cond.get("drug_classes", []):
+                if any((x or "").strip().lower() == m for x in cls.get("medicines", [])):
+                    paths.append((ha["health_area"], cond["condition"], cls["drug_class"]))
+    return paths
+
+
 def source_by_id(source_id: str) -> dict:
     for s in sources():
         if s["source_id"] == source_id:

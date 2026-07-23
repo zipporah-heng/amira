@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { checkEvidence, type EvidenceResponse } from "../api";
-import { EvidenceSearch, type Filters, type ConditionEntry } from "../components/EvidenceSearch";
+import { EvidenceSearch, hormonalContextToApi, type Filters, type HealthAreaEntry } from "../components/EvidenceSearch";
 import { HormonalFocus } from "../components/HormonalFocus";
 import { WhatToNotice } from "../components/WhatToNotice";
 import { Representation } from "../components/Representation";
@@ -14,16 +14,17 @@ import { ContinueExploring } from "../components/ContinueExploring";
 
 // Digoxin leads: a striking, source-linked finding on the first, default view.
 const DEFAULTS: Filters = {
+  healthArea: "Cardiovascular",
   condition: "Heart failure",
   drugClass: "Cardiac glycoside",
   medicine: "Digoxin",
   lifeStage: "menopause_postmenopause",
-  hormoneTherapy: "Any",
+  hormonalContext: "Any",
 };
 
 const toApi = (f: Filters) => ({
   condition: f.condition, medicine: f.medicine,
-  life_stage: f.lifeStage, hormone_therapy: f.hormoneTherapy.toLowerCase().replace(/\s+/g, "_"),
+  life_stage: f.lifeStage, hormone_therapy: hormonalContextToApi(f.hormonalContext),
 });
 
 export function CheckEvidence() {
@@ -31,7 +32,7 @@ export function CheckEvidence() {
   const [report, setReport] = useState<EvidenceResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [catalog, setCatalog] = useState<ConditionEntry[]>([]);
+  const [catalog, setCatalog] = useState<HealthAreaEntry[]>([]);
   const [traceOpen, setTraceOpen] = useState(false);
 
   const run = async (f: Filters) => {
@@ -42,7 +43,7 @@ export function CheckEvidence() {
   };
 
   useEffect(() => {
-    fetch("/api/catalog").then((r) => r.json()).then((d) => setCatalog(d.conditions || [])).catch(() => setCatalog([]));
+    fetch("/api/catalog").then((r) => r.json()).then((d) => setCatalog(d.health_areas || [])).catch(() => setCatalog([]));
     run(DEFAULTS);
   }, []);
 
