@@ -83,7 +83,7 @@ def test_sotalol_serious_safety_classification_is_bounded():
     assert saf["state"] == clinical.SAF_SIGNIFICANT
     lib = {s["medicine"]: s for s in signals.library()}
     assert lib["Sotalol"]["signal_type"] == "Serious Safety"
-    assert lib["Sotalol"]["featured"] is False  # not auto-featured
+    assert lib["Sotalol"]["featured"] is True  # curated Featured story
     joined = " ".join(lib["Sotalol"]["cautions"]).lower()
     assert "not an individual treatment recommendation" in joined
 
@@ -143,11 +143,19 @@ def test_aspirin_no_formal_women_vs_men_conclusion():
         assert "women-only" in f["interpretation"].lower() or "only women" in f["interpretation"].lower()
 
 
-def test_aspirin_not_featured_and_not_in_library():
+def test_aspirin_in_library_but_not_featured():
+    """Aspirin's women-only outcome pattern qualifies for the Library, but it is NOT
+    promoted to Featured (Library inclusion and Featured promotion are separate)."""
     meds_featured = {s["medicine"] for s in signals.featured()}
-    meds_lib = {s["medicine"] for s in signals.library()}
+    lib = {s["medicine"]: s for s in signals.library()}
+    assert "Aspirin" in lib
+    assert lib["Aspirin"]["featured"] is False
     assert "Aspirin" not in meds_featured
-    assert "Aspirin" not in meds_lib
+    assert lib["Aspirin"]["signal_type"] == "Outcome Pattern / Safety"
+    # A women-only trial — the signal must not read as a women-versus-men comparison.
+    joined = " ".join(lib["Aspirin"]["cautions"]).lower()
+    assert "not a women-versus-men comparison" in joined
+    assert dataset.source_is_valid(lib["Aspirin"]["source_id"])[0]
 
 
 # --------------------------------------------------------------------------- #

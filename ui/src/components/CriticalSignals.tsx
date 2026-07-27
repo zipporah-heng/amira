@@ -23,8 +23,14 @@ function checkEvidenceHref(s: CriticalSignal): string {
 }
 
 function FeaturedCard({ s }: { s: CriticalSignal }) {
-  // Pink accent only for a genuine adverse signal (mortality / serious safety).
-  const tone = /mortal|safety/i.test(s.signal_type) ? "warn" : "calm";
+  // Pink accent only for a genuine adverse signal (mortality / serious safety);
+  // amber for a regulatory dosing action.
+  const tone = /mortal|serious safety/i.test(s.signal_type) ? "warn"
+    : /dosing|regulatory|label/i.test(s.signal_type) ? "amber" : "calm";
+  // Progressive disclosure: a concise "Why it matters" (not the full narrative) and
+  // the single most important caution. The complete evidence lives on Check Evidence.
+  const why = s.why_matters || s.clinical_significance;
+  const caution = s.cautions?.[0];
   return (
     <div className={`cs-card ${tone}`}>
       <div className="cs-card-head">
@@ -34,10 +40,8 @@ function FeaturedCard({ s }: { s: CriticalSignal }) {
       <div className="cs-med">{s.medicine}</div>
       <div className="cs-headline">{s.headline}</div>
       {s.summary && <div className="cs-summary">{s.summary}</div>}
-      {s.clinical_significance && <p className="cs-expl">{s.clinical_significance}</p>}
-      {s.cautions?.length > 0 && (
-        <div className="cs-cautions">{s.cautions.join(" · ")}</div>
-      )}
+      {why && <p className="cs-expl"><span className="cs-why-label">Why it matters:</span> {why}</p>}
+      {caution && <div className="cs-cautions">{caution}</div>}
       {s.source_url
         ? <a className="cs-link" href={s.source_url} target="_blank" rel="noopener noreferrer">View exact passage →</a>
         : <span className="cs-link muted">Source unresolved</span>}

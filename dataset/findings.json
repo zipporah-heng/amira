@@ -216,6 +216,7 @@
     "retrieved_at": "2026-07-20T18:42:00Z",
     "critical_signal": true,
     "featured_signal": true,
+    "featured_rank": 1,
     "why_it_matters": "A historical analysis found higher mortality among women assigned digoxin. This signal should not be missed, but it does not by itself determine treatment for an individual patient."
   },
   {
@@ -300,6 +301,8 @@
     "verifier": null,
     "retrieved_at": "2026-07-27T00:00:00Z",
     "critical_signal": true,
+    "featured_signal": true,
+    "featured_rank": 3,
     "signal_category": "serious_safety",
     "signal_headline": "Women experienced a higher rate of torsades de pointes during sotalol treatment",
     "signal_summary": "4.1% (33/799) women vs 1.9% (44/2336) men · P < 0.001 · ~3-fold higher adjusted odds in women",
@@ -333,6 +336,8 @@
     "verifier": null,
     "retrieved_at": "2026-07-27T00:00:00Z",
     "critical_signal": true,
+    "featured_signal": true,
+    "featured_rank": 4,
     "signal_category": "serious_safety",
     "signal_headline": "Pioglitazone was associated with a higher fracture incidence in women in PROactive",
     "signal_summary": "Women 5.1% (44/870) vs placebo 2.5% (23/905) · Men 1.7% vs 2.1% · mean follow-up 34.5 months",
@@ -366,6 +371,8 @@
     "verifier": null,
     "retrieved_at": "2026-07-27T00:00:00Z",
     "critical_signal": true,
+    "featured_signal": true,
+    "featured_rank": 2,
     "signal_category": "regulatory_dosing",
     "signal_headline": "FDA lowered recommended zolpidem doses for women after evidence of slower elimination and next-morning impairment risk",
     "signal_summary": "Immediate-release: 10 mg → 5 mg for women · Extended-release: 12.5 mg → 6.25 mg for women",
@@ -424,7 +431,13 @@
     "source_verified": true,
     "human_verified": false,
     "verifier": null,
-    "retrieved_at": "2026-07-27T00:00:00Z"
+    "retrieved_at": "2026-07-27T00:00:00Z",
+    "critical_signal": true,
+    "signal_category": "outcome_pattern",
+    "signal_headline": "In the Women's Health Study, low-dose aspirin reduced stroke risk but did not significantly reduce myocardial infarction or cardiovascular death",
+    "signal_summary": "Stroke RR 0.83 (95% CI 0.69-0.99) · Ischemic stroke RR 0.76 (0.63-0.93) · MI RR 1.02 (0.84-1.25) · CV death RR 0.95 (0.74-1.22) · GI bleeding requiring transfusion RR 1.40 (1.07-1.83)",
+    "why_it_matters": "The trial found different patterns across cardiovascular outcomes in women, alongside an increased risk of gastrointestinal bleeding requiring transfusion.",
+    "cautions": ["Women-only randomized trial (39,876 women)", "Not a women-versus-men comparison", "Does not show that aspirin works differently in women", "Not a treatment recommendation"]
   },
   {
     "finding_id": "F-SAF-WHS-001",

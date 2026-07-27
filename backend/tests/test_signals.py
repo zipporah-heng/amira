@@ -10,9 +10,9 @@ INCOMPLETE = {"Semaglutide", "Liraglutide", "Tirzepatide", "Apixaban", "Alendron
               "Risperidone", "Aripiprazole"}
 
 
-def test_digoxin_is_the_only_featured_signal_with_canonical_provenance():
+def test_digoxin_is_the_first_featured_signal_with_canonical_provenance():
     feats = signals.featured()
-    assert len(feats) == 1
+    assert len(feats) == 4  # Digoxin, Zolpidem, Sotalol, Pioglitazone
     s = feats[0]
     assert s["medicine"] == "Digoxin"
     assert s["signal_type"] == "Mortality"
@@ -61,32 +61,35 @@ def test_featured_promotion_rule_rejects_unverified_and_nonsignificant():
          "source_id": "SRC-PMID-12409542", "exact_passage": "x"}) is False
 
 
-def test_critical_library_contains_the_curated_critical_signals():
-    """After the four-cases ingestion the Library holds the digoxin mortality signal
-    plus the sotalol torsades, pioglitazone fracture, and zolpidem dosing signals —
-    and NOTHING else. Featured remains Digoxin-only (see the featured test)."""
+def test_critical_library_contains_all_five_curated_signals():
+    """The Library holds the five qualifying critical signals — digoxin mortality,
+    zolpidem dosing, sotalol torsades, pioglitazone fracture, and the aspirin
+    women-only outcome pattern — and NOTHING else."""
     lib = signals.library()
     meds = {s["medicine"] for s in lib}
-    assert meds == {"Digoxin", "Sotalol", "Pioglitazone", "Zolpidem"}
+    assert meds == {"Digoxin", "Zolpidem", "Sotalol", "Pioglitazone", "Aspirin"}
     by_med = {s["medicine"]: s for s in lib}
     assert by_med["Digoxin"]["signal_type"] == "Mortality"
     assert by_med["Sotalol"]["signal_type"] == "Serious Safety"
     assert by_med["Pioglitazone"]["signal_type"] == "Serious Safety"
-    assert by_med["Zolpidem"]["signal_type"] == "Dosing"
-    # Aspirin is a women-only trial (no between-sex comparison) — deliberately NOT a
-    # critical signal, so it stays in Evidence Coverage / Check Evidence only.
-    assert "Aspirin" not in meds
-    # Every library signal resolves to a verified canonical finding.
+    assert by_med["Zolpidem"]["signal_type"] == "Dosing / Regulatory Action"
+    assert by_med["Aspirin"]["signal_type"] == "Outcome Pattern / Safety"
+    # Every library signal resolves to a verified canonical finding (no second truth system).
     fids = {f["finding_id"] for f in dataset.findings() if dataset.verified_evidence(f)}
     for s in lib:
         assert s["finding_id"] in fids
 
 
-def test_featured_stays_digoxin_only_after_ingestion():
-    """Ingesting new significant signals must NOT auto-promote them to Featured.
-    Featured is separately controlled by the curated featured_signal flag."""
+def test_four_signals_featured_aspirin_library_only():
+    """Featured = the four curated stories (in rank order). Aspirin is Library-only:
+    present in the Library but featured=False. Featured is decided by the explicit
+    featured_signal flag, never by table presence or significance alone."""
     feats = signals.featured()
-    assert [s["medicine"] for s in feats] == ["Digoxin"]
+    assert [s["medicine"] for s in feats] == ["Digoxin", "Zolpidem", "Sotalol", "Pioglitazone"]
+    by_med = {s["medicine"]: s for s in signals.library()}
+    for med in ("Digoxin", "Zolpidem", "Sotalol", "Pioglitazone"):
+        assert by_med[med]["featured"] is True
+    assert by_med["Aspirin"]["featured"] is False
 
 
 def test_noncritical_findings_are_absent_from_critical_signals():
