@@ -88,3 +88,61 @@ describe("CriticalSignals", () => {
     expect(screen.getByText(/does not diagnose, prescribe, or recommend treatment/)).toBeInTheDocument();
   });
 });
+
+// --- Correction: four Featured cards + Aspirin Library-only ------------------ #
+const mk = (over: any) => ({ ...digoxin, signal_id: `SIG-${over.finding_id}-${over.featured ? "F" : "L"}`, ...over });
+const four = {
+  featured: [
+    mk({ medicine: "Digoxin", finding_id: "F-EFF-DIG-001", featured: true, featured_priority: 1 }),
+    mk({ medicine: "Zolpidem", finding_id: "F-SAF-ZOL-001", signal_type: "Dosing / Regulatory Action",
+         headline: "FDA lowered recommended zolpidem doses for women", featured: true, featured_priority: 2 }),
+    mk({ medicine: "Sotalol", finding_id: "F-SAF-SOT-001", signal_type: "Serious Safety",
+         headline: "Women experienced a higher rate of torsades de pointes during sotalol treatment",
+         featured: true, featured_priority: 3 }),
+    mk({ medicine: "Pioglitazone", finding_id: "F-SAF-PIO-001", signal_type: "Serious Safety",
+         headline: "Pioglitazone was associated with a higher fracture incidence in women in PROactive",
+         featured: true, featured_priority: 4 }),
+  ],
+  library: [
+    mk({ medicine: "Digoxin", finding_id: "F-EFF-DIG-001", featured: true }),
+    mk({ medicine: "Zolpidem", finding_id: "F-SAF-ZOL-001", featured: true }),
+    mk({ medicine: "Sotalol", finding_id: "F-SAF-SOT-001", featured: true }),
+    mk({ medicine: "Pioglitazone", finding_id: "F-SAF-PIO-001", featured: true }),
+    mk({ medicine: "Aspirin", finding_id: "F-EFF-WHS-002", signal_type: "Outcome Pattern / Safety",
+         headline: "In the Women's Health Study, low-dose aspirin reduced stroke risk but did not significantly reduce myocardial infarction or cardiovascular death",
+         source_url: "https://pubmed.ncbi.nlm.nih.gov/15753114/",
+         cautions: ["Women-only randomized trial (39,876 women)", "Not a women-versus-men comparison"],
+         featured: false, featured_priority: null }),
+  ],
+  signal_types: ["Mortality", "Serious Safety", "Dosing / Regulatory Action", "Outcome Pattern / Safety"],
+  evidence_statuses: ["Source Verified", "Human Review Pending", "Human Reviewed", "Evidence Review Incomplete"],
+  max_featured: 5,
+};
+
+describe("CriticalSignals — four Featured + Aspirin Library-only", () => {
+  it("renders exactly four Featured cards for Digoxin, Zolpidem, Sotalol, Pioglitazone", async () => {
+    mock(four);
+    const { container } = render(<CriticalSignals />);
+    await screen.findByText("Evidence That Changed the Story for Women");
+    const cards = container.querySelectorAll(".cs-card");
+    expect(cards.length).toBe(4);
+    const cardText = [...cards].map((c) => c.textContent).join(" ");
+    for (const med of ["Digoxin", "Zolpidem", "Sotalol", "Pioglitazone"]) {
+      expect(cardText).toContain(med);
+    }
+    // Aspirin is NOT a Featured card.
+    expect(cardText).not.toContain("Aspirin");
+  });
+
+  it("shows Aspirin in the Library table (not a Featured card)", async () => {
+    mock(four);
+    render(<CriticalSignals />);
+    await screen.findByText("Evidence That Changed the Story for Women");
+    const rows = [...document.querySelectorAll(".cs-table tbody tr")].map((r) => r.querySelector("b")?.textContent);
+    expect(rows).toContain("Aspirin");
+    // The Library holds all five medicines.
+    for (const med of ["Digoxin", "Zolpidem", "Sotalol", "Pioglitazone", "Aspirin"]) {
+      expect(rows).toContain(med);
+    }
+  });
+});

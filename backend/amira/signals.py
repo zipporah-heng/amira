@@ -20,8 +20,9 @@ from . import dataset
 MAX_FEATURED = 5
 
 # Signal-type vocabulary (clinically bounded; no sensational wording).
-SIGNAL_TYPES = ["Mortality", "Serious Safety", "Dosing", "Label Change",
-                "Effectiveness", "Outcome Difference", "Other Clinically Important Signal"]
+SIGNAL_TYPES = ["Mortality", "Serious Safety", "Dosing / Regulatory Action", "Label Change",
+                "Outcome Pattern / Safety", "Effectiveness", "Outcome Difference",
+                "Other Clinically Important Signal"]
 EVIDENCE_STATUSES = ["Source Verified", "Human Review Pending", "Human Reviewed",
                      "Evidence Review Incomplete"]
 
@@ -46,11 +47,13 @@ def _signal_type(f: dict) -> str:
     ep = (f.get("endpoint") or "").lower()
     sig = f.get("significance")
     cat = f.get("signal_category")
-    # A curated regulatory category names the signal type directly.
+    # A curated category names the signal type directly.
     if cat == "regulatory_dosing":
-        return "Dosing"
+        return "Dosing / Regulatory Action"
     if cat == "regulatory_label":
         return "Label Change"
+    if cat == "outcome_pattern":
+        return "Outcome Pattern / Safety"
     if ("death" in ep or "mortalit" in ep) and sig == "significant":
         return "Mortality"
     if f.get("finding_type") == "safety":
@@ -94,13 +97,14 @@ def _is_critical(f: dict) -> bool:
 
 def _featured_eligible(f: dict) -> bool:
     """Featured promotion rule (SEPARATELY controlled from Library inclusion):
-    verified provenance, a significant result, a resolvable source, an exact passage,
-    AND an explicit curated ``featured_signal`` flag. A finding is never auto-featured
-    merely because it is significant or was named in an ingestion request; Library
-    membership alone does not promote a signal to Featured."""
-    if not dataset.verified_evidence(f):
-        return False
-    if f.get("significance") != "significant":
+    the finding must be a verified CRITICAL signal (see ``_is_critical``), carry an
+    explicit curated ``featured_signal`` flag, resolve to an authoritative source, and
+    have an exact passage. Featured status is decided by the explicit flag — NEVER by
+    statistical significance alone and NEVER merely by Library/table presence. So a
+    curated regulatory or serious-safety signal (e.g. zolpidem dosing, pioglitazone
+    fracture) can be Featured, while a Library-only signal without the flag (e.g. the
+    aspirin women-only outcome pattern) is never auto-promoted."""
+    if not _is_critical(f):
         return False
     if not f.get("featured_signal"):
         return False
@@ -190,8 +194,13 @@ def library() -> List[dict]:
     deliberately excluded here — they remain in Evidence Coverage and the medicine's
     Check Evidence record. Incomplete medicines contribute none (no verified findings)."""
     findings = [f for f in dataset.findings() if _is_critical(f)]
-    # Featured-eligible first (significant), then the rest; stable within groups.
-    findings.sort(key=lambda f: (0 if _featured_eligible(f) else 1, f["finding_id"]))
+    # Featured-eligible first, ordered by the curated featured_rank (then finding_id);
+    # Library-only signals follow, ordered by finding_id.
+    findings.sort(key=lambda f: (
+        0 if _featured_eligible(f) else 1,
+        f.get("featured_rank", 999) if _featured_eligible(f) else 0,
+        f["finding_id"],
+    ))
     out = []
     fpri = 0
     for f in findings:

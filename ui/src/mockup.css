@@ -231,13 +231,21 @@
 
 /* --- Critical Signals --- */
 .critical-signals { margin-top: 8px; }
-.cs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-top: 12px; }
-.cs-card { border: 1px solid var(--border); border-radius: 16px; padding: 18px; background: var(--surface); border-left: 4px solid var(--lav-700); }
+/* Featured grid: up to 4 across on wide desktop, 2 on tablet, 1 on mobile; equal height. */
+.cs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 16px; margin-top: 12px; align-items: stretch; }
+@media (min-width: 1180px) { .cs-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 640px) and (max-width: 1179px) { .cs-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 639px) { .cs-grid { grid-template-columns: 1fr; } }
+.cs-card { border: 1px solid var(--border); border-radius: 16px; padding: 18px; background: var(--surface); border-left: 4px solid var(--lav-700); display: flex; flex-direction: column; }
+.cs-card .cs-link { margin-top: auto; }
 .cs-card.warn { border-left-color: #b23a63; background: #fdeef2; }
+.cs-card.amber { border-left-color: #b98900; background: #fff8ea; }
 .cs-card.calm { border-left-color: #1d6b47; }
 .cs-card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .cs-type { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; padding: 3px 9px; border-radius: 999px; background: var(--lav-50); color: var(--lav-700); }
 .cs-type.warn { background: #f6c9d6; color: #b23a63; }
+.cs-type.amber { background: #f7e4b5; color: #8a5a00; }
+.cs-why-label { font-weight: 700; color: var(--ink-2); }
 .cs-status { font-size: 11px; font-weight: 700; color: var(--ink-3); background: var(--surface-2); padding: 3px 9px; border-radius: 999px; }
 .cs-med { font-size: 13px; font-weight: 700; color: var(--ink-2); margin-top: 12px; }
 .cs-headline { font-size: 19px; font-weight: 750; color: var(--ink); line-height: 1.25; margin-top: 4px; }
