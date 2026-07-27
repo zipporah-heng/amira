@@ -12,6 +12,16 @@ function uniq(xs: (string | null | undefined)[]): string[] {
   return [...new Set(xs.filter((x): x is string => !!x))].sort();
 }
 
+/** Deep link into the medicine's full Check Evidence record with context selected. */
+function checkEvidenceHref(s: CriticalSignal): string {
+  const p = new URLSearchParams();
+  if (s.health_area) p.set("healthArea", s.health_area);
+  if (s.condition) p.set("condition", s.condition);
+  if (s.drug_class) p.set("drugClass", s.drug_class);
+  p.set("medicine", s.medicine);
+  return `/amira/check-evidence?${p.toString()}`;
+}
+
 function FeaturedCard({ s }: { s: CriticalSignal }) {
   // Pink accent only for a genuine adverse signal (mortality / serious safety).
   const tone = /mortal|safety/i.test(s.signal_type) ? "warn" : "calm";
@@ -128,7 +138,10 @@ export function CriticalSignals() {
               <tr><td colSpan={8} style={{ color: "var(--ink-3)", padding: 16 }}>No signals match these filters.</td></tr>
             ) : filtered.map((s) => (
               <tr key={s.signal_id}>
-                <td><b>{s.medicine}</b></td>
+                <td>
+                  <b>{s.medicine}</b>
+                  <div><a className="cs-viewfull" href={checkEvidenceHref(s)}>View full evidence →</a></div>
+                </td>
                 <td>{s.health_area}</td>
                 <td>{s.condition}</td>
                 <td>{s.headline}</td>

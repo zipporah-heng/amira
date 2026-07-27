@@ -21,6 +21,14 @@ export function Methodology() {
         evidence, then shows what the research did and did not report.
       </p>
 
+      <div className="method-positioning">
+        <p>AMIRA is designed as a trusted women's evidence layer for clinical, research, and
+          life-sciences platforms.</p>
+        <p>AMIRA reports evidence coverage within defined source sets, guidelines, conditions, and
+          review dates. It does not claim global completeness, is not FDA-approved, and does not
+          provide autonomous medical guidance.</p>
+      </div>
+
       <HormonalFocus />
 
       <MethodologyFlow />
