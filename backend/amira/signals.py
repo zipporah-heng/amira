@@ -61,15 +61,21 @@ def _evidence_status(f: dict) -> str:
     return "Human Review Pending"
 
 
-def _is_signal_finding(f: dict) -> bool:
-    """A finding surfaces as a critical signal only when it is a VERIFIED,
-    trial-scoped, genuinely sex-specific finding (a reported estimate or a formal
-    between-sex comparison). Class-level and unverified findings are excluded."""
+def _is_critical(f: dict) -> bool:
+    """A finding is a CRITICAL signal only when it is a VERIFIED, trial-scoped,
+    STATISTICALLY SIGNIFICANT sex-specific finding — a mortality / serious-safety /
+    clinically-important effectiveness or outcome difference that materially changes
+    how a medicine is understood for women.
+
+    Explicitly NOT critical (they stay in Evidence Coverage + Check Evidence, never
+    here): a `no_significant_difference` result, a `not_tested` estimate, a women-only
+    analysis without a significant sex difference, and class-level or unverified
+    findings. A sex-specific result is not automatically a critical signal."""
     if not f.get("scope", "").startswith("trial:"):
         return False
     if not dataset.verified_evidence(f):
         return False
-    return bool(f.get("female_estimate") or f.get("comparison_p") or f.get("comparison_test"))
+    return f.get("significance") == "significant"
 
 
 def _featured_eligible(f: dict) -> bool:
@@ -147,10 +153,12 @@ def _signal(f: dict, featured: bool, priority: int) -> dict:
 
 
 def library() -> List[dict]:
-    """Every verified, trial-scoped, sex-specific finding as a critical-signal row.
-    This is the scalable intelligence library. Incomplete medicines contribute none
-    (they have no verified findings)."""
-    findings = [f for f in dataset.findings() if _is_signal_finding(f)]
+    """The Critical Evidence Library: ONLY findings meeting the high critical-
+    importance threshold (see `_is_critical`). Non-critical verified findings
+    (no-significant-difference, not-tested, women-only-without-difference) are
+    deliberately excluded here — they remain in Evidence Coverage and the medicine's
+    Check Evidence record. Incomplete medicines contribute none (no verified findings)."""
+    findings = [f for f in dataset.findings() if _is_critical(f)]
     # Featured-eligible first (significant), then the rest; stable within groups.
     findings.sort(key=lambda f: (0 if _featured_eligible(f) else 1, f["finding_id"]))
     out = []

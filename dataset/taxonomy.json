@@ -8,7 +8,14 @@
         {
           "condition": "Cardiovascular disease prevention",
           "drug_classes": [
-            { "drug_class": "Statin", "medicines": ["Rosuvastatin", "Atorvastatin"] }
+            { "drug_class": "Statin", "medicines": ["Rosuvastatin", "Atorvastatin"] },
+            { "drug_class": "Antiplatelet", "medicines": ["Aspirin"] }
+          ]
+        },
+        {
+          "condition": "Heart rhythm disorders",
+          "drug_classes": [
+            { "drug_class": "Antiarrhythmic", "medicines": ["Sotalol"] }
           ]
         },
         {
@@ -39,7 +46,8 @@
           "condition": "Type 2 diabetes",
           "drug_classes": [
             { "drug_class": "GLP-1 receptor agonist", "medicines": ["Semaglutide", "Liraglutide"] },
-            { "drug_class": "Dual GIP/GLP-1 receptor agonist", "medicines": ["Tirzepatide"] }
+            { "drug_class": "Dual GIP/GLP-1 receptor agonist", "medicines": ["Tirzepatide"] },
+            { "drug_class": "Thiazolidinedione", "medicines": ["Pioglitazone"] }
           ]
         },
         {
@@ -106,6 +114,17 @@
           "condition": "Irritability associated with autism",
           "drug_classes": [
             { "drug_class": "Atypical antipsychotic", "medicines": ["Risperidone", "Aripiprazole"] }
+          ]
+        }
+      ]
+    },
+    {
+      "health_area": "Sleep Health",
+      "conditions": [
+        {
+          "condition": "Insomnia",
+          "drug_classes": [
+            { "drug_class": "Sedative-hypnotic", "medicines": ["Zolpidem"] }
           ]
         }
       ]

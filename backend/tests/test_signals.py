@@ -61,6 +61,32 @@ def test_featured_promotion_rule_rejects_unverified_and_nonsignificant():
          "source_id": "SRC-PMID-12409542", "exact_passage": "x"}) is False
 
 
+def test_critical_library_contains_only_the_digoxin_mortality_signal():
+    lib = signals.library()
+    # Exactly one critical signal — the Digoxin mortality finding.
+    assert [s["finding_id"] for s in lib] == ["F-EFF-DIG-001"]
+    assert lib[0]["medicine"] == "Digoxin" and lib[0]["signal_type"] == "Mortality"
+
+
+def test_noncritical_findings_are_absent_from_critical_signals():
+    # No-significant-difference / not-tested / women-only findings must NOT appear
+    # as critical signals (they remain in Evidence Coverage / Check Evidence).
+    excluded = {"F-EFF-DAPA-001", "F-EFF-DEC-001", "F-EFF-HAY-001", "F-EFF-JUP-001",
+                "F-EFF-CLASS-001", "F-SAF-CLASS-001"}
+    lib_fids = {s["finding_id"] for s in signals.library()}
+    assert not (lib_fids & excluded)
+    lib_meds = {s["medicine"] for s in signals.library()}
+    # Dapagliflozin / Valsartan / Rosuvastatin have no critical signal.
+    assert not ({"Dapagliflozin", "Valsartan", "Rosuvastatin"} & lib_meds)
+
+
+def test_noncritical_findings_still_exist_in_the_canonical_corpus():
+    # Cleanup must NOT delete evidence — the records remain in findings.json.
+    fids = {f["finding_id"] for f in dataset.findings()}
+    for fid in ("F-EFF-DAPA-001", "F-EFF-DEC-001", "F-EFF-HAY-001", "F-EFF-JUP-001"):
+        assert fid in fids
+
+
 def test_library_rows_carry_filterable_fields():
     for s in signals.library():
         for k in ("health_area", "condition", "signal_type", "life_stage", "evidence_status"):

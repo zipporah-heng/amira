@@ -10,7 +10,7 @@ client = TestClient(main.app)
 
 EXPECTED_HEALTH_AREAS = {
     "Cardiovascular", "Metabolic Health", "Bone Health",
-    "Hormone-related Cancer", "Neurology", "Neurodevelopmental Health",
+    "Hormone-related Cancer", "Neurology", "Neurodevelopmental Health", "Sleep Health",
 }
 # Medicines newly registered by the taxonomy that have NO ingested trials yet.
 NEW_MEDICINES = [
@@ -18,6 +18,8 @@ NEW_MEDICINES = [
     "Denosumab", "Tamoxifen", "Anastrozole", "Carbidopa/Levodopa", "Lecanemab",
     "Donanemab", "Methylphenidate", "Lisdexamfetamine", "Atomoxetine",
     "Risperidone", "Aripiprazole",
+    # Added this mission (Phase 4).
+    "Zolpidem", "Sotalol", "Pioglitazone", "Aspirin",
 ]
 
 
@@ -49,6 +51,22 @@ def test_new_medicines_have_no_trials_and_are_not_verified():
     for m in NEW_MEDICINES:
         assert not clinical.medicine_ingestion_complete(m)
         assert not any(t["medicine"] == m for t in dataset.trials())
+
+
+def test_phase4_new_medicines_registered_incomplete_in_expected_paths():
+    cat = client.get("/api/catalog").json()
+    rows = _all_meds(cat)
+    def path(med):
+        return next(((ha, c, cl) for (ha, c, cl, m, _) in rows if m == med), None)
+    def status(med):
+        return next((s for (_, _, _, m, s) in rows if m == med), None)
+    assert path("Zolpidem") == ("Sleep Health", "Insomnia", "Sedative-hypnotic")
+    assert path("Sotalol") == ("Cardiovascular", "Heart rhythm disorders", "Antiarrhythmic")
+    assert path("Pioglitazone") == ("Metabolic Health", "Type 2 diabetes", "Thiazolidinedione")
+    assert path("Aspirin") == ("Cardiovascular", "Cardiovascular disease prevention", "Antiplatelet")
+    for med in ("Zolpidem", "Sotalol", "Pioglitazone", "Aspirin"):
+        assert status(med) == "incomplete"
+        assert not clinical.medicine_ingestion_complete(med)
 
 
 def test_autism_condition_uses_evidence_accurate_label():
