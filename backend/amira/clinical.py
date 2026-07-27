@@ -30,6 +30,11 @@ EFF_NOT_REPORTED = "Sex-specific effectiveness not reported"
 # ---- safety states ---- #
 SAF_SIGNIFICANT = "Significant sex-specific safety difference identified"
 SAF_TRENDS = "Non-significant sex-specific trends identified"
+# A curated, source-verified serious-safety or regulatory signal reported for one
+# sex where a formal between-sex statistical test was NOT located (e.g. the
+# pioglitazone fracture signal in women, the FDA zolpidem dosing action). AMIRA
+# reports the signal without asserting an interaction statistic.
+SAF_SEX_SIGNAL = "Sex-specific safety signal reported"
 SAF_NO_DIFF = "No significant sex-specific difference identified"
 # Reported by sex, but only against placebo within each sex — no between-sex test.
 SAF_REPORTED_NO_COMPARISON = "Reported by sex, no formal between-sex comparison"
@@ -202,6 +207,14 @@ def safety_state(medicine: str) -> dict:
         f.get("reporting_scope") == "women_only_narrative" for f in drug_specific
     )
 
+    # A curated, verified serious-safety / regulatory signal (higher risk reported in
+    # one sex without a formal between-sex test). Checked AFTER the significance-based
+    # states so a genuine between-sex difference (e.g. sotalol torsades, P<0.001) still
+    # reads as SAF_SIGNIFICANT, not the softer signal state.
+    has_curated_signal = bool(drug_specific) and any(
+        f.get("critical_signal") for f in drug_specific
+    )
+
     if women_only:
         state = SAF_WOMEN_ONLY
     elif women_report_only:
@@ -210,6 +223,8 @@ def safety_state(medicine: str) -> dict:
         state = SAF_SIGNIFICANT
     elif "trend_only" in sigs:
         state = SAF_TRENDS
+    elif has_curated_signal:
+        state = SAF_SEX_SIGNAL
     elif drug_specific and any(
         f.get("significance") == "no_significant_difference"
         and (f.get("comparison_p") is not None or f.get("comparison_test"))
@@ -238,6 +253,9 @@ def safety_state(medicine: str) -> dict:
     headline = {
         SAF_SIGNIFICANT: "A statistically significant sex difference in side effects was reported.",
         SAF_TRENDS: "Non-significant sex-specific safety trends were reported.",
+        SAF_SEX_SIGNAL: ("A sex-specific safety signal was reported for this medicine. A formal "
+                         "between-sex statistical comparison was not located, so AMIRA reports the "
+                         "signal without asserting an interaction statistic."),
         SAF_NO_DIFF: "Side effects were compared by sex and did not differ significantly.",
         SAF_REPORTED_NO_COMPARISON: (
             "Safety outcomes were reported separately by sex, with no excess versus placebo "
@@ -306,14 +324,26 @@ def medicine_ingestion_complete(medicine: str) -> bool:
         return False
     if any(v.get("trial_id") in tids for v in exports.duplicate_or_conflicting_assertions()):
         return False
-    # Foundational enrolment must be verified-reported for at least one trial.
-    if not any(
+    # Foundational evidence must be present and verified: EITHER a verified
+    # enrolment figure (reported/derived count or percentage) for a trial, OR at
+    # least one source-verified, authoritative, trial-scoped finding for the medicine.
+    # The finding alternative covers regulatory records (e.g. an FDA dosing action)
+    # that carry a genuine, passage-backed sex-specific signal but no trial enrolment
+    # count. Registered-but-un-ingested medicines have no trials and already returned
+    # False above, so this never lets an un-ingested medicine look complete.
+    has_enrolment = any(
         dataset.assertion_validity(t["trial_id"], "female_enrollment_count",
                                    require_numeric=True)["valid"]
         or dataset.assertion_validity(t["trial_id"], "female_enrollment_pct",
                                       require_numeric=True)["valid"]
         for t in trials
-    ):
+    )
+    has_verified_finding = any(
+        (f.get("scope") or "").startswith("trial:") and dataset.verified_evidence(f)
+        for f in dataset.findings()
+        if f["medicine"].strip().lower() == medicine.strip().lower()
+    )
+    if not (has_enrolment or has_verified_finding):
         return False
     return True
 

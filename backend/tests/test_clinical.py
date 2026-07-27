@@ -25,9 +25,14 @@ def _check(**kw):
 # Study identification
 # --------------------------------------------------------------------------- #
 def test_all_included_studies_are_randomized_and_phase_is_not_inferred():
+    # Randomized trials plus two non-trial evidence types (a pooled clinical-trial
+    # analysis and a regulatory safety communication). Study phase is never inferred.
+    allowed_types = {"Randomized Controlled Trial", "Pooled analysis of clinical trials",
+                     "Regulatory safety communication"}
+    allowed_phases = {"Phase 3", "Phase 4", "Not reported", "Not applicable"}
     for t in dataset.trials():
-        assert t["study_type"] == "Randomized Controlled Trial", t["trial_id"]
-        assert t["study_phase"] in {"Phase 3", "Phase 4", "Not reported"}, t["trial_id"]
+        assert t["study_type"] in allowed_types, t["trial_id"]
+        assert t["study_phase"] in allowed_phases, t["trial_id"]
     hayoz = next(t for t in dataset.trials() if t["trial_id"] == "HAYOZ-2012")
     assert hayoz["study_phase"] == "Not reported"
 
@@ -112,7 +117,8 @@ def test_interaction_p_is_parsed_and_surfaced():
 # --------------------------------------------------------------------------- #
 def test_no_age_to_menopause_inference_across_all_trials():
     for t in dataset.trials():
-        assert t.get("minimum_age")  # trials do restrict by age
+        # A menopause "yes" is only ever backed by an explicit postmenopausal passage —
+        # never inferred from an age eligibility criterion (which some records omit).
         v, _, assertion = dataset.assertion_value(t["trial_id"], "menopause_status_reported")
         if v == "yes":
             assert "postmenopausal" in assertion["exact_passage"].lower()
@@ -207,7 +213,7 @@ def test_every_finding_links_to_a_real_source():
         assert s["url"].startswith("https://")
         assert any(d in s["url"] for d in
                    ("clinicaltrials.gov", "pubmed.ncbi.nlm.nih.gov", "ncbi.nlm.nih.gov",
-                    "nature.com"))
+                    "nature.com", "fda.gov", "dailymed.nlm.nih.gov"))
         assert f["exact_passage"].strip()
         assert f["human_verified"] is False  # nothing signed off yet
 

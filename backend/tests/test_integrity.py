@@ -46,7 +46,7 @@ def test_maturity_level_is_never_stored_in_source_data():
 
 def test_source_urls_are_real_registries_or_literature():
     allowed = ("clinicaltrials.gov", "pubmed.ncbi.nlm.nih.gov", "ncbi.nlm.nih.gov",
-               "nature.com")
+               "nature.com", "fda.gov", "dailymed.nlm.nih.gov")
     for s in dataset.sources():
         assert any(d in s["url"] for d in allowed), s["url"]
 
@@ -78,8 +78,11 @@ def test_participant_double_count_prevention():
     """Each trial contributes its participants exactly once."""
     trials = dataset.trials()
     totals = engine.aggregate_participants([t["trial_id"] for t in trials])
+    # Only verified, reported total-enrollment values contribute (a regulatory record
+    # with no enrollment count contributes nothing and must not raise).
     expected = sum(
-        dataset.assertion_value(t["trial_id"], "total_enrollment")[0] for t in trials
+        int(v) for t in trials
+        if (v := dataset.total_enrollment_projection(t["trial_id"])["value"]) is not None
     )
     assert totals["participants_total"] == expected
     # And the derived female estimate never exceeds total participants.

@@ -232,6 +232,9 @@ AUTHORITATIVE_HOSTS = frozenset({
     "pmc.ncbi.nlm.nih.gov",
     "nejm.org", "www.nejm.org",
     "nature.com", "www.nature.com",
+    # U.S. regulatory sources (FDA drug-safety communications; DailyMed labels).
+    "fda.gov", "www.fda.gov",
+    "dailymed.nlm.nih.gov",
 })
 # Approved subdomain suffixes (exact-suffix match on the parsed hostname only).
 APPROVED_HOST_SUFFIXES = (".ncbi.nlm.nih.gov",)

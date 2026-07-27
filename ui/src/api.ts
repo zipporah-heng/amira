@@ -284,6 +284,7 @@ export interface StudySelection {
   records_excluded: number;
   records_deferred: number;
   unique_phase3_rcts_identified: number;
+  regulatory_records_included?: number;
   trial_registry_records_included: number;
   randomized_studies_in_corpus: number;
   randomized_studies_for_selected_medicine: number;
@@ -628,6 +629,7 @@ export interface CriticalSignal {
   hormonal_context: string;
   human_verified: boolean;
   cautions: string[];
+  why_matters?: string | null;
   featured: boolean;
   featured_priority: number | null;
 }

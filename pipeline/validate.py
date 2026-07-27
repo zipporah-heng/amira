@@ -24,6 +24,8 @@ ALLOWED_HOSTS = (
     "ncbi.nlm.nih.gov",
     "nejm.org",
     "nature.com",
+    "fda.gov",
+    "dailymed.nlm.nih.gov",
 )
 VALID_BASES = {"reported", "derived", "not_reported", "not_located"}
 SYNTHETIC_MARKERS = ("example.org", "DEMO DATA", "amira_demo_evidence", "AMIRA-DEMO-")

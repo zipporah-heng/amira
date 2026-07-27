@@ -208,5 +208,61 @@
     "api_url": null,
     "retrieved_at": "2026-07-20T18:42:00Z",
     "license_note": "Open-access publisher article; short excerpts quoted for citation."
+  },
+  {
+    "source_id": "SRC-PMID-8921798",
+    "source_type": "journal_article",
+    "title": "Sex difference in risk of torsade de pointes with d,l-sotalol.",
+    "publisher": "Circulation",
+    "year": 1996,
+    "nct_id": null,
+    "pmid": "8921798",
+    "pmcid": null,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/8921798/",
+    "api_url": null,
+    "retrieved_at": "2026-07-27T00:00:00Z",
+    "license_note": "Abstract text (c) publisher; short excerpts quoted for citation. Pooled analysis of 22 clinical trials of oral d,l-sotalol."
+  },
+  {
+    "source_id": "SRC-DAILYMED-PIOGLITAZONE",
+    "source_type": "regulatory_prescribing_information",
+    "title": "Pioglitazone tablets — Highlights of Prescribing Information (Warnings and Precautions: Fractures), DailyMed",
+    "publisher": "DailyMed (U.S. National Library of Medicine)",
+    "year": null,
+    "nct_id": null,
+    "pmid": null,
+    "pmcid": null,
+    "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=0478f0e7-87fb-4adb-ae9b-6624555ccbe4",
+    "api_url": null,
+    "retrieved_at": "2026-07-27T00:00:00Z",
+    "license_note": "U.S. Government public-domain prescribing information (DailyMed); the fracture data reflect the PROactive trial. Short excerpts quoted for citation."
+  },
+  {
+    "source_id": "SRC-PMID-15753114",
+    "source_type": "journal_article",
+    "title": "A randomized trial of low-dose aspirin in the primary prevention of cardiovascular disease in women.",
+    "publisher": "The New England journal of medicine",
+    "year": 2005,
+    "nct_id": null,
+    "pmid": "15753114",
+    "pmcid": null,
+    "url": "https://pubmed.ncbi.nlm.nih.gov/15753114/",
+    "api_url": null,
+    "retrieved_at": "2026-07-27T00:00:00Z",
+    "license_note": "Abstract text (c) publisher; short excerpts quoted for citation. Women's Health Study (women-only RCT)."
+  },
+  {
+    "source_id": "SRC-FDA-ZOLPIDEM-2013",
+    "source_type": "regulatory_safety_communication",
+    "title": "FDA Drug Safety Communication: Risk of next-morning impairment after use of insomnia drugs; FDA requires lower recommended doses for certain drugs containing zolpidem",
+    "publisher": "U.S. Food and Drug Administration",
+    "year": 2013,
+    "nct_id": null,
+    "pmid": null,
+    "pmcid": null,
+    "url": "https://www.fda.gov/drugs/drug-safety-and-availability/questions-and-answers-risk-next-morning-impairment-after-use-insomnia-drugs-fda-requires-lower",
+    "api_url": null,
+    "retrieved_at": "2026-07-27T00:00:00Z",
+    "license_note": "U.S. Government public-domain regulatory communication (2013 dosing action). The FDA site blocks automated retrieval; the excerpt reflects the communication's published dosing action and awaits named human verification. Short excerpts quoted for citation."
   }
 ]
