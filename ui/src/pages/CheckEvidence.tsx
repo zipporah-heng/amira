@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { checkEvidence, getCriticalSignals, type CriticalSignal, type EvidenceResponse } from "../api";
 import { EvidenceSearch, hormonalContextToApi, type Filters, type HealthAreaEntry } from "../components/EvidenceSearch";
 import { HormonalFocus } from "../components/HormonalFocus";
-import { CriticalSignalPanel, EvidenceScope, WhatRemainsUnknown } from "../components/EvidenceClarity";
+import { EvidenceScope, WhatRemainsUnknown } from "../components/EvidenceClarity";
 import { WhatToNotice } from "../components/WhatToNotice";
 import { Representation } from "../components/Representation";
 import { AiFound } from "../components/AiFound";
@@ -102,9 +102,10 @@ export function CheckEvidence() {
 
       {report && report.supported && report.banner && report.totals && (
         <>
-          {/* Verified Critical Signal (compact) + Why This Matters — only when one exists. */}
-          <CriticalSignalPanel signal={signals.find((s) => s.medicine === report.banner!.medicine) || null} />
-          <WhatToNotice report={report} />
+          {/* "What should I notice?" is the SINGLE primary presentation of the signal.
+              When a verified Critical Signal exists for this medicine it is consolidated
+              INTO this card (no separate standalone panel above the selector). */}
+          <WhatToNotice report={report} signal={signals.find((s) => s.medicine === report.banner!.medicine) || null} />
           <EvidenceScope report={report} />
           <Representation report={report} />
           <WhatRemainsUnknown report={report} />

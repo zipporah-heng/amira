@@ -74,6 +74,7 @@ def test_study_selection_counts_reconcile():
     sel = _check()["study_selection"]
     assert sel["evidence_sources_included"] == (
         sel["unique_phase3_rcts_identified"] + sel["publications_included"]
+        + sel.get("regulatory_records_included", 0)
     )
     assert sel["rcts_for_selected_medicine"] == len(_check()["trials"])
     assert sel["candidate_records_screened"] >= sel["evidence_sources_included"]

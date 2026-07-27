@@ -12,15 +12,19 @@ EXPECTED_HEALTH_AREAS = {
     "Cardiovascular", "Metabolic Health", "Bone Health",
     "Hormone-related Cancer", "Neurology", "Neurodevelopmental Health", "Sleep Health",
 }
-# Medicines newly registered by the taxonomy that have NO ingested trials yet.
+# Medicines registered by the taxonomy that have NO ingested trials yet (still
+# DISCOVERED / evidence-review-incomplete). Zolpidem, Sotalol, Pioglitazone and
+# Aspirin were ingested in the four-cases mission and are now VERIFIED, so they are
+# no longer in this list.
 NEW_MEDICINES = [
     "Apixaban", "Semaglutide", "Liraglutide", "Tirzepatide", "Alendronate",
     "Denosumab", "Tamoxifen", "Anastrozole", "Carbidopa/Levodopa", "Lecanemab",
     "Donanemab", "Methylphenidate", "Lisdexamfetamine", "Atomoxetine",
     "Risperidone", "Aripiprazole",
-    # Added this mission (Phase 4).
-    "Zolpidem", "Sotalol", "Pioglitazone", "Aspirin",
 ]
+
+# Ingested in the four-cases mission (now verified / evidence review complete).
+INGESTED_FOUR_CASES = ["Zolpidem", "Sotalol", "Pioglitazone", "Aspirin"]
 
 
 def _all_meds(cat):
@@ -39,9 +43,12 @@ def test_cardiovascular_verified_status_unchanged():
     rows = _all_meds(cat)
     verified = {m for (_, _, _, m, s) in rows if s == "verified"}
     incomplete = {m for (_, _, _, m, s) in rows if s == "incomplete"}
-    # Exactly the four trial-backed CV medicines are verified.
-    assert verified == {"Rosuvastatin", "Dapagliflozin", "Digoxin", "Valsartan"}
-    # Atorvastatin (not_located enrolment) and every newly registered medicine are incomplete.
+    # The four frozen CV/HF medicines PLUS the four ingested four-cases medicines are
+    # verified. Frozen CV science (Rosuvastatin/Dapagliflozin/Digoxin/Valsartan) is
+    # unchanged; the new verified medicines are the four this mission ingested.
+    assert verified == {"Rosuvastatin", "Dapagliflozin", "Digoxin", "Valsartan",
+                        "Aspirin", "Sotalol", "Pioglitazone", "Zolpidem"}
+    # Atorvastatin (not_located enrolment) and every still-un-ingested medicine remain incomplete.
     assert "Atorvastatin" in incomplete
     for m in NEW_MEDICINES:
         assert m in incomplete, f"{m} should be incomplete"
@@ -53,7 +60,9 @@ def test_new_medicines_have_no_trials_and_are_not_verified():
         assert not any(t["medicine"] == m for t in dataset.trials())
 
 
-def test_phase4_new_medicines_registered_incomplete_in_expected_paths():
+def test_four_cases_medicines_ingested_verified_in_expected_paths():
+    """The four-cases mission ingested Zolpidem/Sotalol/Pioglitazone/Aspirin: each now
+    sits at its taxonomy path AND is verified (evidence review complete)."""
     cat = client.get("/api/catalog").json()
     rows = _all_meds(cat)
     def path(med):
@@ -64,9 +73,9 @@ def test_phase4_new_medicines_registered_incomplete_in_expected_paths():
     assert path("Sotalol") == ("Cardiovascular", "Heart rhythm disorders", "Antiarrhythmic")
     assert path("Pioglitazone") == ("Metabolic Health", "Type 2 diabetes", "Thiazolidinedione")
     assert path("Aspirin") == ("Cardiovascular", "Cardiovascular disease prevention", "Antiplatelet")
-    for med in ("Zolpidem", "Sotalol", "Pioglitazone", "Aspirin"):
-        assert status(med) == "incomplete"
-        assert not clinical.medicine_ingestion_complete(med)
+    for med in INGESTED_FOUR_CASES:
+        assert status(med) == "verified"
+        assert clinical.medicine_ingestion_complete(med)
 
 
 def test_autism_condition_uses_evidence_accurate_label():
@@ -94,7 +103,10 @@ def test_new_medicines_never_enter_verified_medicines():
 
 def test_trials_carry_health_area_for_research_map():
     trials = client.get("/api/trials").json()["trials"]
-    assert {t["health_area"] for t in trials} == {"Cardiovascular"}
+    # Cardiovascular (statins, HF, hypertension, sotalol, aspirin) plus the two new
+    # health areas populated by the four-cases ingestion.
+    assert {t["health_area"] for t in trials} == {
+        "Cardiovascular", "Metabolic Health", "Sleep Health"}
 
 
 def test_frozen_cardiovascular_outputs_unchanged():

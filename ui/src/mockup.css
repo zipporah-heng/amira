@@ -36,6 +36,17 @@
 .notice-finding { background: #fdeef2; border: 1px solid #f3d3de; border-radius: 14px; padding: 18px; display: flex; gap: 14px; }
 .nf-icon { width: 36px; height: 36px; border-radius: 10px; background: #f6c9d6; color: #b23a63; display: grid; place-items: center; font-size: 18px; flex-shrink: 0; }
 .nf-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #b23a63; }
+/* Consolidated signal badges (Mortality Signal / Human Review Pending / Historical Post Hoc Signal) */
+.nf-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+.nf-badge { font-size: 10.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 999px; border: 1px solid transparent; }
+.nf-badge.warn { background: #f6c9d6; color: #9c2b50; }
+.nf-badge.amber { background: #f7e4b5; color: #8a5a00; }
+.nf-badge.status { background: #eef1f6; color: #4a5568; border-color: #dbe1ea; }
+.nf-badge.muted { background: #f3eefc; color: #6b4bab; border-color: #e2d6f6; }
+.nf-why { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.08); }
+.nf-why h3 { font-size: 15px; font-weight: 700; color: var(--ink); }
+.nf-why p { font-size: 13.5px; color: var(--ink-2); margin-top: 6px; line-height: 1.5; }
 .nf-headline { font-size: 22px; font-weight: 750; color: var(--ink); line-height: 1.22; margin-top: 8px; }
 .nf-stats { font-size: 15px; color: var(--ink-2); margin-top: 12px; font-weight: 600; }
 .nf-caveat { font-size: 13px; color: var(--ink-3); margin-top: 12px; line-height: 1.5; }

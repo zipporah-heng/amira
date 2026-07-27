@@ -1,41 +1,13 @@
-import type { CriticalSignal, EvidenceResponse } from "../api";
+import type { EvidenceResponse } from "../api";
 
 /** Compact Check Evidence additions (progressive disclosure, no dense dashboard):
- *  - CriticalSignalPanel: a verified Critical Signal card + "Why This Matters
- *    Clinically" (rendered ONLY when a verified critical signal exists).
  *  - EvidenceScope: what AMIRA actually reviewed — bounded, never a global
  *    completeness claim, numbers only from the real report.
- *  - WhatRemainsUnknown: canonical evidence-state gaps. */
-
-export function CriticalSignalPanel({ signal }: { signal: CriticalSignal | null }) {
-  if (!signal) return null;
-  const isMortality = /mortal/i.test(signal.signal_type);
-  const why = isMortality
-    ? `A historical analysis found higher mortality among women assigned ${signal.medicine.toLowerCase()}. This signal should not be missed, but it does not by itself determine treatment for an individual patient.`
-    : `A clinically important sex-specific difference was reported for ${signal.medicine.toLowerCase()}. This signal should not be missed, but it does not by itself determine treatment for an individual patient.`;
-  return (
-    <section className="card cs-check" id="critical-signal" style={{ marginTop: 18 }}>
-      <div className="cs-check-flag warn">
-        <span className="cs-type warn">{signal.signal_type} signal</span>
-        <span className="cs-status">{signal.evidence_status}</span>
-      </div>
-      <h2 className="cs-check-headline">{signal.headline}</h2>
-      {signal.summary && <div className="cs-check-summary">{signal.summary}</div>}
-      {signal.cautions?.length > 0 && <div className="cs-cautions">{signal.cautions.join(" · ")}</div>}
-      {signal.source_url && (
-        <a className="cs-link" href={signal.source_url} target="_blank" rel="noopener noreferrer">
-          View exact passage →
-        </a>
-      )}
-      <div className="cs-why-clinical">
-        <h3>Why This Matters Clinically</h3>
-        <p>{why}</p>
-        <p>Clinicians should consider this evidence alongside patient characteristics, current
-          guidance, and the full balance of risks and benefits.</p>
-      </div>
-    </section>
-  );
-}
+ *  - WhatRemainsUnknown: canonical evidence-state gaps.
+ *
+ *  NOTE: the medicine's headline signal (badges, statistics, cautions, exact passage
+ *  and "Why does this matter?") lives in a single place — the "What should I notice?"
+ *  card (see WhatToNotice). There is no separate standalone signal panel here. */
 
 export function EvidenceScope({ report }: { report: EvidenceResponse }) {
   const ss = report.study_selection;
@@ -53,7 +25,7 @@ export function EvidenceScope({ report }: { report: EvidenceResponse }) {
       </p>
       <div className="es-grid">
         <div><span className="es-k">Guideline coverage</span><span className="es-v">Guideline-level coverage review not yet completed</span></div>
-        {ss && <div><span className="es-k">Studies assessed by AMIRA</span><span className="es-v">{ss.rcts_for_selected_medicine} randomized {ss.rcts_for_selected_medicine === 1 ? "study" : "studies"} · {ss.publications_for_selected_medicine} publication{ss.publications_for_selected_medicine === 1 ? "" : "s"}</span></div>}
+        {ss && <div><span className="es-k">Evidence records reviewed by AMIRA</span><span className="es-v">{ss.rcts_for_selected_medicine} evidence record{ss.rcts_for_selected_medicine === 1 ? "" : "s"} · {ss.publications_for_selected_medicine} publication{ss.publications_for_selected_medicine === 1 ? "" : "s"}</span></div>}
         <div><span className="es-k">Sex-specific findings located</span><span className="es-v">{sexFindings}</span></div>
         <div><span className="es-k">Source cutoff</span><span className="es-v">{report.source_cutoff}</span></div>
         <div><span className="es-k">Human review status</span><span className={`es-badge ${humanReviewed ? "ok" : "pending"}`}>{humanReviewed ? "Human reviewed" : "Human review pending"}</span></div>

@@ -61,11 +61,32 @@ def test_featured_promotion_rule_rejects_unverified_and_nonsignificant():
          "source_id": "SRC-PMID-12409542", "exact_passage": "x"}) is False
 
 
-def test_critical_library_contains_only_the_digoxin_mortality_signal():
+def test_critical_library_contains_the_curated_critical_signals():
+    """After the four-cases ingestion the Library holds the digoxin mortality signal
+    plus the sotalol torsades, pioglitazone fracture, and zolpidem dosing signals —
+    and NOTHING else. Featured remains Digoxin-only (see the featured test)."""
     lib = signals.library()
-    # Exactly one critical signal — the Digoxin mortality finding.
-    assert [s["finding_id"] for s in lib] == ["F-EFF-DIG-001"]
-    assert lib[0]["medicine"] == "Digoxin" and lib[0]["signal_type"] == "Mortality"
+    meds = {s["medicine"] for s in lib}
+    assert meds == {"Digoxin", "Sotalol", "Pioglitazone", "Zolpidem"}
+    by_med = {s["medicine"]: s for s in lib}
+    assert by_med["Digoxin"]["signal_type"] == "Mortality"
+    assert by_med["Sotalol"]["signal_type"] == "Serious Safety"
+    assert by_med["Pioglitazone"]["signal_type"] == "Serious Safety"
+    assert by_med["Zolpidem"]["signal_type"] == "Dosing"
+    # Aspirin is a women-only trial (no between-sex comparison) — deliberately NOT a
+    # critical signal, so it stays in Evidence Coverage / Check Evidence only.
+    assert "Aspirin" not in meds
+    # Every library signal resolves to a verified canonical finding.
+    fids = {f["finding_id"] for f in dataset.findings() if dataset.verified_evidence(f)}
+    for s in lib:
+        assert s["finding_id"] in fids
+
+
+def test_featured_stays_digoxin_only_after_ingestion():
+    """Ingesting new significant signals must NOT auto-promote them to Featured.
+    Featured is separately controlled by the curated featured_signal flag."""
+    feats = signals.featured()
+    assert [s["medicine"] for s in feats] == ["Digoxin"]
 
 
 def test_noncritical_findings_are_absent_from_critical_signals():

@@ -13,26 +13,34 @@
     "NCT03036124",
     "PMID23126349",
     "NCT00000476",
-    "NCT03783429"
+    "NCT03783429",
+    "PMID8921798",
+    "PMID15753114",
+    "DAILYMED-PIOGLITAZONE",
+    "FDA-ZOLPIDEM-2013"
   ],
   "medicines": [
+    "Aspirin",
     "Atorvastatin",
     "Dapagliflozin",
     "Digoxin",
+    "Pioglitazone",
     "Rosuvastatin",
-    "Valsartan"
+    "Sotalol",
+    "Valsartan",
+    "Zolpidem"
   ],
   "counts": {
-    "trials": 7,
-    "sources": 15,
-    "assertions": 58,
-    "findings": 10,
+    "trials": 11,
+    "sources": 19,
+    "assertions": 88,
+    "findings": 16,
     "direct_comparisons": 1,
-    "screening_records": 20
+    "screening_records": 24
   },
   "screening_summary": {
-    "identified": 20,
-    "included": 15,
+    "identified": 24,
+    "included": 19,
     "excluded": 3,
     "deferred": 2
   },

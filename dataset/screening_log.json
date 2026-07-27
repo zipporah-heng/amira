@@ -138,5 +138,33 @@
     "decision": "include",
     "reason": "DECISION primary report with 284 women and a formal sex-by-treatment interaction analysis.",
     "screened_at": "2026-07-20T18:42:00Z"
+  },
+  {
+    "candidate": "PMID 8921798",
+    "identifier_type": "pmid",
+    "decision": "include",
+    "reason": "Pooled analysis of 22 oral d,l-sotalol trials (3135 patients) reporting a significant sex difference in torsade de pointes risk (women 4.1% vs men 1.9%, P<0.001).",
+    "screened_at": "2026-07-27T00:00:00Z"
+  },
+  {
+    "candidate": "PMID 15753114",
+    "identifier_type": "pmid",
+    "decision": "include",
+    "reason": "Women's Health Study — a 39,876-woman randomized primary-prevention trial of low-dose aspirin (women-only outcomes for stroke, MI, cardiovascular death, and bleeding).",
+    "screened_at": "2026-07-27T00:00:00Z"
+  },
+  {
+    "candidate": "DailyMed pioglitazone prescribing information (setid 0478f0e7-87fb-4adb-ae9b-6624555ccbe4)",
+    "identifier_type": "regulatory",
+    "decision": "include",
+    "reason": "FDA prescribing information (based on PROactive) reporting a higher fracture incidence in women (5.1% vs 2.5%) not observed in men.",
+    "screened_at": "2026-07-27T00:00:00Z"
+  },
+  {
+    "candidate": "FDA Drug Safety Communication: zolpidem lower recommended doses for women (2013)",
+    "identifier_type": "regulatory",
+    "decision": "include",
+    "reason": "FDA sex-specific dosing action: women eliminate zolpidem more slowly; recommended doses lowered for women (IR 10->5 mg; ER 12.5->6.25 mg).",
+    "screened_at": "2026-07-27T00:00:00Z"
   }
 ]

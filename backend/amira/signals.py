@@ -45,6 +45,12 @@ def _pct(text: Optional[str], which: int) -> Optional[str]:
 def _signal_type(f: dict) -> str:
     ep = (f.get("endpoint") or "").lower()
     sig = f.get("significance")
+    cat = f.get("signal_category")
+    # A curated regulatory category names the signal type directly.
+    if cat == "regulatory_dosing":
+        return "Dosing"
+    if cat == "regulatory_label":
+        return "Label Change"
     if ("death" in ep or "mortalit" in ep) and sig == "significant":
         return "Mortality"
     if f.get("finding_type") == "safety":
@@ -62,35 +68,50 @@ def _evidence_status(f: dict) -> str:
 
 
 def _is_critical(f: dict) -> bool:
-    """A finding is a CRITICAL signal only when it is a VERIFIED, trial-scoped,
-    STATISTICALLY SIGNIFICANT sex-specific finding — a mortality / serious-safety /
-    clinically-important effectiveness or outcome difference that materially changes
-    how a medicine is understood for women.
+    """A finding is a CRITICAL signal only when it is VERIFIED and trial-scoped AND
+    it is clinically high-importance for women — either:
+      * a statistically SIGNIFICANT sex-specific finding (e.g. the digoxin mortality
+        signal, the sotalol torsades sex difference), OR
+      * a curated, source-verified serious-safety / regulatory signal explicitly
+        flagged ``critical_signal`` (e.g. the pioglitazone fracture signal, the FDA
+        zolpidem dosing action) — a signal that materially changes how a medicine is
+        understood for women even when a formal between-sex interaction test is not
+        reported.
 
     Explicitly NOT critical (they stay in Evidence Coverage + Check Evidence, never
-    here): a `no_significant_difference` result, a `not_tested` estimate, a women-only
-    analysis without a significant sex difference, and class-level or unverified
-    findings. A sex-specific result is not automatically a critical signal."""
+    here): a `no_significant_difference` result, an ordinary `not_tested` estimate, a
+    women-only outcome analysis without a curated flag, and class-level or unverified
+    findings. Being sex-specific — or being named in an ingestion request — does not
+    by itself make a finding critical."""
     if not f.get("scope", "").startswith("trial:"):
         return False
     if not dataset.verified_evidence(f):
         return False
-    return f.get("significance") == "significant"
+    if f.get("significance") == "significant":
+        return True
+    return bool(f.get("critical_signal"))
 
 
 def _featured_eligible(f: dict) -> bool:
-    """Featured promotion rule: verified provenance, a significant result, a
-    resolvable source, and an exact passage. Non-significant / unverified /
-    passage-less findings are Library-only, never Featured."""
+    """Featured promotion rule (SEPARATELY controlled from Library inclusion):
+    verified provenance, a significant result, a resolvable source, an exact passage,
+    AND an explicit curated ``featured_signal`` flag. A finding is never auto-featured
+    merely because it is significant or was named in an ingestion request; Library
+    membership alone does not promote a signal to Featured."""
     if not dataset.verified_evidence(f):
         return False
     if f.get("significance") != "significant":
+        return False
+    if not f.get("featured_signal"):
         return False
     ok, _ = dataset.source_is_valid(f.get("source_id"))
     return ok and bool((f.get("exact_passage") or "").strip())
 
 
 def _headline(f: dict, medicine: str, stype: str) -> str:
+    # A curated finding carries its own exact, source-grounded headline.
+    if (f.get("signal_headline") or "").strip():
+        return f["signal_headline"].strip()
     drug_pct = _pct(f.get("female_rate"), 0)
     if stype == "Mortality" and drug_pct:
         return f"{drug_pct} of women assigned {medicine.lower()} died during follow-up"
@@ -101,7 +122,10 @@ def _headline(f: dict, medicine: str, stype: str) -> str:
 
 
 def _summary(f: dict) -> str:
-    # The finding's own estimate / CI / interaction wording, verbatim where present.
+    # A curated finding carries its own exact statistics line.
+    if (f.get("signal_summary") or "").strip():
+        return f["signal_summary"].strip()
+    # Otherwise: the finding's own estimate / CI / interaction wording, verbatim.
     placebo = _pct(f.get("female_rate"), 1)
     parts = [
         f"{placebo} placebo" if placebo else None,
@@ -120,9 +144,14 @@ def _signal(f: dict, featured: bool, priority: int) -> dict:
     stype = _signal_type(f)
     src = dataset.source_link_safe(f.get("source_id"))
     is_post_hoc = "post hoc" in (f.get("interpretation") or "").lower()
-    cautions = list(_CAUTIONS)
-    if is_post_hoc:
-        cautions = ["Historical post hoc signal", "Not menopause-specific", *cautions]
+    # A curated finding carries its own bounded cautions; otherwise use the defaults
+    # (prepending the historical-post-hoc caution when the finding is post hoc).
+    if f.get("cautions"):
+        cautions = list(f["cautions"])
+    else:
+        cautions = list(_CAUTIONS)
+        if is_post_hoc:
+            cautions = ["Historical post hoc signal", "Not menopause-specific", *cautions]
     return {
         "signal_id": f"SIG-{f['finding_id']}",
         "medicine": medicine,
@@ -147,6 +176,8 @@ def _signal(f: dict, featured: bool, priority: int) -> dict:
         "hormonal_context": "Not reported" if stype == "Mortality" else "Not reported",
         "human_verified": bool(f.get("human_verified")),
         "cautions": cautions,
+        # Bounded "why this matters" line, source-grounded (never a recommendation).
+        "why_matters": (f.get("why_it_matters") or "").strip() or None,
         "featured": featured,
         "featured_priority": priority if featured else None,
     }

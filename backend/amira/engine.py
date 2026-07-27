@@ -711,6 +711,9 @@ def study_selection(medicine: str, matched: List[dict]) -> dict:
 
     included_ncts = {r["candidate"] for r in included if r["identifier_type"] == "nct"}
     included_pubs = [r for r in included if r["identifier_type"] in ("pmid", "pmcid")]
+    # Regulatory evidence sources (FDA safety communications, DailyMed labels) are a
+    # distinct evidence type, counted separately so the reconciliation adds up.
+    included_regulatory = [r for r in included if r["identifier_type"] == "regulatory"]
 
     # Publications in the dataset linked to THIS medicine's trials.
     med_ncts = {t["nct_id"] for t in matched if t.get("nct_id")}
@@ -731,14 +734,16 @@ def study_selection(medicine: str, matched: List[dict]) -> dict:
         # records, not an assertion that every study is Phase 3.
         "unique_phase3_rcts_identified": len(included_ncts),
         "publications_included": len(included_pubs),
+        "regulatory_records_included": len(included_regulatory),
         "rcts_for_selected_medicine": len(matched),
         "publications_for_selected_medicine": len(med_pubs),
         "medicine": medicine,
         "reconciliation": (
             f"{len(rows)} candidate records screened. {len(included)} evidence sources were "
-            f"included: {len(included_ncts)} trial registry records and "
-            f"{len(included_pubs)} publication records. The corpus represents "
-            f"{len(dataset.trials())} randomized studies; {len(matched)} are shown for {medicine}."
+            f"included: {len(included_ncts)} trial registry records, "
+            f"{len(included_pubs)} publication records and "
+            f"{len(included_regulatory)} regulatory records. The corpus represents "
+            f"{len(dataset.trials())} evidence records; {len(matched)} are shown for {medicine}."
         ),
     }
 
