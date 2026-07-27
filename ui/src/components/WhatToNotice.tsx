@@ -52,7 +52,7 @@ function SignalCard({ signal }: { signal: CriticalSignal }) {
         <div className="nf-badges">
           <span className={`nf-badge ${tone}`}>{signal.signal_type} Signal</span>
           <span className="nf-badge status">{signal.evidence_status}</span>
-          {isPostHoc && <span className="nf-badge muted">Historical Post Hoc Signal</span>}
+          {isPostHoc && <span className="nf-badge outline">Historical Post Hoc Signal</span>}
         </div>
         <div className="nf-headline">{signal.headline}</div>
         {signal.summary && <div className="nf-stats">{signal.summary}</div>}
