@@ -106,6 +106,12 @@ export function CheckEvidence() {
               When a verified Critical Signal exists for this medicine it is consolidated
               INTO this card (no separate standalone panel above the selector). */}
           <WhatToNotice report={report} signal={signals.find((s) => s.medicine === report.banner!.medicine) || null} />
+          {/* Page-level maturity disclaimer, beneath the combined signal + maturity card. */}
+          <p className="maturity-note">
+            <span className="mn-ic" aria-hidden="true">ℹ️</span>
+            <span>Evidence Maturity reflects the depth and specificity of women's health reporting in
+              the research. It is not a quality rating and is not intended to compare this medicine to others.</span>
+          </p>
           <EvidenceScope report={report} />
           <Representation report={report} />
           <WhatRemainsUnknown report={report} />
