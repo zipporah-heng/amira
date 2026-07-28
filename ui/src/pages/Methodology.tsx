@@ -22,15 +22,18 @@ export function Methodology() {
     if (!id) return;
     let tries = 0;
     let timer: ReturnType<typeof setTimeout>;
+    // Re-pin across the settle window: late images/fonts render AFTER the first jump
+    // and push the anchor down, so we must keep re-scrolling for a while (not stop as
+    // soon as one scroll lands). Instant (not smooth) — some embedded browsers ignore
+    // programmatic smooth scrolling and would leave the jump at the top of the page.
     const jump = () => {
       const el = document.getElementById(id);
-      // Instant (not smooth): some embedded browsers ignore programmatic smooth
-      // scrolling, which would leave the jump at the top of the page.
       if (el) el.scrollIntoView({ block: "start" });
-      if (tries++ < 5) timer = setTimeout(jump, 150);
+      if (tries++ < 14) timer = setTimeout(jump, 200);
     };
-    timer = setTimeout(jump, 100);
-    return () => clearTimeout(timer);
+    timer = setTimeout(jump, 80);
+    window.addEventListener("load", jump);
+    return () => { clearTimeout(timer); window.removeEventListener("load", jump); };
   }, []);
 
   return (
