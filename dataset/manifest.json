@@ -17,30 +17,39 @@
     "PMID8921798",
     "PMID15753114",
     "DAILYMED-PIOGLITAZONE",
-    "FDA-ZOLPIDEM-2013"
+    "FDA-ZOLPIDEM-2013",
+    "NCT01720446",
+    "PMID31167654",
+    "NCT03548935",
+    "PMID33567185",
+    "PMID34170647",
+    "FDA-MOUNJARO-SNAPSHOT"
   ],
   "medicines": [
     "Aspirin",
     "Atorvastatin",
     "Dapagliflozin",
     "Digoxin",
+    "Mounjaro",
+    "Ozempic",
     "Pioglitazone",
     "Rosuvastatin",
     "Sotalol",
     "Valsartan",
+    "Wegovy",
     "Zolpidem"
   ],
   "counts": {
-    "trials": 11,
-    "sources": 19,
-    "assertions": 88,
-    "findings": 16,
+    "trials": 14,
+    "sources": 25,
+    "assertions": 112,
+    "findings": 20,
     "direct_comparisons": 1,
-    "screening_records": 24
+    "screening_records": 30
   },
   "screening_summary": {
-    "identified": 24,
-    "included": 19,
+    "identified": 30,
+    "included": 25,
     "excluded": 3,
     "deferred": 2
   },

@@ -107,6 +107,39 @@
 /* Methodology anchor: don't hide the heading under the header when jumped to. */
 #evidence-maturity-model { scroll-margin-top: 90px; }
 
+/* --- Compare Women's Evidence: three GLP-1 brand cards --- */
+.compare-page { max-width: 100%; }
+.cmp-warning { margin-top: 14px; padding: 12px 16px; border: 1px solid #f2dca8; background: #fff8ea;
+  border-radius: 12px; font-size: 13.5px; line-height: 1.55; color: #6b5321; }
+.cmp-scope { margin-top: 16px; font-size: 12.5px; color: var(--ink-3); line-height: 1.55; }
+.cmp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 18px; align-items: stretch; }
+@media (max-width: 1100px) { .cmp-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 720px) { .cmp-grid { grid-template-columns: 1fr; } }
+.cmp-card { display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border);
+  border-radius: 16px; padding: 18px; background: var(--surface); border-top: 4px solid var(--lav-700); }
+.cmp-brand { font-size: 20px; font-weight: 800; color: var(--ink); }
+.cmp-ingredient { font-size: 12.5px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: var(--lav-700); margin-top: -4px; }
+.cmp-brandnote { font-size: 12px; color: var(--ink-3); line-height: 1.45; background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; }
+.cmp-row { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 5px 0;
+  border-bottom: 1px solid var(--border); }
+.cmp-k { color: var(--ink-3); font-weight: 600; flex-shrink: 0; }
+.cmp-v { color: var(--ink); font-weight: 650; text-align: right; }
+.cmp-mat { color: var(--lav-700); }
+.cmp-block { padding: 6px 0; border-bottom: 1px solid var(--border); }
+.cmp-block .cmp-k { display: block; margin-bottom: 5px; }
+.cmp-sub { font-size: 12.5px; color: var(--ink-2); line-height: 1.4; margin-top: 3px; }
+.cmp-chip { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 999px; }
+.cmp-chip.yes { background: #cdeadb; color: #1d6b47; }
+.cmp-chip.no { background: #eef1f6; color: #4a5568; }
+.cmp-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+.cmp-badge.pending { background: #eef1f6; color: #4a5568; border: 1px solid #dbe1ea; }
+.cmp-badge.ok { background: #cdeadb; color: #1d6b47; }
+.cmp-links { display: flex; flex-direction: column; gap: 5px; margin-top: auto; padding-top: 8px; }
+.cmp-viewfull { font-size: 13px; font-weight: 700; color: var(--lav-700); }
+.cmp-passage { font-size: 12px; color: var(--ink-2); }
+
 /* --- Representation: 7 cards one row (redesigned: circular icon + status pill) --- */
 .representation { padding: 26px 28px; }
 .rep-h { font-size: 27px; font-weight: 750; letter-spacing: -0.01em; margin-bottom: 20px; }

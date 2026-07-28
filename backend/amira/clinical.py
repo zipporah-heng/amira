@@ -207,12 +207,14 @@ def safety_state(medicine: str) -> dict:
         f.get("reporting_scope") == "women_only_narrative" for f in drug_specific
     )
 
-    # A curated, verified serious-safety / regulatory signal (higher risk reported in
-    # one sex without a formal between-sex test). Checked AFTER the significance-based
-    # states so a genuine between-sex difference (e.g. sotalol torsades, P<0.001) still
-    # reads as SAF_SIGNIFICANT, not the softer signal state.
-    has_curated_signal = bool(drug_specific) and any(
-        f.get("critical_signal") for f in drug_specific
+    # A sex-specific safety signal reported descriptively without a formal between-sex
+    # test: either a curated critical signal (e.g. pioglitazone fracture) OR a
+    # sex-stratified adverse-event pattern flagged `sex_specific_safety_pattern`
+    # (e.g. GLP-1 gastrointestinal events reported by sex). Checked AFTER the
+    # significance-based states so a genuine between-sex difference (e.g. sotalol
+    # torsades, P<0.001) still reads as SAF_SIGNIFICANT, not the softer signal state.
+    has_sex_pattern = bool(drug_specific) and any(
+        f.get("critical_signal") or f.get("sex_specific_safety_pattern") for f in drug_specific
     )
 
     if women_only:
@@ -223,7 +225,7 @@ def safety_state(medicine: str) -> dict:
         state = SAF_SIGNIFICANT
     elif "trend_only" in sigs:
         state = SAF_TRENDS
-    elif has_curated_signal:
+    elif has_sex_pattern:
         state = SAF_SEX_SIGNAL
     elif drug_specific and any(
         f.get("significance") == "no_significant_difference"

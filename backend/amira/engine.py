@@ -478,6 +478,8 @@ def check_evidence(condition: str, medicine: str,
     trial_ids = [t["trial_id"] for t in matched]
     drug_class = matched[0].get("drug_class") or "Statin"
     indication = matched[0].get("indication")
+    active_ingredient = matched[0].get("active_ingredient")
+    brand_note = matched[0].get("brand_note")
 
     mat = maturity.evaluate(trial_ids)
     effectiveness = clinical.effectiveness_state(medicine)
@@ -540,6 +542,8 @@ def check_evidence(condition: str, medicine: str,
         },
         "banner": {
             "medicine": medicine,
+            "active_ingredient": active_ingredient,
+            "brand_note": brand_note,
             "drug_class": drug_class,
             "indication": indication,
             # Presentation flag: true when this medicine's evidence review is

@@ -47,9 +47,13 @@ def test_cardiovascular_verified_status_unchanged():
     # verified. Frozen CV science (Rosuvastatin/Dapagliflozin/Digoxin/Valsartan) is
     # unchanged; the new verified medicines are the four this mission ingested.
     assert verified == {"Rosuvastatin", "Dapagliflozin", "Digoxin", "Valsartan",
-                        "Aspirin", "Sotalol", "Pioglitazone", "Zolpidem"}
-    # Atorvastatin (not_located enrolment) and every still-un-ingested medicine remain incomplete.
+                        "Aspirin", "Sotalol", "Pioglitazone", "Zolpidem",
+                        "Ozempic", "Wegovy", "Mounjaro"}
+    # Atorvastatin (not_located enrolment) and every still-un-ingested medicine remain
+    # incomplete — including the ACTIVE-INGREDIENT entries (Semaglutide/Tirzepatide),
+    # which stay DISCOVERED even though their brand records (Ozempic/Wegovy/Mounjaro) are verified.
     assert "Atorvastatin" in incomplete
+    assert {"Semaglutide", "Tirzepatide", "Liraglutide"} <= incomplete
     for m in NEW_MEDICINES:
         assert m in incomplete, f"{m} should be incomplete"
 
@@ -95,10 +99,16 @@ def test_check_evidence_for_registered_but_uningested_medicine_is_incomplete():
     assert "0 / 5" not in str(r)
 
 
-def test_new_medicines_never_enter_verified_medicines():
-    # A new drug class (e.g. GLP-1) has no verified medicines.
+def test_uningested_ingredient_entries_never_enter_verified_medicines():
+    # The GLP-1 class now has verified BRAND records (Ozempic, Wegovy) but the
+    # un-ingested ACTIVE-INGREDIENT entries (Semaglutide, Liraglutide) must never be
+    # counted as verified.
     cc = clinical.class_comparison("GLP-1 receptor agonist")
-    assert cc["verified_medicines"] == []
+    assert set(cc["verified_medicines"]) == {"Ozempic", "Wegovy"}
+    assert "Semaglutide" not in cc["verified_medicines"]
+    assert "Liraglutide" not in cc["verified_medicines"]
+    # A class with only un-ingested medicines still has none verified.
+    assert clinical.class_comparison("Bisphosphonate")["verified_medicines"] == []
 
 
 def test_trials_carry_health_area_for_research_map():
