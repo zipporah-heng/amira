@@ -1,5 +1,6 @@
 import type { CriticalSignal, EvidenceResponse, Finding } from "../api";
 import { MaturityMeter } from "./MaturityMeter";
+import { MATURITY_ANCHOR, maturityChecklist } from "../maturityLevels";
 
 /** Section: "What should I notice?" — the SINGLE primary presentation of a
  *  medicine's headline signal. Two equal-height panels.
@@ -145,6 +146,43 @@ function FindingCard({ report }: { report: EvidenceResponse }) {
   );
 }
 
+/** "How this level was reached" — a compact, accessible checklist that EXPLAINS the
+ *  canonical derived maturity level. Reached/unreached is conveyed by icon shape AND
+ *  a screen-reader label (never colour alone); the checklist is derived only from
+ *  `level` (never recomputed). */
+function MaturityChecklist({ level }: { level: number }) {
+  const items = maturityChecklist(level);
+  return (
+    <div className="nm-how">
+      <div className="nm-how-head">
+        How this level was reached
+        <span className="nm-info" role="img"
+          aria-label="How this evidence maturity level is determined"
+          title="Levels are cumulative: each level is reached only when the one before it is. Derived from what the reviewed research reported.">ⓘ</span>
+      </div>
+      <ul className="nm-check">
+        {items.map((it) => (
+          <li key={it.level} className={it.isReached ? "reached" : "unreached"}>
+            <span className={`nm-ic ${it.isReached ? "on" : "off"}`} aria-hidden="true">
+              {it.isReached ? "✓" : ""}
+            </span>
+            <div className="nm-item">
+              <span className="nm-lvl">
+                {it.label}
+                <span className="nm-sr"> — level {it.isReached ? "reached" : "not reached"}</span>
+              </span>
+              <span className="nm-desc">{it.description}</span>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <a className="nm-link" href={`/amira/methodology#${MATURITY_ANCHOR}`}>
+        About evidence maturity levels →
+      </a>
+    </div>
+  );
+}
+
 export function WhatToNotice({ report, signal = null }: { report: EvidenceResponse; signal?: CriticalSignal | null }) {
   const mat = report.maturity!;
   return (
@@ -162,6 +200,10 @@ export function WhatToNotice({ report, signal = null }: { report: EvidenceRespon
           )}
           <MaturityMeter level={mat.level} maxLevel={mat.max_level} label={mat.label} scored={mat.scorable !== false} />
           <p className="nm-note">This measures evidence completeness—not whether the medicine is better.</p>
+          {/* "How this level was reached" — the checklist EXPLAINS the canonical
+              derived level. Shown only for a scored medicine (never a 0/5 checklist
+              for an unscored / evidence-review-incomplete medicine). */}
+          {mat.scorable !== false && <MaturityChecklist level={mat.level} />}
         </div>
       </div>
     </section>

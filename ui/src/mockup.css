@@ -77,6 +77,36 @@
 .mm-label { font-size: 12.5px; fill: var(--ink-3); font-weight: 650; }
 .nm-note { font-size: 13px; color: var(--ink-3); margin-top: 4px; max-width: 280px; line-height: 1.45; }
 
+/* --- "How this level was reached" checklist (explains the derived maturity level) --- */
+.nm-how { width: 100%; text-align: left; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.nm-how-head { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800;
+  letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }
+.nm-info { font-size: 12px; color: var(--lav-700); cursor: help; line-height: 1; }
+.nm-check { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.nm-check li { display: flex; align-items: flex-start; gap: 9px; }
+.nm-ic { flex-shrink: 0; width: 18px; height: 18px; border-radius: 999px; display: inline-flex;
+  align-items: center; justify-content: center; font-size: 11px; font-weight: 800; margin-top: 1px; }
+.nm-ic.on { background: #1d6b47; color: #fff; }              /* reached — filled green check */
+.nm-ic.off { background: transparent; border: 1.5px solid #cdd3dd; }  /* unreached — outlined circle */
+.nm-item { display: flex; flex-direction: column; gap: 1px; }
+.nm-lvl { font-size: 11.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--ink); }
+.nm-check li.unreached .nm-lvl { color: var(--ink-3); }
+.nm-desc { font-size: 12.5px; color: var(--ink-2); line-height: 1.4; }
+.nm-check li.unreached .nm-desc { color: var(--ink-3); }
+.nm-link { display: inline-block; margin-top: 12px; font-size: 12.5px; font-weight: 650; color: var(--lav-700); }
+/* Visually-hidden text so screen readers hear reached / not-reached (never colour alone). */
+.nm-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* Page-level maturity disclaimer, beneath the combined Critical Signal + Maturity card. */
+.maturity-note { display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; padding: 10px 14px;
+  font-size: 12.5px; color: var(--ink-3); line-height: 1.5; background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: 10px; }
+.maturity-note .mn-ic { color: var(--lav-700); flex-shrink: 0; }
+
+/* Methodology anchor: don't hide the heading under the header when jumped to. */
+#evidence-maturity-model { scroll-margin-top: 90px; }
+
 /* --- Representation: 7 cards one row (redesigned: circular icon + status pill) --- */
 .representation { padding: 26px 28px; }
 .rep-h { font-size: 27px; font-weight: 750; letter-spacing: -0.01em; margin-bottom: 20px; }

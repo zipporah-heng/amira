@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { MethodologyFlow } from "../components/MethodologyFlow";
 import { HormonalFocus } from "../components/HormonalFocus";
+import { MATURITY_ANCHOR } from "../maturityLevels";
 
 /** Definitions of the maturity ladder. The AWARDED level is never defined here —
  *  it is derived from evidence by the API at request time. */
@@ -12,6 +14,25 @@ const MATURITY_MODEL = [
 ];
 
 export function Methodology() {
+  // Scroll to the requested section (e.g. #evidence-maturity-model from the Evidence
+  // Maturity card's "About evidence maturity levels" link). Retry briefly so the jump
+  // lands after the page below has finished laying out (the anchor sits mid-page).
+  useEffect(() => {
+    const id = window.location.hash.replace(/^#/, "");
+    if (!id) return;
+    let tries = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    const jump = () => {
+      const el = document.getElementById(id);
+      // Instant (not smooth): some embedded browsers ignore programmatic smooth
+      // scrolling, which would leave the jump at the top of the page.
+      if (el) el.scrollIntoView({ block: "start" });
+      if (tries++ < 5) timer = setTimeout(jump, 150);
+    };
+    timer = setTimeout(jump, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="methodology-page">
       <span className="eyebrow">Methodology</span>
@@ -33,7 +54,7 @@ export function Methodology() {
 
       <MethodologyFlow />
 
-      <h2 className="page-q" style={{ fontSize: 22, marginTop: 34 }}>The 1-to-5 Evidence Maturity Model</h2>
+      <h2 id={MATURITY_ANCHOR} className="page-q" style={{ fontSize: 22, marginTop: 34 }}>The 1-to-5 Evidence Maturity Model</h2>
       <p style={{ maxWidth: 720 }}>
         AMIRA scores how completely research reports women's and hormonal context. This is an
         evidence-maturity model only — it does not imply a personalized treatment recommendation.
