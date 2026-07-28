@@ -4,6 +4,7 @@ import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom"
 import { AmiraShell } from "./components/AmiraShell";
 import { CheckEvidence } from "./pages/CheckEvidence";
 import { ResearchMap } from "./pages/ResearchMap";
+import { Compare } from "./pages/Compare";
 import { OpenBenchmark } from "./pages/OpenBenchmark";
 import { Methodology } from "./pages/Methodology";
 import "./theme.css";
@@ -18,6 +19,7 @@ const router = createBrowserRouter([
   { path: "/amira", element: <Navigate to="/amira/check-evidence" replace /> },
   { path: "/amira/check-evidence", element: withShell(<CheckEvidence />) },
   { path: "/amira/research-map", element: withShell(<ResearchMap />) },
+  { path: "/amira/compare", element: withShell(<Compare />) },
   { path: "/amira/open-benchmark", element: withShell(<OpenBenchmark />) },
   { path: "/amira/methodology", element: withShell(<Methodology />) },
   { path: "*", element: <Navigate to="/amira/check-evidence" replace /> },

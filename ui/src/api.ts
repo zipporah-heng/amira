@@ -228,6 +228,8 @@ export interface WhoRow {
 
 export interface Banner {
   medicine: string;
+  active_ingredient?: string | null;
+  brand_note?: string | null;
   drug_class: string;
   indication: string | null;
   // false when the selected medicine's evidence review is incomplete (unscored).
