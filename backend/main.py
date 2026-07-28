@@ -109,7 +109,9 @@ def get_catalog():
         for cond in ha.get("conditions", []):
             cls_entries = []
             for cls in cond.get("drug_classes", []):
-                meds = [{"medicine": m, "status": status_of(m)} for m in cls.get("medicines", [])]
+                meds = [{"medicine": m, "status": status_of(m),
+                         "active_ingredient": dataset.active_ingredient_of(m)}
+                        for m in cls.get("medicines", [])]
                 cls_entries.append({"drug_class": cls["drug_class"], "medicines": meds})
                 slot = legacy_conditions.setdefault(cond["condition"], {}).setdefault(cls["drug_class"], {"v": set(), "i": set()})
                 for m in meds:

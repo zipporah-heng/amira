@@ -165,6 +165,37 @@ def test_exact_passages_resolve_for_the_new_findings():
         assert _resolves(f["source_id"])
 
 
+def test_brand_specific_trials_do_not_leak_across_products():
+    # Each brand's evidence is scoped ONLY to its own trials — no inheritance across
+    # brands that share an active ingredient.
+    by_brand = {
+        "Ozempic": {"SUSTAIN-6"}, "Wegovy": {"STEP-1"}, "Mounjaro": {"SURPASS-2"},
+    }
+    for brand, expected in by_brand.items():
+        got = {t["trial_id"] for t in dataset.trials() if t["medicine"] == brand}
+        assert got == expected, f"{brand} trials leaked: {got}"
+
+
+def test_selected_medicine_name_matches_the_evidence_scope():
+    for cond, med, ing in [("Type 2 diabetes", "Ozempic", "Semaglutide"),
+                           ("Weight management", "Wegovy", "Semaglutide"),
+                           ("Type 2 diabetes", "Mounjaro", "Tirzepatide")]:
+        b = engine.check_evidence(cond, med)["banner"]
+        assert b["medicine"] == med
+        assert b["active_ingredient"] == ing
+
+
+def test_mounjaro_women_counted_and_percentage_are_consistent():
+    # The canonical evidence stores a reported female PERCENTAGE (not a reported count),
+    # and the "Women Counted" maturity level (1) is reached — so any 'women included'
+    # surface must resolve to YES, never 'Not reported'.
+    r = engine.check_evidence("Type 2 diabetes", "Mounjaro")
+    assert r["totals"]["women_pct_of_participants"] == 53.0
+    level1 = next(t for t in r["maturity"]["rule_trace"] if t["level"] == 1)
+    assert level1["satisfied"] is True  # Women Counted reached
+    assert r["banner"]["maturity"]["level"] >= 2  # and Women Analyzed
+
+
 def test_frozen_outputs_unchanged():
     r = engine.check_evidence("Cardiovascular disease prevention", "Rosuvastatin")
     d = engine.check_evidence("Heart failure", "Dapagliflozin")

@@ -12,6 +12,10 @@ export interface MedicineEntry {
   // "verified" = completed, integrity-checked ingestion; "incomplete" = registered
   // but DISCOVERED / evidence review incomplete (unscored, unranked).
   status: "verified" | "incomplete";
+  // Active ingredient behind a brand product (e.g. Ozempic -> semaglutide). Shown as
+  // secondary information; the option VALUE stays the brand name so the evidence scope
+  // (brand/indication/program) is never mixed across products sharing an ingredient.
+  active_ingredient?: string | null;
 }
 export interface ClassEntry {
   drug_class: string;
@@ -107,8 +111,12 @@ export function EvidenceSearch({ filters, setFilters, onCheck, catalog }: {
   const conditions = conditionsFor(filters.healthArea).map((c) => c.condition);
   const classNames = classesFor(filters.healthArea, filters.condition).map((c) => c.drug_class);
   const medEntries = medsFor(filters.healthArea, filters.condition, filters.drugClass);
-  // Clean medicine names only — incomplete status is surfaced in the result, never here.
-  const medOpts = medEntries.map((m) => ({ label: m.medicine, value: m.medicine }));
+  // Brand name is the option value (keeps each brand's evidence scope distinct); the
+  // active ingredient is shown as secondary metadata (e.g. "Ozempic · semaglutide").
+  const medOpts = medEntries.map((m) => ({
+    label: m.active_ingredient ? `${m.medicine} · ${m.active_ingredient.toLowerCase()}` : m.medicine,
+    value: m.medicine,
+  }));
 
   const onHealthAreaChange = (healthArea: string) => {
     const cond = conditionsFor(healthArea)[0];

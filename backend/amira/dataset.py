@@ -189,6 +189,17 @@ def taxonomy_conditions_for(medicine: str) -> list:
     return paths
 
 
+def active_ingredient_of(medicine: str) -> str | None:
+    """The active ingredient for a (brand) medicine, from its trial records. Brands
+    (Ozempic/Wegovy/Mounjaro) carry an explicit active_ingredient; medicines without a
+    trial record (un-ingested taxonomy entries) return None."""
+    m = (medicine or "").strip().lower()
+    for t in trials():
+        if t["medicine"].strip().lower() == m and t.get("active_ingredient"):
+            return t["active_ingredient"]
+    return None
+
+
 def source_by_id(source_id: str) -> dict:
     for s in sources():
         if s["source_id"] == source_id:
