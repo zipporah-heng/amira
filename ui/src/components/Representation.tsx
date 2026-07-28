@@ -28,6 +28,24 @@ const Icon = ({ name }: { name: string }) => {
 export function Representation({ report }: { report: EvidenceResponse }) {
   const t = report.totals!;
   const dim = (d: string) => report.dimensions.find((x) => x.dimension === d)?.n_reporting ?? 0;
+
+  // "Women included" must reflect ANY verified female-participation evidence — a
+  // reported count, a reported percentage, a derived female subtotal, OR the
+  // canonical "Women Counted" maturity level (level >= 1) OR a verified sex-specific
+  // finding. Keying it on the reported COUNT alone made it read "Not reported" for a
+  // brand (e.g. Mounjaro) whose female participation is stored as a percentage, which
+  // contradicted the maturity checklist. This uses canonical fields, not hard-coded text.
+  const womenCounted = report.maturity?.rule_trace?.find((x) => x.level === 1)?.satisfied ?? false;
+  const femaleFigureStored =
+    t.women_reported_count > 0 ||
+    t.women_estimated_total > 0 ||
+    t.women_pct_of_participants != null;
+  const sexAnalysisStored =
+    (report.effectiveness?.findings?.length || 0) > 0 ||
+    (report.safety?.significant_findings?.length || 0) > 0 ||
+    (report.safety?.other_findings?.length || 0) > 0;
+  const womenIncluded = womenCounted || femaleFigureStored || sexAnalysisStored;
+  const womenPct = t.women_pct_of_participants;
   const effState = (report.effectiveness?.state || "").toLowerCase();
   const safState = (report.safety?.state || "").toLowerCase();
   const postHoc = (report.effectiveness?.findings || []).some((f) => /post hoc/i.test(f.interpretation || ""));
@@ -44,7 +62,8 @@ export function Representation({ report }: { report: EvidenceResponse }) {
     : safState.includes("significant") && !safState.includes("no ") ? "yes" : "limited";
 
   const cards: { title: string; icon: string; tone: Tone; sub?: string }[] = [
-    { title: "Women included", icon: "women", tone: t.women_reported_count > 0 ? "yes" : "missing" },
+    { title: "Women included", icon: "women", tone: womenIncluded ? "yes" : "missing",
+      sub: womenIncluded && womenPct != null ? `${womenPct}%` : undefined },
     { title: "Sex-specific outcomes", icon: "chart", tone: effTone, sub: postHoc ? "post hoc" : undefined },
     { title: "Sex-specific safety", icon: "shield", tone: safTone },
     { title: "Menopause", icon: "calendar", tone: dim("menopause_status_reported") > 0 ? "yes" : "missing" },

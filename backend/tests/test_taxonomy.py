@@ -17,11 +17,15 @@ EXPECTED_HEALTH_AREAS = {
 # Aspirin were ingested in the four-cases mission and are now VERIFIED, so they are
 # no longer in this list.
 NEW_MEDICINES = [
-    "Apixaban", "Semaglutide", "Liraglutide", "Tirzepatide", "Alendronate",
+    "Apixaban", "Alendronate",
     "Denosumab", "Tamoxifen", "Anastrozole", "Carbidopa/Levodopa", "Lecanemab",
     "Donanemab", "Methylphenidate", "Lisdexamfetamine", "Atomoxetine",
     "Risperidone", "Aripiprazole",
 ]
+# Active-ingredient entries removed from the taxonomy because they duplicated ingested
+# BRAND products (Ozempic/Wegovy/Mounjaro) and had no deliberate ingredient-level
+# review. They must NOT appear as selectable catalog medicines.
+REMOVED_INGREDIENT_ENTRIES = ["Semaglutide", "Tirzepatide", "Liraglutide"]
 
 # Ingested in the four-cases mission (now verified / evidence review complete).
 INGESTED_FOUR_CASES = ["Zolpidem", "Sotalol", "Pioglitazone", "Aspirin"]
@@ -49,13 +53,15 @@ def test_cardiovascular_verified_status_unchanged():
     assert verified == {"Rosuvastatin", "Dapagliflozin", "Digoxin", "Valsartan",
                         "Aspirin", "Sotalol", "Pioglitazone", "Zolpidem",
                         "Ozempic", "Wegovy", "Mounjaro"}
-    # Atorvastatin (not_located enrolment) and every still-un-ingested medicine remain
-    # incomplete — including the ACTIVE-INGREDIENT entries (Semaglutide/Tirzepatide),
-    # which stay DISCOVERED even though their brand records (Ozempic/Wegovy/Mounjaro) are verified.
+    # Atorvastatin (not_located enrolment) and every still-un-ingested medicine remain incomplete.
     assert "Atorvastatin" in incomplete
-    assert {"Semaglutide", "Tirzepatide", "Liraglutide"} <= incomplete
     for m in NEW_MEDICINES:
         assert m in incomplete, f"{m} should be incomplete"
+    # The duplicate active-ingredient entries were removed from the taxonomy: they must
+    # not appear as selectable catalog medicines in ANY status.
+    all_meds = {m for (_, _, _, m, _) in rows}
+    for ing in REMOVED_INGREDIENT_ENTRIES:
+        assert ing not in all_meds, f"{ing} must not be a selectable medicine"
 
 
 def test_new_medicines_have_no_trials_and_are_not_verified():
@@ -91,12 +97,38 @@ def test_autism_condition_uses_evidence_accurate_label():
 
 
 def test_check_evidence_for_registered_but_uningested_medicine_is_incomplete():
-    r = engine.check_evidence("Type 2 diabetes", "Semaglutide")
+    # Apixaban is registered in the taxonomy but has no ingested trials.
+    r = engine.check_evidence("Stroke prevention in atrial fibrillation", "Apixaban")
     assert r["supported"] is False
     assert r["bounded_response"]["status"] == "evidence_review_incomplete"
     assert r["maturity"] is None and r["totals"] is None
     # No fabricated score anywhere.
     assert "0 / 5" not in str(r)
+
+
+def test_removed_ingredient_entries_are_no_longer_in_the_corpus_taxonomy():
+    # Semaglutide/Tirzepatide/Liraglutide were duplicates of ingested brands (or an
+    # un-reviewed ingredient) and are removed from the selectable taxonomy. They now
+    # fall through to "medicine_not_in_corpus" rather than an incomplete registration.
+    for cond, ing in [("Type 2 diabetes", "Semaglutide"), ("Type 2 diabetes", "Tirzepatide"),
+                      ("Weight management", "Liraglutide")]:
+        r = engine.check_evidence(cond, ing)
+        assert r["supported"] is False
+        assert r["bounded_response"]["status"] == "medicine_not_in_corpus"
+    assert not ({"Semaglutide", "Tirzepatide", "Liraglutide"} & dataset.taxonomy_medicines())
+
+
+def test_glp1_brands_show_active_ingredient_in_catalog():
+    cat = client.get("/api/catalog").json()
+    ing = {}
+    for ha in cat["health_areas"]:
+        for c in ha["conditions"]:
+            for cl in c["drug_classes"]:
+                for m in cl["medicines"]:
+                    ing[m["medicine"]] = m.get("active_ingredient")
+    assert ing.get("Ozempic") == "Semaglutide"
+    assert ing.get("Wegovy") == "Semaglutide"
+    assert ing.get("Mounjaro") == "Tirzepatide"
 
 
 def test_uningested_ingredient_entries_never_enter_verified_medicines():

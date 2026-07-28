@@ -45,16 +45,15 @@
         {
           "condition": "Type 2 diabetes",
           "drug_classes": [
-            { "drug_class": "GLP-1 receptor agonist", "medicines": ["Semaglutide", "Liraglutide", "Ozempic"] },
-            { "drug_class": "Dual GIP/GLP-1 receptor agonist", "medicines": ["Tirzepatide", "Mounjaro"] },
+            { "drug_class": "GLP-1 receptor agonist", "medicines": ["Ozempic"] },
+            { "drug_class": "Dual GIP/GLP-1 receptor agonist", "medicines": ["Mounjaro"] },
             { "drug_class": "Thiazolidinedione", "medicines": ["Pioglitazone"] }
           ]
         },
         {
           "condition": "Weight management",
           "drug_classes": [
-            { "drug_class": "GLP-1 receptor agonist", "medicines": ["Semaglutide", "Liraglutide", "Wegovy"] },
-            { "drug_class": "Dual GIP/GLP-1 receptor agonist", "medicines": ["Tirzepatide"] }
+            { "drug_class": "GLP-1 receptor agonist", "medicines": ["Wegovy"] }
           ]
         }
       ]
