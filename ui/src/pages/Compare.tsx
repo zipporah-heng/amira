@@ -101,7 +101,26 @@ const ROWS: RowDef[] = [
   { key: "primary", label: "Primary evidence",
     render: (r) => <span className="cmp-val">{M.evidencePopulation(r).label}</span> },
   { key: "included", label: "Women included",
-    render: (r) => <StateChip cell={M.womenIncluded(r)} /> },
+    // Identical to Check Evidence and the PDF: a combined figure only when every
+    // reviewed study reports both sides of the ratio, otherwise bounded wording plus
+    // the study-specific values.
+    render: (r) => (
+      <>
+        <StateChip cell={M.womenIncluded(r)} />
+        {M.womenIncludedStudies(r).length > 0 && (
+          <ul className="cmp-women-studies">
+            {M.womenIncludedStudies(r).map((s) => (
+              <li key={s.trial_id}>
+                <span className="cmp-ws-study">{s.study}</span>
+                <span className={`cmp-ws-value${s.female_n == null ? " not-located" : ""}`}>
+                  {M.studyWomenLabel(s)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </>
+    ) },
   { key: "counted", label: "Women counted", render: (r) => <StateChip cell={M.womenCounted(r)} /> },
   { key: "analyzed", label: "Women analyzed", render: (r) => <StateChip cell={M.womenAnalyzed(r)} /> },
   { key: "effectiveness", label: "Sex-specific effectiveness",
@@ -202,6 +221,9 @@ export function Compare() {
   const [activeMobile, setActiveMobile] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Export failures are shown beside the button that failed — never swallowed.
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [briefBusy, setBriefBusy] = useState<string | null>(null);
   // Canonical critical signals, keyed by medicine. A medicine without an entry has no
   // qualifying signal in the reviewed source set — never "no signal exists".
   const [signals, setSignals] = useState<Record<string, CriticalSignal>>({});
@@ -267,14 +289,22 @@ export function Compare() {
 
   const exportComparison = async () => {
     if (!shownReports.length) return;
-    setBusy(true);
+    setBusy(true); setExportError(null);
     try {
       downloadBlob(await buildComparisonPdf(shownReports, ctx.condition), comparisonFilename(ctx.condition));
+    } catch (e: any) {
+      setExportError(`The comparison PDF could not be generated${e?.message ? `: ${e.message}` : ""}. Please try again.`);
     } finally { setBusy(false); }
   };
 
   const exportBrief = async (r: EvidenceResponse) => {
-    downloadBlob(await buildEvidenceBriefPdf(r), evidenceBriefFilename(r));
+    const name = M.medicineName(r);
+    setBriefBusy(name); setExportError(null);
+    try {
+      downloadBlob(await buildEvidenceBriefPdf(r), evidenceBriefFilename(r));
+    } catch (e: any) {
+      setExportError(`The ${name} evidence brief could not be generated${e?.message ? `: ${e.message}` : ""}. Please try again.`);
+    } finally { setBriefBusy(null); }
   };
 
   // Reviewed source coverage — computed from the medicines currently displayed.
@@ -325,6 +355,7 @@ export function Compare() {
               {shownReports.length} medicine{shownReports.length === 1 ? "" : "s"}
             </span>
           </button>
+          {exportError && <p className="cmp-export-err" role="alert">{exportError}</p>}
         </div>
       </div>
 
@@ -439,7 +470,15 @@ export function Compare() {
                 return (
                   <div key={`export-${c.medicine}`} className="cmp-cell value" role="cell">
                     {r && r.banner ? (
-                      <button className="cmp-btn" onClick={() => exportBrief(r)}>⭳ Export Evidence Brief PDF</button>
+                      <>
+                        <button className="cmp-btn" onClick={() => exportBrief(r)}
+                                disabled={briefBusy === M.medicineName(r)}>
+                          {briefBusy === M.medicineName(r) ? "Preparing PDF…" : "⭳ Export Evidence Brief PDF"}
+                        </button>
+                        {exportError && exportError.includes(M.medicineName(r)) && (
+                          <p className="cmp-export-err" role="alert">{exportError}</p>
+                        )}
+                      </>
                     ) : (
                       <a className="cmp-inline-link"
                          href={checkHref({ healthArea: ctx.healthArea, condition: ctx.condition, drugClass: c.drug_class, medicine: c.medicine })}>

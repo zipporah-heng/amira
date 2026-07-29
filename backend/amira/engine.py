@@ -133,6 +133,119 @@ def _assertion_view(a: dict) -> dict:
 # --------------------------------------------------------------------------- #
 # Aggregation
 # --------------------------------------------------------------------------- #
+def _trial_name(trial_id: str) -> str:
+    for t in dataset.trials():
+        if t["trial_id"] == trial_id:
+            return t["display_name"]
+    return trial_id
+
+
+def women_included_summary(trial_ids: List[str]) -> dict:
+    """The ONE canonical answer to "how many women were included?".
+
+    A medicine-level numerator and denominator may be combined ONLY when every
+    included study contributes a compatible, verified pair: a verified total
+    enrolment AND a female count that is either reported or derived from that same
+    study's reported percentage. If any study is missing either side, no combined
+    figure and no combined percentage is produced — the summary reports partial
+    coverage plus the study-specific values instead.
+
+    This exists because a known numerator from one study over a denominator that
+    includes studies with unknown female enrolment (e.g. "284 of 7,801" for
+    Digoxin) is neither a within-study ratio nor a complete cross-study count.
+    """
+    per_study = []
+    for tid in trial_ids:
+        te = dataset.total_enrollment_projection(tid)
+        total = int(te["value"]) if te["coverage"] == "complete" else None
+        cv = dataset.assertion_validity(tid, "female_enrollment_count", require_numeric=True)
+        pv = dataset.assertion_validity(tid, "female_enrollment_pct", require_numeric=True)
+
+        female_n, female_basis, female_pct = None, "not_located", None
+        if cv["valid"] and cv["basis"] == "reported":
+            female_n, female_basis = int(cv["value"]), "reported"
+        elif pv["valid"] and pv["basis"] == "reported" and total is not None:
+            # Derived from THIS study's own reported percentage and total only.
+            female_n, female_basis = int(round(float(pv["value"]) / 100.0 * total)), "derived"
+        if pv["valid"] and pv["basis"] == "reported":
+            female_pct = float(pv["value"])
+
+        # The WITHIN-STUDY percentage: this study's own female count over its own
+        # total. Both numbers are canonical reported values for the same study, so the
+        # ratio is a within-study figure — never a cross-study one. It is displayed in
+        # preference to a rounded percentage recorded in the source (e.g. DECISION's
+        # "28% were women (n = 284)" of 1,001 → 28.4%); the recorded value stays
+        # available in female_pct_reported.
+        within = (round(female_n / total * 100, 1)
+                  if female_n is not None and total else None)
+
+        per_study.append({
+            "trial_id": tid,
+            "study": _trial_name(tid),
+            "total_enrollment": total,
+            "total_enrollment_state": te["state"],
+            "female_n": female_n,
+            "female_basis": female_basis,
+            "female_pct_reported": female_pct,
+            "female_pct_within_study": within,
+            # Compatible = both sides of the ratio exist for THIS study.
+            "combinable": female_n is not None and total is not None,
+        })
+
+    combinable = [s for s in per_study if s["combinable"]]
+    missing = [s for s in per_study if not s["combinable"]]
+    may_combine = bool(per_study) and not missing
+
+    def _study_sentence(s: dict) -> str:
+        if s["female_n"] is None:
+            return f"The female enrollment count was not located for {s['study']}."
+        pct = s["female_pct_within_study"] if s["female_pct_within_study"] is not None else s["female_pct_reported"]
+        pct_txt = f", {pct}%" if pct is not None else ""
+        approx = "approximately " if s["female_basis"] == "derived" else ""
+        if s["total_enrollment"] is None:
+            return f"{s['study']} reported {approx}{s['female_n']:,} women; total enrolment was not located."
+        return (f"{s['study']} reported {approx}{s['female_n']:,} of "
+                f"{s['total_enrollment']:,} women{pct_txt}.")
+
+    detail = " ".join(_study_sentence(s) for s in per_study)
+
+    if may_combine:
+        count = sum(s["female_n"] for s in per_study)
+        total = sum(s["total_enrollment"] for s in per_study)
+        derived = any(s["female_basis"] == "derived" for s in per_study)
+        return {
+            "state": "reported",
+            "label": f"{'approximately ' if derived else ''}{count:,} of {total:,}",
+            "detail": detail,
+            "combined_count": count,
+            "combined_total": total,
+            "combined_percentage": round(count / total * 100, 1) if total else None,
+            "combined_basis": "mixed_reported_and_derived" if derived else "reported",
+            "studies_reporting_women": len(combinable),
+            "studies_reviewed": len(per_study),
+            "per_study": per_study,
+        }
+
+    reported_any = bool(combinable)
+    return {
+        # Partial coverage: at least one study reports women, at least one does not.
+        "state": "partially_reported" if reported_any else "not_reported",
+        "label": (
+            "Partially reported across reviewed studies" if reported_any
+            else "Not reported in the reviewed studies"
+        ),
+        "detail": detail,
+        # Fail closed: no medicine-level numerator, denominator or percentage.
+        "combined_count": None,
+        "combined_total": None,
+        "combined_percentage": None,
+        "combined_basis": "not_combinable_incomplete_coverage",
+        "studies_reporting_women": len(combinable),
+        "studies_reviewed": len(per_study),
+        "per_study": per_study,
+    }
+
+
 def aggregate_participants(trial_ids: List[str]) -> dict:
     """Totals with explicit basis handling. Never mixes reported and derived."""
     participants_total = 0
@@ -241,6 +354,10 @@ def aggregate_participants(trial_ids: List[str]) -> dict:
             else "not_calculated_incomplete_coverage"
         ),
         "count_basis_warning": count_warning,
+        # The canonical women-included answer. Every surface (Check Evidence, Compare
+        # Evidence, the PDF exports) reads THIS block, so none of them can pair a
+        # partial numerator with a full denominator.
+        "women_included": women_included_summary(trial_ids),
     }
 
 

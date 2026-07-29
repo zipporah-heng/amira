@@ -88,6 +88,36 @@ export interface Totals {
   women_pct_of_participants: number | null;
   women_pct_basis: string;
   count_basis_warning: string | null;
+  /** The canonical women-included answer. A combined count, total and percentage exist
+   *  ONLY when every reviewed study contributes a compatible verified pair. */
+  women_included?: WomenIncludedSummary;
+}
+
+export interface WomenIncludedStudy {
+  trial_id: string;
+  study: string;
+  total_enrollment: number | null;
+  total_enrollment_state: string;
+  female_n: number | null;
+  female_basis: "reported" | "derived" | "not_located";
+  /** The percentage recorded in the source, when one is recorded. */
+  female_pct_reported: number | null;
+  /** This study's own female count over its own total — the displayed percentage. */
+  female_pct_within_study: number | null;
+  combinable: boolean;
+}
+
+export interface WomenIncludedSummary {
+  state: "reported" | "partially_reported" | "not_reported";
+  label: string;
+  detail: string;
+  combined_count: number | null;
+  combined_total: number | null;
+  combined_percentage: number | null;
+  combined_basis: string;
+  studies_reporting_women: number;
+  studies_reviewed: number;
+  per_study: WomenIncludedStudy[];
 }
 
 export interface Maturity {

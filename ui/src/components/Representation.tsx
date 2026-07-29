@@ -33,12 +33,19 @@ const GLYPH: Record<M.StateTone, string> = {
 export function Representation({ report }: { report: EvidenceResponse }) {
   const hc = M.hormonalContext(report);
   const included = M.womenIncluded(report);
-  const pct = report.totals?.women_pct_of_participants;
+  // A percentage is shown ONLY when the canonical summary produced a combined figure;
+  // a partially reported medicine shows its study coverage instead.
+  const wi = report.totals?.women_included;
+  const pct = wi ? wi.combined_percentage : report.totals?.women_pct_of_participants ?? null;
 
   const cards: { title: string; icon: string; cell: M.EvidenceCell; sub?: string }[] = [
     // "Women included" keeps its percentage; the state itself is the shared one.
     { title: "Women included", icon: "women", cell: included,
-      sub: included.tone === "reported" && pct != null ? `${pct}%` : undefined },
+      sub: included.tone === "reported" && pct != null
+        ? `${pct}%`
+        : wi && wi.state === "partially_reported"
+          ? `${wi.studies_reporting_women} of ${wi.studies_reviewed} studies`
+          : undefined },
     // Sex-specific outcomes IS the women-analyzed question — same value, same wording.
     { title: "Sex-specific outcomes", icon: "chart", cell: M.sexSpecificOutcomes(report) },
     { title: "Sex-specific safety", icon: "shield", cell: M.safety(report) },
