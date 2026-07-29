@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { checkEvidence, getCriticalSignals, type CriticalSignal, type EvidenceResponse } from "../api";
 import { EvidenceSearch, hormonalContextToApi, type Filters, type HealthAreaEntry } from "../components/EvidenceSearch";
 import { HormonalFocus } from "../components/HormonalFocus";
-import { WhatToNotice } from "../components/WhatToNotice";
+import { NoticePanel, MaturityPanel } from "../components/WhatToNotice";
 import { EvidenceReview } from "../components/EvidenceReview";
 import { Representation } from "../components/Representation";
 import { AiFound } from "../components/AiFound";
@@ -108,14 +108,15 @@ export function CheckEvidence() {
            evidence summary rather than becoming a second competing headline. */
         <EvidenceReview
           report={report}
-          /* The original two-column summary: the primary finding beside the circular
-             maturity meter and its checklist. */
+          /* Columns two and three of the compact summary row: the primary result,
+             then the circular maturity meter and its checklist. */
           signalCard={
-            <WhatToNotice
+            <NoticePanel
               report={report}
               signal={signals.find((s) => s.medicine === report.banner!.medicine) || null}
             />
           }
+          maturityCard={<MaturityPanel report={report} />}
           scopeCard={<EvidenceScope report={report} />}
           representationCard={<Representation report={report} />}
           unknownCard={<WhatRemainsUnknown report={report} />}

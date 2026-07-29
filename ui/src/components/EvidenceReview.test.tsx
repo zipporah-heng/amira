@@ -97,7 +97,7 @@ describe("Check Evidence — approved review layout", () => {
       expect(container.querySelector(`#${id}`)).not.toBeNull();
     }
     // Every detailed section is reachable.
-    for (const s of SECTIONS.filter((x) => !["important-finding", "representation", "ai-found"].includes(x.id))) {
+    for (const s of SECTIONS.filter((x) => !["important-finding", "representation", "remains-unknown", "ai-found"].includes(x.id))) {
       expect(container.querySelector(`a[href="#${s.id}"]`)).not.toBeNull();
     }
   });
@@ -152,7 +152,7 @@ describe("Check Evidence — approved review layout", () => {
   it("5. Shows the active ingredient separately (never inside the medicine name)", () => {
     const { container } = render_(OZEMPIC);
     expect(container.querySelector(".ev-med-name")!.textContent).toBe("Ozempic");
-    expect(container.querySelector(".ev-med-ing")!.textContent).toBe("Active ingredient: semaglutide");
+    expect(container.querySelector(".ev-med-ing")!.textContent).toBe("semaglutide");
     expect(container.querySelector(".ev-med-name")!.textContent).not.toContain("semaglutide");
   });
 
@@ -233,9 +233,9 @@ describe("Check Evidence — approved review layout", () => {
       sourceId: "SRC-CARDS", sourceTitle: "CARDS", sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/15325833/",
     });
     const { container } = render(<EvidenceReview report={unscored} />);
-    expect(container.querySelector(".ev-mat-compact .ev-mat-v")!.textContent).toBe("—");
-    expect(container.querySelector(".ev-mat-label")!.textContent).toBe("Not yet established");
+    // No fabricated score anywhere in the identity column.
     expect(container.textContent).not.toContain("0 / 5");
+    expect(container.querySelector(".ev-identity")!.textContent).not.toMatch(/\d\s*\/\s*5/);
   });
 
   it("Displays every evidence state with a text label, never colour alone", () => {

@@ -76,6 +76,41 @@
 .ev-link { font-size: 13.5px; font-weight: 650; color: var(--lav-700); display: inline-block; margin-top: 10px; }
 .ev-link:hover { text-decoration: underline; }
 
+/* ---- Compact three-column evidence summary: identity · result · maturity ---- */
+.ev-summary3 { display: grid; grid-template-columns: 20% 50% 30%; gap: 18px; align-items: start; }
+.ev-summary3 > * { min-width: 0; }
+.ev-identity {
+  border: 1px solid var(--border); border-radius: 14px; padding: 16px 17px;
+  background: var(--lav-50); align-self: stretch;
+}
+.ev-identity .ev-med-name { font-size: 20px; line-height: 1.25; }
+.ev-identity .ev-med-ing { font-size: 13px; margin-top: 2px; }
+.ev-identity-facts { margin: 12px 0 0; display: flex; flex-direction: column; gap: 9px; }
+.ev-identity-facts div { display: flex; flex-direction: column; gap: 1px; }
+.ev-identity-facts dt {
+  font-size: 10px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-3);
+}
+.ev-identity-facts dd { margin: 0; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.ev-identity .ev-med-note { font-size: 11.5px; margin-top: 10px; }
+.ev-identity .ev-selected-badge { margin-top: 12px; }
+/* The two panels sit directly in the row — no nested card chrome. */
+.ev-summary3 .notice-panel, .ev-summary3 .notice-maturity { scroll-margin-top: 96px; }
+.ev-summary3 .notice-maturity {
+  border: 1px solid var(--border); border-radius: 14px; padding: 16px; background: var(--surface);
+}
+.ev-summary3 .notice-title { margin-bottom: 12px; }
+
+@media (max-width: 1100px) {
+  /* Tablet: identity becomes a compact top row; result and maturity sit beneath it. */
+  .ev-summary3 { grid-template-columns: 1fr 1fr; }
+  .ev-identity { grid-column: 1 / -1; }
+  .ev-identity-facts { flex-direction: row; gap: 22px; flex-wrap: wrap; }
+}
+@media (max-width: 760px) {
+  /* Mobile: identity, then result, then maturity. */
+  .ev-summary3 { grid-template-columns: 1fr; }
+}
+
 /* Medicine summary card */
 .ev-med-card { border: 1px solid var(--border); border-radius: 14px; padding: 20px; background: var(--lav-50); }
 .ev-med-head { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
@@ -222,19 +257,23 @@
 .cmp-note {
   display: flex; gap: 10px; align-items: flex-start; margin-top: 16px; padding: 13px 16px;
   background: var(--lav-50); border: 1px solid var(--lav-200); border-radius: 12px;
-  font-size: 13.5px; color: var(--ink-2); line-height: 1.55;
+  font-size: 14px; color: var(--ink-2); line-height: 1.55;
 }
 
 /* Fixed evidence-label column + one column per medicine, rows aligned by CSS grid. */
 .cmp-matrix { margin-top: 18px; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--surface); }
 .cmp-scroll { overflow-x: auto; }
 .cmp-grid { display: grid; min-width: min-content; }
+/* Readability: one visual step up across the matrix, while keeping the columns
+   narrow enough that side-by-side comparison still works. */
 .cmp-cell { padding: 13px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; min-width: 0; }
 .cmp-cell.label {
   position: sticky; left: 0; z-index: 2; background: var(--surface-2);
-  font-size: 13px; font-weight: 650; color: var(--ink-2); gap: 8px; border-right: 1px solid var(--border);
+  font-size: 14px; font-weight: 650; color: var(--ink-2); gap: 8px; border-right: 1px solid var(--border);
 }
-.cmp-cell.value { font-size: 13.5px; color: var(--ink); background: var(--surface); }
+.cmp-cell.value { font-size: 14px; color: var(--ink); background: var(--surface); }
+.cmp-matrix .ev-chip { font-size: 12.5px; }
+.cmp-matrix .ev-foot { font-size: 12px; }
 .cmp-cell.value .cmp-val { min-width: 0; overflow-wrap: anywhere; }
 .cmp-row-head { background: var(--surface-2); }
 .cmp-colhead {
@@ -243,24 +282,24 @@
 }
 .cmp-colhead.selected { background: var(--lav-50); box-shadow: inset 0 3px 0 var(--lav-500); }
 .cmp-colhead.selected .cmp-colname { color: var(--lav-700); }
-.cmp-colname { font-size: 19px; font-weight: 750; color: var(--ink); }
-.cmp-colsub { font-size: 12.5px; color: var(--ink-3); }
+.cmp-colname { font-size: 18px; font-weight: 750; color: var(--ink); }
+.cmp-colsub { font-size: 13px; color: var(--ink-3); }
 .cmp-selbadge {
-  font-size: 10px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
+  font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
   color: #fff; background: var(--lav-500); padding: 3px 9px; border-radius: 999px;
 }
 .cmp-incomplete-badge {
-  font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+  font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
   color: var(--grey-incomplete); background: #f2f3f6; border: 1px solid #dfe1e8;
   padding: 3px 9px; border-radius: 999px;
 }
 .cmp-expand {
-  background: none; border: 0; padding: 0; font-size: 12.5px; font-weight: 650;
+  background: none; border: 0; padding: 0; font-size: 13px; font-weight: 650;
   color: var(--lav-700); cursor: pointer; text-align: left;
 }
 .cmp-expand:hover { text-decoration: underline; }
 .cmp-expand:focus-visible { outline: 3px solid var(--lav-300); outline-offset: 2px; }
-.cmp-inline-link { font-size: 12.5px; font-weight: 650; color: var(--lav-700); }
+.cmp-inline-link { font-size: 13px; font-weight: 650; color: var(--lav-700); }
 .cmp-empty { margin-top: 16px; padding: 16px 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); font-size: 14px; color: var(--ink-2); }
 
 /* Medicine switcher (tablet / mobile: one medicine at a time) */
@@ -275,25 +314,25 @@
 /* Edit Comparison */
 .cmp-editor { margin-top: 14px; padding: 18px 20px; border: 1px solid var(--lav-200); border-radius: 14px; background: var(--lav-50); }
 .cmp-editor-h { font-size: 15px; font-weight: 750; color: var(--ink); }
-.cmp-editor-sub { font-size: 12.5px; color: var(--ink-3); margin-top: 4px; }
+.cmp-editor-sub { font-size: 13px; color: var(--ink-3); margin-top: 4px; }
 .cmp-editor-list { list-style: none; margin: 14px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; }
 .cmp-editor-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; font-size: 13.5px; min-height: 44px; }
 .cmp-editor-item input { width: 17px; height: 17px; accent-color: var(--lav-500); }
 .cmp-editor-item.locked { opacity: .85; }
-.cmp-editor-note { font-size: 12px; color: var(--ink-3); margin-top: 12px; line-height: 1.5; }
+.cmp-editor-note { font-size: 12.5px; color: var(--ink-3); margin-top: 12px; line-height: 1.5; }
 
 /* Reviewed source coverage */
 .cmp-coverage { margin-top: 20px; padding: 20px 22px; background: var(--lav-50); border: 1px solid var(--lav-200); border-radius: 16px; }
 .cmp-coverage-head { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
 .cmp-coverage-h { font-size: 17px; font-weight: 750; color: var(--ink); }
-.cmp-coverage-sub { font-size: 12.5px; color: var(--ink-3); margin-top: 5px; max-width: 62ch; line-height: 1.55; }
+.cmp-coverage-sub { font-size: 13px; color: var(--ink-3); margin-top: 5px; max-width: 62ch; line-height: 1.55; }
 .cmp-coverage-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 16px; }
 .cmp-cov-cell { background: var(--surface); border: 1px solid var(--border); border-radius: 11px; padding: 13px 14px; }
-.cmp-cov-k { font-size: 11px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: var(--ink-3); }
+.cmp-cov-k { font-size: 11.5px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: var(--ink-3); }
 .cmp-cov-v { font-size: 16px; font-weight: 750; color: var(--ink); margin-top: 5px; }
-.cmp-cov-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; background: var(--surface); }
+.cmp-cov-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13.5px; background: var(--surface); }
 .cmp-cov-table th, .cmp-cov-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
-.cmp-cov-table th { font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--ink-3); }
+.cmp-cov-table th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .03em; color: var(--ink-3); }
 .cmp-cov-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 11px; margin-top: 16px; }
 
 @media (max-width: 1000px) {
@@ -315,6 +354,29 @@
   .cmp-btn { font-size: 13.5px; padding: 0 14px; }
   .cmp-coverage { padding: 16px 15px; }
 }
+
+/* ============ Critical Evidence Library search — reads as an input box ============ */
+.cs-search-wrap {
+  position: relative; display: flex; align-items: center;
+  background: var(--surface); border: 1px solid var(--lav-200); border-radius: 10px;
+  height: 44px; padding: 0 10px; gap: 8px;
+}
+.cs-search-wrap:focus-within { border-color: var(--lav-500); box-shadow: 0 0 0 3px var(--lav-100); }
+.cs-search-icon { font-size: 13px; opacity: .75; flex: 0 0 auto; }
+.cs-search-input {
+  flex: 1 1 auto; min-width: 0; border: 0; outline: 0; background: transparent;
+  font-size: 14px; color: var(--ink); height: 100%;
+}
+.cs-search-input::placeholder { color: var(--ink-3); }
+/* The native search decoration is replaced by an explicit, labelled clear control. */
+.cs-search-input::-webkit-search-cancel-button { display: none; }
+.cs-search-clear {
+  flex: 0 0 auto; width: 24px; height: 24px; border: 0; border-radius: 50%; cursor: pointer;
+  background: var(--surface-2); color: var(--ink-2); font-size: 16px; line-height: 1;
+  display: grid; place-items: center;
+}
+.cs-search-clear:hover { background: var(--lav-100); color: var(--lav-700); }
+.cs-search-clear:focus-visible, .cs-search-input:focus-visible { outline: 3px solid var(--lav-300); outline-offset: 2px; }
 
 /* ==================== Reusable-science teaser (front page) ==================== */
 .sci-teaser {
@@ -354,11 +416,21 @@
   background: var(--unclear-bg); color: var(--unclear-ink); border: 1px solid #f0dcb0;
 }
 .ob-link { font-size: 13.5px; font-weight: 650; color: var(--lav-700); display: inline-block; margin-top: 10px; }
+/* Metric typography is deliberately restrained and identical across sections B, E
+   and G: the value stays more prominent than its label without dominating the page. */
 .ob-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 12px; }
-.ob-metric { border: 1px solid var(--border); border-radius: 12px; padding: 14px 15px; background: var(--surface); }
-.ob-metric-k { font-size: 11px; font-weight: 750; letter-spacing: .03em; text-transform: uppercase; color: var(--ink-3); }
-.ob-metric-v { font-size: 20px; font-weight: 800; color: var(--ink); margin-top: 5px; line-height: 1.25; }
+.ob-metric { border: 1px solid var(--border); border-radius: 12px; padding: 13px 14px; background: var(--surface); }
+.ob-metric-k { font-size: 10.5px; font-weight: 750; letter-spacing: .03em; text-transform: uppercase; color: var(--ink-3); }
+.ob-metric-v { font-size: 15px; font-weight: 800; color: var(--ink); margin-top: 5px; line-height: 1.3; }
 .ob-metric-note { font-size: 11.5px; color: var(--ink-3); margin-top: 5px; line-height: 1.45; }
+
+/* Benchmark scope: what this release actually covers. */
+.ob-scope {
+  margin-top: 12px; padding: 12px 15px; border-radius: 11px; font-size: 13px; line-height: 1.6;
+  background: var(--lav-50); border: 1px solid var(--lav-200); color: var(--ink-2);
+}
+.ob-suggest { display: block; margin-top: 7px; font-size: 11.5px; font-weight: 650; color: var(--lav-700); white-space: nowrap; }
+.ob-suggest:hover { text-decoration: underline; }
 
 .ob-schema-table { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
 .ob-schema-head, .ob-schema-row { display: grid; grid-template-columns: minmax(190px, 260px) 1fr; gap: 14px; padding: 10px 14px; }

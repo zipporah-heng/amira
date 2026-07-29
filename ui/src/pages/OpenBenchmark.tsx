@@ -13,6 +13,46 @@ import { ReusableAssets } from "../components/ReusableAssets";
 
 const REPO_URL = "https://github.com/zipporah-heng/amira";
 
+/** A prefilled GitHub issue for a source-linked correction. Suggestions are proposals
+ *  only — canonical records are never editable from this page, and nothing changes
+ *  until a suggestion is reviewed and accepted. */
+function correctionUrl(ctx: {
+  benchmarkVersion?: string; datasetVersion?: string; record?: any;
+}) {
+  const r = ctx.record;
+  const field = r?.draft_label
+    ? Object.keys(r.draft_label).find((k) => k !== "expected_abstention") || ""
+    : "";
+  const value = field && r?.draft_label ? String(r.draft_label[field] ?? "not stated") : "";
+  const body = [
+    "<!-- A correction is a proposal. It does not change the benchmark until reviewed and accepted. -->",
+    "",
+    `**Benchmark version:** ${ctx.benchmarkVersion || ""}`,
+    `**Dataset version:** ${ctx.datasetVersion || ""}`,
+    `**Source ID:** ${r?.source_id || ""}`,
+    `**Passage ID:** ${r?.benchmark_id || ""}`,
+    `**Medicine:** ${r?.medicine || ""}`,
+    `**Condition:** ${r?.condition || ""}`,
+    `**Evidence field:** ${field}`,
+    `**Current extracted value:** ${value}`,
+    "",
+    "**Proposed correction:**",
+    "",
+    "**Supporting source or citation:** <!-- URL, PMID, NCT id or document locator -->",
+    "",
+    "**Explanation:**",
+    "",
+    "**Reviewer name or relevant expertise (optional):**",
+    "",
+    r?.exact_passage ? `> Quoted passage: ${r.exact_passage}` : "",
+  ].filter((l) => l !== undefined).join("\n");
+  const title = r?.benchmark_id
+    ? `Benchmark correction: ${r.benchmark_id}`
+    : "Benchmark correction";
+  return `${REPO_URL}/issues/new?labels=${encodeURIComponent("benchmark-correction")}` +
+    `&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
+}
+
 function Metric({ k, v, note }: { k: string; v: string; note?: string }) {
   return (
     <div className="ob-metric">
@@ -61,14 +101,33 @@ export function OpenBenchmark() {
     const pendingRecs = items.filter((i) => i.human_verified !== true);
     const sourceDocs = new Set(items.map((i) => i.source_id).filter(Boolean));
     const studies = new Set(items.map((i) => i.nct_id || i.pmid || i.source_id).filter(Boolean));
+    const medicines = [...new Set(items.map((i) => i.medicine).filter(Boolean))].sort();
     return {
       passages: items.length,
       sourceDocuments: sourceDocs.size,
       studies: studies.size,
       reviewed: reviewed.length,
       pending: pendingRecs.length,
+      medicines,
     };
   }, [items]);
+
+  /** What this benchmark release actually covers, written from the records above so it
+   *  can never drift from them. AMIRA reviews evidence for more medicines than the
+   *  benchmark currently includes, and the difference is stated rather than implied. */
+  const scopeStatement = useMemo(() => {
+    if (!items.length) return null;
+    const { medicines, passages, sourceDocuments, studies } = stats;
+    const list = medicines.length
+      ? medicines.join(", ")
+      : "the medicines represented in these records";
+    const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+    return `Current published benchmark scope: ${list}. This pilot contains ` +
+      `${plural(passages, "passage", "passages")} from ` +
+      `${plural(sourceDocuments, "source document", "source documents")} representing ` +
+      `${plural(studies, "study", "studies")}. Evidence for other medicines is available ` +
+      `elsewhere in AMIRA but is not yet included in this benchmark release.`;
+  }, [items, stats]);
 
   const evaluation = data?.evaluation;
   const evaluationPending = !evaluation || evaluation.status === "EVALUATION PENDING"
@@ -158,6 +217,7 @@ export function OpenBenchmark() {
           <Metric k="Benchmark version" v={data?.benchmark_version || "—"} />
           <Metric k="Evidence cutoff date" v={data?.source_cutoff || "—"} />
         </div>
+        {scopeStatement && <p className="ob-scope" id="ob-scope">{scopeStatement}</p>}
         <p className="ob-warn">
           Source-linked benchmark scaffold pending human review. Draft labels are rule-drafted from
           the retrieved passage; they are not gold labels, ground truth or a validated standard.
@@ -208,6 +268,10 @@ export function OpenBenchmark() {
                       <span className={`ob-pill ${i.human_verified ? "ok" : "pending"}`}>
                         {i.human_verified ? `Reviewed${i.human_verifier ? ` · ${i.human_verifier}` : ""}` : "Pending"}
                       </span>
+                      <a className="ob-suggest" target="_blank" rel="noopener noreferrer"
+                         href={correctionUrl({ benchmarkVersion: data?.benchmark_version, datasetVersion: data?.dataset_version, record: i })}>
+                        Suggest correction
+                      </a>
                     </td>
                   </tr>
                 );
@@ -312,7 +376,15 @@ export function OpenBenchmark() {
           <a className="cmp-btn" href="/amira/methodology">Review methodology</a>
           <a className="cmp-btn" href="#ob-downloads">Download available assets</a>
           <a className="cmp-btn" href="#ob-records">Inspect evidence records</a>
+          <a className="cmp-btn primary" target="_blank" rel="noopener noreferrer"
+             href={correctionUrl({ benchmarkVersion: data?.benchmark_version, datasetVersion: data?.dataset_version })}>
+            Suggest a correction ↗
+          </a>
         </div>
+        <p className="ob-note">
+          Researchers can inspect a record and submit a source-linked correction for review.
+          Suggested changes do not alter the benchmark until they are reviewed and accepted.
+        </p>
       </Section>
 
       <ReusableAssets />

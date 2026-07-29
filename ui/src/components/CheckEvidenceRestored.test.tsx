@@ -127,10 +127,10 @@ describe("Hybrid integration — every approved component coexists", () => {
 
   it("Follows the approved order: quick understanding first, detailed inspection second", () => {
     const { container } = renderPage();
-    const order = ["evidence-summary", "important-finding", "evidence-scope", "representation",
-      "remains-unknown", "ai-found", "women-in-the-evidence", "sex-specific-effectiveness",
+    const order = ["evidence-summary", "important-finding", "evidence-maturity", "evidence-scope",
+      "representation", "women-in-the-evidence", "remains-unknown", "sex-specific-effectiveness",
       "women-specific-safety", "common-adverse-effects", "life-stage-evidence", "hormonal-context",
-      "exact-passages", "source-coverage", "about-this-evidence-review"];
+      "exact-passages", "source-coverage", "ai-found", "about-this-evidence-review"];
     const positions = order.map((id) => {
       const el = container.querySelector(`#${id}`);
       expect(el, id).not.toBeNull();
@@ -144,7 +144,8 @@ describe("Hybrid integration — every approved component coexists", () => {
     const labels = [...container.querySelectorAll(".ev-nav-label")].map((n) => n.textContent);
     expect(labels).toContain("What should I notice?");
     expect(labels).toContain("How were women represented?");
-    expect(labels).toContain("How AMIRA's AI found this");
+    expect(labels).toContain("How AMIRA's AI found this evidence");
+    expect(labels).toContain("What remains unknown");
     expect(labels).toContain("Evidence Summary");
     expect(labels).toContain("About This Evidence Review");
     // Every link still resolves to a real section.
@@ -156,11 +157,10 @@ describe("Hybrid integration — every approved component coexists", () => {
   it("Presents the maturity level once in full, without a competing second meter", () => {
     const { container } = renderPage();
     expect(container.querySelectorAll("svg.maturity-meter").length).toBe(1);
-    // The summary card keeps a compact marker of the same canonical level.
-    const compact = container.querySelector(".ev-mat-compact .ev-mat-v")!.textContent;
-    expect(compact).toContain(String(M.maturity(OZEMPIC).level));
     expect(container.querySelector("svg.maturity-meter")!.getAttribute("aria-label"))
       .toContain(`${M.maturity(OZEMPIC).level} of 5`);
+    // The identity column carries no competing score.
+    expect(container.querySelector(".ev-identity")!.textContent).not.toMatch(/\d\s*\/\s*5/);
   });
 });
 
@@ -286,7 +286,6 @@ describe("Restored components", () => {
     (atorva.banner as any).maturity.scorable = false;
     const { container } = renderPage(atorva);
     expect(container.querySelector("svg.maturity-meter")!.textContent).toContain("—");
-    expect(container.querySelector(".ev-mat-compact .ev-mat-v")!.textContent).toBe("—");
     expect(container.textContent).not.toContain("0 / 5");
     expect(container.querySelector(".nm-check")).toBeNull();
   });
