@@ -59,6 +59,32 @@ describe("Header", () => {
     expect(active?.textContent).toBe("Research Map");
   });
 
+  it("uses the approved navigation order", () => {
+    const { container } = renderHeader();
+    const labels = [...container.querySelectorAll(".hdr-nav .hdr-nav-link")].map((n) => n.textContent);
+    expect(labels).toEqual([
+      "Check Evidence", "Compare Evidence", "Research Map", "Open Benchmark", "Methodology", "GitHub ↗",
+    ]);
+  });
+
+  it("places Check Evidence and Compare Evidence directly beside each other", () => {
+    const { container } = renderHeader();
+    const labels = [...container.querySelectorAll(".hdr-nav .hdr-nav-link")].map((n) => n.textContent);
+    expect(labels.indexOf("Compare Evidence")).toBe(labels.indexOf("Check Evidence") + 1);
+  });
+
+  it("wraps the active page in the lavender pill and leaves the other page clickable", () => {
+    const { container } = renderHeader("/amira/compare-evidence");
+    const active = container.querySelector(".hdr-nav-link.active");
+    expect(active?.textContent).toBe("Compare Evidence");
+    expect(active?.getAttribute("aria-current")).toBe("page");
+    // The inactive sibling remains a real, unstyled-as-active link.
+    const check = [...container.querySelectorAll(".hdr-nav .hdr-nav-link")]
+      .find((n) => n.textContent === "Check Evidence") as HTMLAnchorElement;
+    expect(check.classList.contains("active")).toBe(false);
+    expect(check.getAttribute("href")).toBe("/amira/check-evidence");
+  });
+
   it("has an accessible mobile menu toggle that opens and closes", () => {
     renderHeader();
     const burger = screen.getByLabelText("Toggle navigation menu");

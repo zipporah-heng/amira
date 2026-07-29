@@ -104,9 +104,11 @@
 
 /* --- Header navigation --- */
 .hdr-nav { display: flex; gap: 4px; margin-left: 18px; flex: 1; align-items: center; }
-.hdr-nav-link { font-size: 16px; font-weight: 600; color: var(--ink-2); text-decoration: none; padding: 9px 13px; border-radius: 9px; white-space: nowrap; }
+.hdr-nav-link { font-size: 15.5px; font-weight: 600; color: var(--ink-2); text-decoration: none; padding: 9px 15px; border-radius: 999px; white-space: nowrap; border: 1px solid transparent; }
 .hdr-nav-link:hover { background: var(--lav-50); color: var(--ink); text-decoration: none; }
-.hdr-nav-link.active { background: var(--lav-100); color: var(--lav-700); }
+/* Approved active state: the current page is WRAPPED in a lavender rounded pill.
+   Inactive items stay clearly readable and clickable (never dimmed out). */
+.hdr-nav-link.active { background: var(--lav-100); color: var(--lav-700); border-color: var(--lav-200); font-weight: 700; }
 .hdr-nav-link:focus-visible, .hdr-burger:focus-visible, .hdr-mobile-link:focus-visible, .share-btn:focus-visible {
   outline: 3px solid var(--lav-300); outline-offset: 2px;
 }
@@ -115,7 +117,7 @@
 .hdr-burger span { width: 20px; height: 2px; background: var(--ink-2); border-radius: 2px; }
 .hdr-mobile { display: flex; flex-direction: column; padding: 8px 20px 14px; border-top: 1px solid var(--border); background: #fff; }
 .hdr-mobile-link { font-size: 16px; font-weight: 600; color: var(--ink-2); padding: 12px 8px; min-height: 44px; display: flex; align-items: center; border-radius: 9px; text-decoration: none; }
-.hdr-mobile-link.active { color: var(--lav-700); background: var(--lav-50); }
+.hdr-mobile-link.active { color: var(--lav-700); background: var(--lav-100); border: 1px solid var(--lav-200); font-weight: 700; }
 
 /* --- Evidence-path card treatments: pink warning vs lavender --- */
 .op-card.warn { background: #fdeef2; border: 1px solid #f0c6d3; border-left: 4px solid #d1436e; }

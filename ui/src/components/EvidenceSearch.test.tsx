@@ -156,4 +156,31 @@ describe("Check Evidence + Compare Evidence — adjacent actions preserve contex
     expect(p.get("lifeStage")).toBe("older_adult");
     expect(p.get("hormonalContext")).toBe("Menopause status");
   });
+
+  it("6+31. Neither action label wraps, and both sit in the same actions row", () => {
+    render(<Harness />);
+    const actions = document.querySelector(".filter-actions") as HTMLElement;
+    const check = within(actions).getByRole("button", { name: "Check Evidence" });
+    const compare = within(actions).getByRole("link", { name: "Compare Evidence" });
+    // Single-line labels: no embedded line breaks, and both are direct siblings.
+    for (const el of [check, compare]) {
+      expect(el.textContent).not.toMatch(/\n/);
+      expect(el.parentElement).toBe(actions);
+    }
+    expect(actions.children.length).toBe(2);
+  });
+
+  it("4+32. The Medicine selector shows the medicine name only and keeps every option readable", () => {
+    render(<Harness initial={{ healthArea: "Metabolic Health", condition: "Weight management", drugClass: "GLP-1 receptor agonist", medicine: "Semaglutide" }} />);
+    const med = screen.getByLabelText("Medicine") as HTMLSelectElement;
+    for (const o of within(med).getAllByRole("option")) {
+      expect(o.textContent).not.toMatch(/·/);          // no "Wegovy · semaglutide"
+      expect(o.textContent).not.toMatch(/incomplete/i); // status is a separate badge
+      expect((o as HTMLOptionElement).value).toBe(o.textContent);
+    }
+    // The life-stage selector keeps its full value visible (never truncated to a code).
+    const ls = screen.getByLabelText("Life Stage") as HTMLSelectElement;
+    const selected = within(ls).getAllByRole("option").find((o) => (o as HTMLOptionElement).selected)!;
+    expect(selected.textContent).toBe("Menopause / Postmenopause");
+  });
 });

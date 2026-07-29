@@ -2,16 +2,8 @@ import { useEffect, useState } from "react";
 import { checkEvidence, getCriticalSignals, type CriticalSignal, type EvidenceResponse } from "../api";
 import { EvidenceSearch, hormonalContextToApi, type Filters, type HealthAreaEntry } from "../components/EvidenceSearch";
 import { HormonalFocus } from "../components/HormonalFocus";
-import { EvidenceScope, WhatRemainsUnknown } from "../components/EvidenceClarity";
 import { WhatToNotice } from "../components/WhatToNotice";
-import { Representation } from "../components/Representation";
-import { AiFound } from "../components/AiFound";
-import { EvidenceTraceDrawer } from "../components/EvidenceTraceDrawer";
-import { OtherEvidencePaths } from "../components/OtherEvidencePaths";
-import { StudyTable } from "../components/StudyTable";
-import { NhanesContext } from "../components/NhanesContext";
-import { ReusableAssets } from "../components/ReusableAssets";
-import { ContinueExploring } from "../components/ContinueExploring";
+import { EvidenceReview } from "../components/EvidenceReview";
 
 // Digoxin leads: a striking, source-linked finding on the first, default view.
 const DEFAULTS: Filters = {
@@ -56,7 +48,6 @@ export function CheckEvidence() {
   const [error, setError] = useState<string | null>(null);
   const [catalog, setCatalog] = useState<HealthAreaEntry[]>([]);
   const [signals, setSignals] = useState<CriticalSignal[]>([]);
-  const [traceOpen, setTraceOpen] = useState(false);
 
   const run = async (f: Filters) => {
     setLoading(true); setError(null);
@@ -71,7 +62,6 @@ export function CheckEvidence() {
     run(start);
   }, []);
 
-  const jump = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   const medicine = report?.banner?.medicine || filters.medicine;
 
   return (
@@ -101,38 +91,21 @@ export function CheckEvidence() {
       )}
 
       {report && report.supported && report.banner && report.totals && (
-        <>
-          {/* Active ingredient shown SEPARATELY in the result (never appended to the
-              selectable medicine name). Brand note (e.g. Zepbound) sits alongside it. */}
-          {report.banner.active_ingredient && (
-            <p className="med-ingredient">
-              <span className="med-ingredient-k">Active ingredient:</span> {report.banner.active_ingredient.toLowerCase()}
-              {report.banner.brand_note ? <span className="med-brandnote"> · {report.banner.brand_note}</span> : null}
-            </p>
-          )}
-          {/* "What should I notice?" is the SINGLE primary presentation of the signal.
-              When a verified Critical Signal exists for this medicine it is consolidated
-              INTO this card (no separate standalone panel above the selector). */}
-          <WhatToNotice report={report} signal={signals.find((s) => s.medicine === report.banner!.medicine) || null} />
-          {/* Page-level maturity disclaimer, beneath the combined signal + maturity card. */}
-          <p className="maturity-note">
-            <span className="mn-ic" aria-hidden="true">ℹ️</span>
-            <span>Evidence Maturity reflects the depth and specificity of women's health reporting in
-              the research. It is not a quality rating and is not intended to compare this medicine to others.</span>
-          </p>
-          <EvidenceScope report={report} />
-          <Representation report={report} />
-          <WhatRemainsUnknown report={report} />
-          <AiFound onOpenTrace={() => setTraceOpen(true)} />
-          <OtherEvidencePaths report={report} />
-          {report.studies_behind && <StudyTable records={report.studies_behind} />}
-          <NhanesContext drugClass={report.banner.drug_class} />
-          <ReusableAssets />
-          <ContinueExploring onWhy={() => jump("important-finding")} onPassages={() => setTraceOpen(true)} />
-        </>
+        /* The approved evidence review. Section navigation + evidence sections, all
+           reading the shared evidence model (the same layer the PDF brief reads).
+           The verified critical signal, when one exists, stays consolidated into the
+           evidence summary rather than becoming a second competing headline. */
+        <EvidenceReview
+          report={report}
+          signalCard={
+            <WhatToNotice
+              report={report}
+              signal={signals.find((s) => s.medicine === report.banner!.medicine) || null}
+              showMaturity={false}
+            />
+          }
+        />
       )}
-
-      {traceOpen && <EvidenceTraceDrawer medicine={medicine} onClose={() => setTraceOpen(false)} />}
     </div>
   );
 }

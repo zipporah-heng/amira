@@ -4,10 +4,12 @@ import amiraLogo from "../assets/amira-logo.png";
 
 const REPO_URL = "https://github.com/zipporah-heng/amira";
 
+/** Approved navigation order. Check Evidence and Compare Evidence sit directly
+ *  beside each other — they are the two contextual actions on the same selection. */
 const NAV = [
   { to: "/amira/check-evidence", label: "Check Evidence" },
-  { to: "/amira/research-map", label: "Research Map" },
   { to: "/amira/compare-evidence", label: "Compare Evidence" },
+  { to: "/amira/research-map", label: "Research Map" },
   { to: "/amira/open-benchmark", label: "Open Benchmark" },
   { to: "/amira/methodology", label: "Methodology" },
 ];

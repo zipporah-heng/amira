@@ -183,16 +183,23 @@ function MaturityChecklist({ level }: { level: number }) {
   );
 }
 
-export function WhatToNotice({ report, signal = null }: { report: EvidenceResponse; signal?: CriticalSignal | null }) {
+export function WhatToNotice({ report, signal = null, showMaturity = true }: {
+  report: EvidenceResponse; signal?: CriticalSignal | null;
+  /** False when the surrounding evidence summary already presents maturity — the
+   *  checklist must appear exactly once on the page. */
+  showMaturity?: boolean;
+}) {
   const mat = report.maturity!;
   return (
-    <section className="card notice-card" id="important-finding" style={{ marginTop: 18 }}>
+    <section className={`card notice-card ${showMaturity ? "" : "notice-single"}`} id="important-finding"
+             style={{ marginTop: 18 }}>
       <h2 className="notice-title">What should I notice?</h2>
       <div className="notice-grid">
         {/* LEFT — the single primary signal presentation */}
         {signal ? <SignalCard signal={signal} /> : <FindingCard report={report} />}
 
         {/* RIGHT — evidence maturity */}
+        {showMaturity && (
         <div className="notice-maturity">
           <div className="nm-head">Evidence Maturity</div>
           {report.banner!.evidence_review_complete === false && (
@@ -205,6 +212,7 @@ export function WhatToNotice({ report, signal = null }: { report: EvidenceRespon
               for an unscored / evidence-review-incomplete medicine). */}
           {mat.scorable !== false && <MaturityChecklist level={mat.level} />}
         </div>
+        )}
       </div>
     </section>
   );

@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { getBenchmark } from "../api";
 import { AssetBadge } from "../components/DemoBadge";
+import { AiFound } from "../components/AiFound";
+import { EvidenceTraceDrawer } from "../components/EvidenceTraceDrawer";
+import { ReusableAssets } from "../components/ReusableAssets";
 
 const DATASET_COLUMNS = [
   "assertion_id", "trial_id", "dimension", "value", "value_basis", "source_id",
@@ -11,6 +14,9 @@ const DATASET_COLUMNS = [
 export function OpenBenchmark() {
   const [data, setData] = useState<any>(null);
   const [err, setErr] = useState<string | null>(null);
+  // The extraction pipeline and the reusable open assets describe the DATASET, so they
+  // live with the open benchmark rather than inside a single medicine's evidence review.
+  const [traceOpen, setTraceOpen] = useState(false);
 
   useEffect(() => {
     getBenchmark().then(setData).catch((e) => setErr(e.message));
@@ -160,12 +166,17 @@ export function OpenBenchmark() {
         </div>
       )}
 
+      <AiFound onOpenTrace={() => setTraceOpen(true)} />
+      <ReusableAssets />
+
       {data && (
         <p className="disclaimer" style={{ marginTop: 18 }}>
           Dataset v{data.dataset_version} · source cutoff {data.source_cutoff} ·
           commit {String(data.commit_hash || "").slice(0, 7)}
         </p>
       )}
+
+      {traceOpen && <EvidenceTraceDrawer medicine="Digoxin" onClose={() => setTraceOpen(false)} />}
     </div>
   );
 }
