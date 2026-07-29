@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import type { EvidenceResponse } from "../api";
 import * as M from "../evidenceModel";
 import { buildEvidenceBriefPdf, evidenceBriefFilename, downloadBlob } from "../pdf";
+import * as CS from "../criticalSignal";
+import type { CriticalSignal } from "../api";
 
 /** The approved Check Evidence review: a section navigation beside the evidence
  *  sections, in the approved order.
@@ -16,7 +18,6 @@ import { buildEvidenceBriefPdf, evidenceBriefFilename, downloadBlob } from "../p
  *  detailed inspection second. */
 export const SECTIONS = [
   { id: "evidence-summary", label: "Evidence Summary" },
-  { id: "important-finding", label: "What should I notice?" },
   { id: "representation", label: "How were women represented?" },
   { id: "women-in-the-evidence", label: "Women in the Evidence" },
   { id: "remains-unknown", label: "What remains unknown" },
@@ -32,8 +33,7 @@ export const SECTIONS = [
 ];
 
 const SECTION_SUB: Record<string, string> = {
-  "evidence-summary": "Medicine, result and maturity",
-  "important-finding": "The primary result",
+  "evidence-summary": "Medicine, finding and maturity",
   "representation": "Canonical states at a glance",
   "women-in-the-evidence": "Counts and analysis",
   "remains-unknown": "Gaps in the reviewed sources",
@@ -106,6 +106,33 @@ function Section({ id, title, sub, children }: {
   );
 }
 
+/** A compact critical-signal callout placed beside the evidence section it concerns.
+ *  It sits ALONGSIDE the canonical evidence state — it never replaces it, and the
+ *  section's own classification is unchanged by the signal's presence. */
+function SignalCallout({ signal }: { signal: CriticalSignal }) {
+  const p = CS.presentSignal(signal);
+  return (
+    <aside className={`ev-signal ${p.tone}`} aria-label="Critical evidence signal">
+      <div className="ev-signal-head">
+        <span className="ev-signal-label">{p.label}</span>
+        <span className="ev-signal-review">{p.reviewStatus}</span>
+      </div>
+      {p.headline && <p className="ev-signal-headline">{p.headline}</p>}
+      {p.statistic && <p className="ev-signal-stat">{p.statistic}</p>}
+      {p.analysis && <p className="ev-signal-note">{p.analysis}</p>}
+      {p.sourceUrl && (
+        <a className="ev-link" href={p.sourceUrl} target="_blank" rel="noopener noreferrer">
+          View exact passage →
+        </a>
+      )}
+      <p className="ev-signal-note">
+        Shown separately from the evidence state above. A critical signal does not change
+        evidence maturity, effectiveness or safety classification, and is not a ranking.
+      </p>
+    </aside>
+  );
+}
+
 function MetricCard({ label, value, tone, note }: {
   label: string; value: string; tone: M.StateTone; note?: string;
 }) {
@@ -120,6 +147,7 @@ function MetricCard({ label, value, tone, note }: {
 
 export function EvidenceReview({
   report, signalCard, maturityCard, scopeCard, representationCard, unknownCard, aiFoundCard, footerCard,
+  signal,
 }: {
   report: EvidenceResponse;
   /** "What should I notice?" — the primary result, column two of the summary row. */
@@ -136,6 +164,9 @@ export function EvidenceReview({
   aiFoundCard?: React.ReactNode;
   /** Anything that follows the review (e.g. continue-exploring links). */
   footerCard?: React.ReactNode;
+  /** The medicine's canonical critical signal, when one qualifies. It is shown beside
+   *  the section it concerns and never alters any evidence classification. */
+  signal?: CriticalSignal | null;
 }) {
   const [busy, setBusy] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
@@ -143,7 +174,6 @@ export function EvidenceReview({
   // A summary link is offered only when its component is actually rendered, so the
   // navigation can never point at a section that is not on the page.
   const optional: Record<string, boolean> = {
-    "important-finding": !!signalCard,
     "representation": !!representationCard,
     "remains-unknown": !!unknownCard,
     "ai-found": !!aiFoundCard,
@@ -265,6 +295,7 @@ export function EvidenceReview({
               View exact passages ({passages.length}) →
             </a>
           )}
+          {signal && CS.signalSection(signal.signal_type) === "effectiveness" && <SignalCallout signal={signal} />}
         </Section>
 
         <Section id="women-specific-safety" title="Women-specific safety" sub="What the research shows">
@@ -274,6 +305,7 @@ export function EvidenceReview({
           <p className="ev-foot">
             Women-specific safety is a separate question from the overall adverse effects listed below.
           </p>
+          {signal && CS.signalSection(signal.signal_type) === "safety" && <SignalCallout signal={signal} />}
         </Section>
 
         <Section id="common-adverse-effects" title="Common adverse effects" sub="From reviewed sources">
@@ -293,7 +325,15 @@ export function EvidenceReview({
               )}
             </>
           ) : (
-            <p className="ev-body">Not recorded in the reviewed sources.</p>
+            <>
+              <p className="ev-body">Not reported in the reviewed sources.</p>
+              {signal && (
+                <p className="ev-foot">
+                  A separate {CS.presentSignal(signal).label.toLowerCase()} was identified and is shown in
+                  the Evidence Summary. It is a distinct canonical finding — not a common adverse effect.
+                </p>
+              )}
+            </>
           )}
         </Section>
 
@@ -348,7 +388,8 @@ export function EvidenceReview({
             <MetricCard label="Sources reviewed" value={String(sources.length)} tone="reported" />
             <MetricCard label="Studies behind this result"
               value={String(report.studies_behind?.length ?? report.trials?.length ?? 0)} tone="reported" />
-            <MetricCard label="Evidence cutoff date" value={M.evidenceCutoff(report)} tone="reported" />
+            <MetricCard label={CS.REVIEWED_THROUGH_LABEL} value={M.evidenceCutoff(report)} tone="reported"
+              note={CS.freshness(M.evidenceCutoff(report))?.label} />
           </div>
           <ul className="ev-sources">
             {sources.map((s) => (
@@ -372,8 +413,8 @@ export function EvidenceReview({
           <div className="ev-metrics">
             <MetricCard label="Human review status" value={M.humanReviewStatus(report)}
               tone={M.humanReviewStatus(report) === "Completed" ? "reported" : "limited"} />
-            <MetricCard label="Evidence cutoff date" value={M.evidenceCutoff(report)} tone="reported"
-              note="Sources published on or before this date" />
+            <MetricCard label={CS.REVIEWED_THROUGH_LABEL} value={M.evidenceCutoff(report)} tone="reported"
+              note={`Sources published on or before this date · ${CS.freshness(M.evidenceCutoff(report))?.label ?? ""}`.trim()} />
             <MetricCard label="Source coverage" value={String(sources.length)} tone="reported"
               note="Clinical trials and reviews" />
           </div>

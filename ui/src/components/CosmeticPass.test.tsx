@@ -170,7 +170,7 @@ describe("Check Evidence — anchors and final order", () => {
   it("The table of contents lists the approved sections in the approved order", () => {
     const { container } = renderPage();
     expect([...container.querySelectorAll(".ev-nav-label")].map((n) => n.textContent)).toEqual([
-      "Evidence Summary", "What should I notice?", "How were women represented?",
+      "Evidence Summary", "How were women represented?",
       "Women in the Evidence", "What remains unknown", "Sex-specific Effectiveness",
       "Women-specific Safety", "Common Adverse Effects", "Life-stage Evidence",
       "Hormonal Context", "Exact Passages", "Source Coverage",

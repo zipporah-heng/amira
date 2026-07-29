@@ -205,9 +205,9 @@ describe("Compare Evidence — dynamic comparison from the selected condition", 
     expect(rowLabels(container)).toEqual([
       "Evidence about women", "Evidence maturity", "Active ingredient", "Condition", "Drug class",
       "Primary evidence", "Women included", "Women counted", "Women analyzed",
-      "Sex-specific effectiveness", "Women-specific safety", "Common adverse effects",
-      "Life-stage evidence", "Hormonal context", "Human review status", "Evidence scope",
-      "Exact passages", "Export Evidence Brief PDF",
+      "Sex-specific effectiveness", "Women-specific safety", "Critical evidence status",
+      "Common adverse effects", "Life-stage evidence", "Hormonal context", "Human review status",
+      "Evidence reviewed through", "Evidence scope", "Exact passages", "Export Evidence Brief PDF",
     ]);
     // Alignment: every evidence row is followed by exactly one value cell per medicine,
     // so one medicine's longer text can never push later rows out of step. (The column
@@ -347,7 +347,7 @@ describe("Compare Evidence — reviewed source coverage", () => {
     fireEvent.click(screen.getByRole("button", { name: /View Source Coverage Details/i }));
     const table = container.querySelector(".cmp-cov-table")!;
     expect([...table.querySelectorAll("th")].map((n) => n.textContent))
-      .toEqual(["Medicine", "Source", "Evidence population", "Review status", "Cutoff date"]);
+      .toEqual(["Medicine", "Source", "Evidence population", "Review status", "Reviewed through"]);
     expect(table.textContent).toContain("Digoxin");
     expect(table.textContent).toContain("2026-07-18");
   });

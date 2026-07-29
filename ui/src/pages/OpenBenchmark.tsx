@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getBenchmark, getAssets, getSchema, type AssetsResponse, type SchemaResponse } from "../api";
 import { AssetBadge } from "../components/DemoBadge";
 import { ReusableAssets } from "../components/ReusableAssets";
+import * as CS from "../criticalSignal";
 
 /** OPEN BENCHMARK — the home for AMIRA's reusable scientific assets.
  *
@@ -215,7 +216,8 @@ export function OpenBenchmark() {
           <Metric k="Human-reviewed records" v={String(stats.reviewed)} note="Named reviewer recorded" />
           <Metric k="Pending human review" v={String(stats.pending)} note="Draft labels awaiting review" />
           <Metric k="Benchmark version" v={data?.benchmark_version || "—"} />
-          <Metric k="Evidence cutoff date" v={data?.source_cutoff || "—"} />
+          <Metric k={CS.REVIEWED_THROUGH_LABEL} v={data?.source_cutoff || "—"}
+                  note={CS.freshness(data?.source_cutoff)?.label} />
         </div>
         {scopeStatement && <p className="ob-scope" id="ob-scope">{scopeStatement}</p>}
         <p className="ob-warn">
@@ -354,7 +356,8 @@ export function OpenBenchmark() {
         <div className="ob-metrics">
           <Metric k="Benchmark version" v={data?.benchmark_version || "—"} />
           <Metric k="Dataset version" v={data?.dataset_version || "—"} />
-          <Metric k="Evidence cutoff date" v={data?.source_cutoff || "—"} />
+          <Metric k={CS.REVIEWED_THROUGH_LABEL} v={data?.source_cutoff || "—"}
+                  note={CS.freshness(data?.source_cutoff)?.label} />
           <Metric k="Repository commit" v={String(data?.commit_hash || "—").slice(0, 10)} />
           <Metric k="Last updated" v={data?.generated_at ? String(data.generated_at).slice(0, 10) : "—"} />
           <Metric k="Human-review status"

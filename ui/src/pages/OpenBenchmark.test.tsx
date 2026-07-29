@@ -120,7 +120,7 @@ describe("Open Benchmark — reusable scientific assets", () => {
     expect(metric("Source documents")).toBe("2");     // two distinct SRC- ids
     expect(metric("Studies represented")).toBe("2");
     expect(metric("Benchmark version")).toBe("1.0.0");
-    expect(metric("Evidence cutoff date")).toBe("2026-07-18");
+    expect(metric("Evidence reviewed through")).toBe("2026-07-18");
   });
 
   it("5. Counts human-reviewed and pending records separately", async () => {

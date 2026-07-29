@@ -117,6 +117,7 @@ export function CheckEvidence() {
             />
           }
           maturityCard={<MaturityPanel report={report} />}
+          signal={signals.find((s) => s.medicine === report.banner!.medicine) || null}
           scopeCard={<EvidenceScope report={report} />}
           representationCard={<Representation report={report} />}
           unknownCard={<WhatRemainsUnknown report={report} />}

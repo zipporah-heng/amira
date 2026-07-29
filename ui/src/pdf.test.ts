@@ -118,7 +118,7 @@ describe("Evidence brief PDF", () => {
     expect(text).toContain("Limitations");
     expect(text).toContain("Human review status");
     expect(text).toContain("Pending");
-    expect(text).toContain("Evidence cutoff date");
+    expect(text).toContain("Evidence reviewed through");
     expect(text).toContain("2026-07-18");
     expect(raw.slice(0, 5)).toBe("%PDF-");
   });

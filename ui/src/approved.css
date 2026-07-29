@@ -80,7 +80,7 @@
 .ev-link:hover { text-decoration: underline; }
 
 /* ---- Compact three-column evidence summary: identity · result · maturity ---- */
-.ev-summary3 { display: grid; grid-template-columns: 20% 50% 30%; gap: 18px; align-items: start; }
+.ev-summary3 { display: grid; grid-template-columns: 20% 50% 30%; gap: 18px; align-items: stretch; }
 .ev-summary3 > * { min-width: 0; }
 .ev-identity {
   border: 1px solid var(--border); border-radius: 14px; padding: 16px 17px;
@@ -101,6 +101,8 @@
 .ev-summary3 .notice-maturity {
   border: 1px solid var(--border); border-radius: 14px; padding: 16px; background: var(--surface);
 }
+/* All three columns share the row's height. */
+.ev-summary3 > * { display: flex; flex-direction: column; }
 .ev-summary3 .notice-title { margin-bottom: 12px; }
 
 @media (max-width: 1100px) {
@@ -357,6 +359,51 @@
   .cmp-btn { font-size: 13.5px; padding: 0 14px; }
   .cmp-coverage { padding: 16px 15px; }
 }
+
+/* ===================== Critical evidence signal presentation =====================
+   Red is reserved for mortality and serious-safety signals; dosing / regulatory and
+   outcome-pattern findings are amber; no qualifying signal is neutral. A signal is its
+   own field — it never restyles maturity, effectiveness, safety or column order. */
+.cmp-crit { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.cmp-crit-label {
+  font-size: 12.5px; font-weight: 800; letter-spacing: .02em; padding: 4px 10px; border-radius: 999px;
+}
+.cmp-crit.critical .cmp-crit-label { background: var(--missing-bg); color: var(--missing-ink); border: 1px solid #f2c9d6; }
+.cmp-crit.caution .cmp-crit-label { background: var(--unclear-bg); color: var(--unclear-ink); border: 1px solid #f0dcb0; }
+.cmp-crit.none .cmp-crit-label {
+  background: #f2f3f6; color: var(--grey-incomplete); border: 1px solid #dfe1e8;
+  font-weight: 650; white-space: normal; line-height: 1.4;
+}
+.cmp-crit-stat { font-size: 12.5px; color: var(--ink-2); line-height: 1.45; }
+.cmp-crit-note { font-size: 11.5px; color: var(--ink-3); line-height: 1.4; }
+.cmp-crit-badge {
+  font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 999px; white-space: nowrap;
+}
+.cmp-crit-badge.critical { background: var(--missing-bg); color: var(--missing-ink); border: 1px solid #f2c9d6; }
+.cmp-crit-badge.caution { background: var(--unclear-bg); color: var(--unclear-ink); border: 1px solid #f0dcb0; }
+
+/* Derived freshness of the reviewed-through date. */
+.cmp-fresh {
+  display: inline-block; margin-left: 8px; font-size: 11px; font-weight: 750;
+  padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+}
+.cmp-fresh.current { background: var(--present-bg); color: var(--present-ink); }
+.cmp-fresh.due { background: var(--unclear-bg); color: var(--unclear-ink); }
+.cmp-fresh.overdue { background: var(--missing-bg); color: var(--missing-ink); }
+
+/* The Check Evidence callout, placed beside the section a signal concerns. */
+.ev-signal { margin-top: 14px; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); }
+.ev-signal.critical { background: var(--missing-bg); border-color: #f2c9d6; }
+.ev-signal.caution { background: var(--unclear-bg); border-color: #f0dcb0; }
+.ev-signal-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: baseline; }
+.ev-signal-label { font-size: 13px; font-weight: 800; letter-spacing: .02em; }
+.ev-signal.critical .ev-signal-label { color: var(--missing-ink); }
+.ev-signal.caution .ev-signal-label { color: var(--unclear-ink); }
+.ev-signal-review { font-size: 11.5px; font-weight: 700; color: var(--ink-3); }
+.ev-signal-headline { font-size: 15px; font-weight: 700; color: var(--ink); margin-top: 8px; line-height: 1.4; }
+.ev-signal-stat { font-size: 13px; color: var(--ink-2); margin-top: 6px; line-height: 1.5; }
+.ev-signal-note { font-size: 11.5px; color: var(--ink-3); margin-top: 8px; line-height: 1.5; }
 
 /* ============ Critical Evidence Library search — reads as an input box ============ */
 .cs-search-wrap {

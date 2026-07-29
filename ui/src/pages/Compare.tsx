@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { checkEvidence, type EvidenceResponse } from "../api";
+import { checkEvidence, getCriticalSignals, type CriticalSignal, type EvidenceResponse } from "../api";
 import { hormonalContextToApi, type HealthAreaEntry, type MedicineEntry } from "../components/EvidenceSearch";
 import * as M from "../evidenceModel";
+import * as CS from "../criticalSignal";
 import { StateChip } from "../components/EvidenceReview";
 import {
   buildComparisonPdf, comparisonFilename, buildEvidenceBriefPdf, evidenceBriefFilename, downloadBlob,
@@ -82,8 +83,10 @@ function checkHref(c: { healthArea: string; condition: string; drugClass?: strin
 interface RowDef {
   key: string;
   label: string;
-  /** Rendered cell for a reviewed medicine. */
-  render: (r: EvidenceResponse) => React.ReactNode;
+  /** Rendered cell for a reviewed medicine. The medicine's canonical critical signal
+   *  (when it has one) is passed separately — it is its own field, never derived from
+   *  maturity, effectiveness or safety. */
+  render: (r: EvidenceResponse, signal?: CriticalSignal | null) => React.ReactNode;
   /** Plain text used when the medicine has no completed review. */
   incomplete?: string;
 }
@@ -105,6 +108,9 @@ const ROWS: RowDef[] = [
     render: (r) => <ExpandableState report={r} kind="effectiveness" /> },
   { key: "safety", label: "Women-specific safety",
     render: (r) => <ExpandableState report={r} kind="safety" /> },
+  { key: "critical", label: "Critical evidence status",
+    render: (_r, signal) => <CriticalStatusCell signal={signal} />,
+    incomplete: CS.NO_SIGNAL },
   { key: "adverse", label: "Common adverse effects",
     render: (r) => {
       const ae = M.commonAdverseEffects(r);
@@ -115,6 +121,17 @@ const ROWS: RowDef[] = [
     render: (r) => <StateChip cell={M.hormonalContext(r).hormonalContextAnalysis} /> },
   { key: "review", label: "Human review status",
     render: (r) => <span className="cmp-val">{M.humanReviewStatus(r)}</span> },
+  { key: "reviewed-through", label: CS.REVIEWED_THROUGH_LABEL,
+    render: (r) => {
+      const cutoff = M.evidenceCutoff(r);
+      const f = CS.freshness(cutoff);
+      return (
+        <span className="cmp-val">
+          {cutoff || "—"}
+          {f && <span className={`cmp-fresh ${f.tone}`}>{f.label}</span>}
+        </span>
+      );
+    } },
   { key: "scope", label: "Evidence scope",
     render: (r) => <span className="cmp-val">{M.evidencePopulation(r).detail || M.condition(r)}</span> },
   { key: "passages", label: "Exact passages",
@@ -129,6 +146,29 @@ const ROWS: RowDef[] = [
       );
     } },
 ];
+
+/** The medicine's canonical critical-evidence signal, or the bounded absence wording.
+ *  This is a SEPARATE field: it never changes evidence maturity, effectiveness, safety
+ *  or the order of the columns, and carrying a signal is not a ranking. */
+function CriticalStatusCell({ signal }: { signal?: CriticalSignal | null }) {
+  const p = CS.presentSignal(signal);
+  if (!p.present) {
+    return (
+      <div className="cmp-val cmp-crit none">
+        <span className="cmp-crit-label">{CS.NO_SIGNAL}</span>
+      </div>
+    );
+  }
+  return (
+    <div className={`cmp-val cmp-crit ${p.tone}`}>
+      <span className="cmp-crit-label">{p.label}</span>
+      {p.headline && <span className="cmp-crit-stat">{p.headline}</span>}
+      {p.statistic && <span className="cmp-crit-stat">{p.statistic}</span>}
+      {p.analysis && <span className="cmp-crit-note">{p.analysis}</span>}
+      <span className="cmp-crit-note">{p.reviewStatus}</span>
+    </div>
+  );
+}
 
 /** A long finding is summarised to its canonical state, with the full text behind an
  *  explicit expander — compact cells never hold multiple paragraphs. */
@@ -162,6 +202,9 @@ export function Compare() {
   const [activeMobile, setActiveMobile] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Canonical critical signals, keyed by medicine. A medicine without an entry has no
+  // qualifying signal in the reviewed source set — never "no signal exists".
+  const [signals, setSignals] = useState<Record<string, CriticalSignal>>({});
   const narrow = useNarrow();
 
   useEffect(() => {
@@ -184,6 +227,14 @@ export function Compare() {
           .catch(() => setReports((prev) => ({ ...prev, [m.medicine]: null })));
       });
     }).catch((e) => setError(e.message || "Could not load the comparison catalog"));
+
+    getCriticalSignals()
+      .then((d) => {
+        const byMedicine: Record<string, CriticalSignal> = {};
+        for (const s of d.library || []) if (!byMedicine[s.medicine]) byMedicine[s.medicine] = s;
+        setSignals(byMedicine);
+      })
+      .catch(() => setSignals({}));
   }, []);
 
   /** Columns currently displayed — selected medicine always first. */
@@ -352,6 +403,11 @@ export function Compare() {
                   <span className="cmp-colsub">
                     {reports[c.medicine]?.banner?.active_ingredient?.toLowerCase() || c.active_ingredient?.toLowerCase() || c.drug_class}
                   </span>
+                  {signals[c.medicine] && (
+                    <span className={`cmp-crit-badge ${CS.signalTone(signals[c.medicine].signal_type)}`}>
+                      Critical signal
+                    </span>
+                  )}
                   {c.status !== "verified" && <span className="cmp-incomplete-badge">Evidence review incomplete</span>}
                 </div>
               ))}
@@ -368,7 +424,7 @@ export function Compare() {
                         {incomplete
                           ? <span className="cmp-val">{row.incomplete || "Evidence review incomplete"}</span>
                           : r && r.banner
-                            ? row.render(r)
+                            ? row.render(r, signals[c.medicine])
                             : <span className="cmp-val">Loading…</span>}
                       </div>
                     );
@@ -436,15 +492,22 @@ export function Compare() {
               <div className="cmp-cov-v">{coverage.hormonal} of {coverage.total}</div></div>
             <div className="cmp-cov-cell"><div className="cmp-cov-k">Human review status</div>
               <div className="cmp-cov-v">{coverage.review}</div></div>
-            <div className="cmp-cov-cell"><div className="cmp-cov-k">Evidence cutoff date</div>
-              <div className="cmp-cov-v">{coverage.cutoff}</div></div>
+            <div className="cmp-cov-cell"><div className="cmp-cov-k">{CS.REVIEWED_THROUGH_LABEL}</div>
+              <div className="cmp-cov-v">
+                {coverage.cutoff}
+                {CS.freshness(coverage.cutoff) && (
+                  <span className={`cmp-fresh ${CS.freshness(coverage.cutoff)!.tone}`}>
+                    {CS.freshness(coverage.cutoff)!.label}
+                  </span>
+                )}
+              </div></div>
           </div>
 
           {coverageOpen && (
             <div className="cmp-cov-wrap">
               <table className="cmp-cov-table">
                 <thead>
-                  <tr><th>Medicine</th><th>Source</th><th>Evidence population</th><th>Review status</th><th>Cutoff date</th></tr>
+                  <tr><th>Medicine</th><th>Source</th><th>Evidence population</th><th>Review status</th><th>Reviewed through</th></tr>
                 </thead>
                 <tbody>
                   {shownReports.flatMap((r) =>
