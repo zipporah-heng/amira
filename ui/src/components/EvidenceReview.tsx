@@ -18,8 +18,8 @@ export const SECTIONS = [
   { id: "evidence-summary", label: "Evidence Summary" },
   { id: "important-finding", label: "What should I notice?" },
   { id: "representation", label: "How were women represented?" },
-  { id: "ai-found", label: "How AMIRA's AI found this" },
   { id: "women-in-the-evidence", label: "Women in the Evidence" },
+  { id: "remains-unknown", label: "What remains unknown" },
   { id: "sex-specific-effectiveness", label: "Sex-specific Effectiveness" },
   { id: "women-specific-safety", label: "Women-specific Safety" },
   { id: "common-adverse-effects", label: "Common Adverse Effects" },
@@ -27,15 +27,16 @@ export const SECTIONS = [
   { id: "hormonal-context", label: "Hormonal Context" },
   { id: "exact-passages", label: "Exact Passages" },
   { id: "source-coverage", label: "Source Coverage" },
+  { id: "ai-found", label: "How AMIRA's AI found this evidence" },
   { id: "about-this-evidence-review", label: "About This Evidence Review" },
 ];
 
 const SECTION_SUB: Record<string, string> = {
-  "evidence-summary": "Medicine and maturity",
+  "evidence-summary": "Medicine, result and maturity",
   "important-finding": "The primary result",
   "representation": "Canonical states at a glance",
-  "ai-found": "Pipeline and schema",
   "women-in-the-evidence": "Counts and analysis",
+  "remains-unknown": "Gaps in the reviewed sources",
   "sex-specific-effectiveness": "What the research shows",
   "women-specific-safety": "What the research shows",
   "common-adverse-effects": "From reviewed sources",
@@ -43,6 +44,7 @@ const SECTION_SUB: Record<string, string> = {
   "hormonal-context": "Menopause and hormone therapy",
   "exact-passages": "What the sources say",
   "source-coverage": "Studies and reviews",
+  "ai-found": "Pipeline and schema",
   "about-this-evidence-review": "Methods and limitations",
 };
 
@@ -117,12 +119,13 @@ function MetricCard({ label, value, tone, note }: {
 }
 
 export function EvidenceReview({
-  report, signalCard, scopeCard, representationCard, unknownCard, aiFoundCard, footerCard,
+  report, signalCard, maturityCard, scopeCard, representationCard, unknownCard, aiFoundCard, footerCard,
 }: {
   report: EvidenceResponse;
-  /** "What should I notice?" — the signal plus the circular maturity meter and its
-   *  checklist, in the original two-column summary layout. */
+  /** "What should I notice?" — the primary result, column two of the summary row. */
   signalCard?: React.ReactNode;
+  /** Evidence Maturity — the circular meter and its checklist, column three. */
+  maturityCard?: React.ReactNode;
   /** The bounded Evidence Scope panel. */
   scopeCard?: React.ReactNode;
   /** "How were women represented?" — the canonical summary row. */
@@ -142,11 +145,11 @@ export function EvidenceReview({
   const optional: Record<string, boolean> = {
     "important-finding": !!signalCard,
     "representation": !!representationCard,
+    "remains-unknown": !!unknownCard,
     "ai-found": !!aiFoundCard,
   };
   const navSections = SECTIONS.filter((s) => optional[s.id] !== false);
   const active = useActiveSection(navSections.map((s) => s.id));
-  const mat = M.maturity(report);
   const pop = M.evidencePopulation(report);
   const ae = M.commonAdverseEffects(report);
   const hc = M.hormonalContext(report);
@@ -206,47 +209,31 @@ export function EvidenceReview({
 
       {/* ---- Evidence sections ---- */}
       <div className="ev-main">
+        {/* One aligned row: medicine identity (compact) · the primary result ·
+            evidence maturity. Stacks in that same order on narrow viewports. */}
         <Section id="evidence-summary" title="Evidence summary">
-          <div className="ev-med-card">
-            <div className="ev-med-head">
-              <div>
-                <div className="ev-med-name">{M.medicineName(report)}</div>
-                {M.activeIngredient(report) && (
-                  <div className="ev-med-ing">Active ingredient: {M.activeIngredient(report)!.toLowerCase()}</div>
-                )}
-                <div className="ev-med-meta">Drug class: {M.drugClass(report)}</div>
-                <div className="ev-med-meta">Condition: {M.condition(report)}</div>
-                {M.brandNote(report) && <p className="ev-med-note">{M.brandNote(report)}</p>}
-                <span className="ev-selected-badge">Selected medicine</span>
-              </div>
-              {/* A compact maturity marker beside the medicine identity. The prominent
-                  circular meter and its checklist live in the two-column summary below,
-                  so the canonical level is presented once in full. */}
-              <div className="ev-mat ev-mat-compact">
-                <div className="ev-mat-k">Evidence maturity</div>
-                <div className="ev-mat-v">
-                  {mat.scorable ? <>{mat.level}<span className="ev-mat-den"> / {mat.maxLevel}</span></> : "—"}
-                </div>
-                <div className="ev-mat-label">{mat.scorable ? mat.label : "Not yet established"}</div>
-              </div>
+          <div className="ev-summary3">
+            <div className="ev-identity">
+              <div className="ev-med-name">{M.medicineName(report)}</div>
+              {M.activeIngredient(report) && (
+                <div className="ev-med-ing">{M.activeIngredient(report)!.toLowerCase()}</div>
+              )}
+              <dl className="ev-identity-facts">
+                <div><dt>Drug class</dt><dd>{M.drugClass(report)}</dd></div>
+                <div><dt>Condition</dt><dd>{M.condition(report)}</dd></div>
+              </dl>
+              {M.brandNote(report) && <p className="ev-med-note">{M.brandNote(report)}</p>}
+              <span className="ev-selected-badge">Selected medicine</span>
             </div>
-            <p className="ev-mat-note">
-              Evidence maturity reflects the depth and specificity of women's health reporting in the
-              research. It is not a quality rating and is not intended to compare this medicine to others.
-            </p>
+            {signalCard}
+            {maturityCard}
           </div>
-
-          {/* The original two-column summary: the primary finding on the left, the
-              circular maturity meter and its checklist on the right. */}
-          {signalCard}
         </Section>
 
-        {/* Quick evidence understanding, in the approved order, all reading the same
-            canonical evidence record as the detailed review below. */}
+        {/* Quick evidence understanding, all reading the same canonical record as the
+            detailed review below. */}
         {scopeCard}
         {representationCard}
-        {unknownCard}
-        {aiFoundCard}
 
         <Section id="women-in-the-evidence" title="Women in the evidence" sub="Counts and analysis">
           <div className="ev-metrics">
@@ -263,6 +250,8 @@ export function EvidenceReview({
             took part without analysing their outcomes separately.
           </p>
         </Section>
+
+        {unknownCard}
 
         <Section id="sex-specific-effectiveness" title="Sex-specific effectiveness" sub="What the research shows">
           <StateChip cell={M.effectiveness(report)} />
@@ -374,6 +363,10 @@ export function EvidenceReview({
             study has been reviewed.
           </p>
         </Section>
+
+        {/* Governance last: the reader inspects the evidence and its sources first,
+            then how AMIRA extracted it. */}
+        {aiFoundCard}
 
         <Section id="about-this-evidence-review" title="About this evidence review" sub="Methods and limitations">
           <div className="ev-metrics">

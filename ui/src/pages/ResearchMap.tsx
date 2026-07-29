@@ -22,8 +22,15 @@ interface TrialWithMeta extends TrialRow {
 export function ResearchMap() {
   const [trials, setTrials] = useState<TrialWithMeta[]>([]);
   const [meta, setMeta] = useState<{ v?: string; cutoff?: string }>({});
-  // Two internal views inside Research Map (NOT a new top-level nav item).
-  const [view, setView] = useState<"coverage" | "signals">("coverage");
+  // Two internal views inside Research Map (NOT a new top-level nav item). The view is
+  // addressable as ?view=signals so a Critical Signals search can be linked and shared,
+  // matching the existing ?medicine= deep-link convention. Coverage remains the default.
+  const [view, setView] = useState<"coverage" | "signals">(() => {
+    try {
+      return new URLSearchParams(window.location.search).get("view") === "signals"
+        ? "signals" : "coverage";
+    } catch { return "coverage"; }
+  });
 
   useEffect(() => {
     fetch("/api/trials")

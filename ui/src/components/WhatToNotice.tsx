@@ -187,36 +187,53 @@ function MaturityChecklist({ level }: { level: number }) {
   );
 }
 
+/** "What should I notice?" on its own — the single primary presentation of the finding
+ *  or the verified critical signal. Composed into the three-column evidence summary. */
+export function NoticePanel({ report, signal = null }: {
+  report: EvidenceResponse; signal?: CriticalSignal | null;
+}) {
+  return (
+    <div className="notice-panel" id="important-finding">
+      <h2 className="notice-title">What should I notice?</h2>
+      {signal ? <SignalCard signal={signal} /> : <FindingCard report={report} />}
+    </div>
+  );
+}
+
+/** Evidence Maturity on its own — the circular meter, the canonical level, the
+ *  completeness explanation and the five-level checklist. */
+export function MaturityPanel({ report }: { report: EvidenceResponse }) {
+  const mat = report.maturity!;
+  return (
+    <div className="notice-maturity" id="evidence-maturity">
+      <div className="nm-head">Evidence Maturity</div>
+      {report.banner!.evidence_review_complete === false && (
+        <span className="review-status-badge" role="status">Evidence review incomplete</span>
+      )}
+      <MaturityMeter level={mat.level} maxLevel={mat.max_level} label={mat.label} scored={mat.scorable !== false} />
+      <p className="nm-note">This measures evidence completeness—not whether the medicine is better.</p>
+      {/* "How this level was reached" — the checklist EXPLAINS the canonical derived
+          level. Shown only for a scored medicine (never a 0/5 checklist for an
+          unscored / evidence-review-incomplete medicine). */}
+      {mat.scorable !== false && <MaturityChecklist level={mat.level} />}
+    </div>
+  );
+}
+
+/** The original two-column card, kept for surfaces that present the finding and its
+ *  maturity together outside the three-column summary. */
 export function WhatToNotice({ report, signal = null, showMaturity = true }: {
   report: EvidenceResponse; signal?: CriticalSignal | null;
   /** False when the surrounding evidence summary already presents maturity — the
    *  checklist must appear exactly once on the page. */
   showMaturity?: boolean;
 }) {
-  const mat = report.maturity!;
   return (
-    <section className={`card notice-card ${showMaturity ? "" : "notice-single"}`} id="important-finding"
+    <section className={`card notice-card ${showMaturity ? "" : "notice-single"}`}
              style={{ marginTop: 18 }}>
-      <h2 className="notice-title">What should I notice?</h2>
       <div className="notice-grid">
-        {/* LEFT — the single primary signal presentation */}
-        {signal ? <SignalCard signal={signal} /> : <FindingCard report={report} />}
-
-        {/* RIGHT — evidence maturity */}
-        {showMaturity && (
-        <div className="notice-maturity">
-          <div className="nm-head">Evidence Maturity</div>
-          {report.banner!.evidence_review_complete === false && (
-            <span className="review-status-badge" role="status">Evidence review incomplete</span>
-          )}
-          <MaturityMeter level={mat.level} maxLevel={mat.max_level} label={mat.label} scored={mat.scorable !== false} />
-          <p className="nm-note">This measures evidence completeness—not whether the medicine is better.</p>
-          {/* "How this level was reached" — the checklist EXPLAINS the canonical
-              derived level. Shown only for a scored medicine (never a 0/5 checklist
-              for an unscored / evidence-review-incomplete medicine). */}
-          {mat.scorable !== false && <MaturityChecklist level={mat.level} />}
-        </div>
-        )}
+        <NoticePanel report={report} signal={signal} />
+        {showMaturity && <MaturityPanel report={report} />}
       </div>
     </section>
   );

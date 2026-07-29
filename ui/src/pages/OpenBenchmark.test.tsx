@@ -197,6 +197,87 @@ describe("Open Benchmark — reusable scientific assets", () => {
     }
   });
 
+  it("19+20. States the real benchmark scope, generated from the records", async () => {
+    mockFetch();
+    const { container } = renderPage();
+    await waitFor(() => expect(container.querySelector("#ob-scope")).not.toBeNull());
+    const scope = container.querySelector("#ob-scope")!.textContent!;
+    // Both fixture records resolve to different medicines, 2 passages, 2 documents.
+    expect(scope).toContain("Current published benchmark scope:");
+    expect(scope).toContain("2 passages");
+    expect(scope).toContain("2 source documents");
+    expect(scope).toContain("2 studies");
+    expect(scope).toMatch(/not yet included in this benchmark release/i);
+    expect(container.textContent).toContain("Source-linked benchmark scaffold pending human review.");
+  });
+
+  it("Scope counts follow the records, and singulars read correctly", async () => {
+    mockFetch({
+      benchmark: { ...BENCHMARK, total: 1, items: [ITEMS[0]] },
+    });
+    const { container } = renderPage();
+    await waitFor(() => expect(container.querySelector("#ob-scope")).not.toBeNull());
+    const scope = container.querySelector("#ob-scope")!.textContent!;
+    expect(scope).toContain("1 passage from 1 source document representing 1 study");
+    expect(scope).toContain("Rosuvastatin");
+    expect(scope).not.toContain("30 passages");   // never a hard-coded figure
+  });
+
+  it("21. Uses one metric typography scale across sections B, E and G", async () => {
+    mockFetch();
+    const { container } = renderPage();
+    await waitFor(() => expect(sec(container, "ob-versioning")).not.toBeNull());
+    for (const id of ["ob-status", "ob-evaluation", "ob-versioning"]) {
+      const metrics = sec(container, id).querySelectorAll(".ob-metric");
+      expect(metrics.length, id).toBeGreaterThan(0);
+      // Every metric uses the same classes, so one stylesheet rule governs all three.
+      metrics.forEach((m) => {
+        expect(m.querySelector(".ob-metric-k"), id).not.toBeNull();
+        expect(m.querySelector(".ob-metric-v"), id).not.toBeNull();
+      });
+    }
+  });
+
+  it("22+23. Suggest a correction opens a prefilled issue carrying the record identifiers", async () => {
+    mockFetch();
+    const { container } = renderPage();
+    await waitFor(() => expect(sec(container, "ob-actions")).not.toBeNull());
+
+    const general = within(sec(container, "ob-actions"))
+      .getByRole("link", { name: /Suggest a correction/i }) as HTMLAnchorElement;
+    const url = new URL(general.href);
+    expect(url.origin + url.pathname).toBe("https://github.com/zipporah-heng/amira/issues/new");
+    expect(url.searchParams.get("labels")).toBe("benchmark-correction");
+    const body = url.searchParams.get("body")!;
+    for (const field of ["Benchmark version", "Dataset version", "Source ID", "Passage ID",
+      "Medicine", "Condition", "Evidence field", "Current extracted value", "Proposed correction",
+      "Supporting source or citation", "Explanation", "Reviewer name"]) {
+      expect(body, field).toContain(field);
+    }
+    expect(body).toContain("1.0.0");   // benchmark version
+    expect(body).toContain("3.0.0");   // dataset version
+
+    // Row-level action prefills that record.
+    const row = sec(container, "ob-records").querySelector("tbody tr")!;
+    const rowLink = within(row as HTMLElement).getByRole("link", { name: /Suggest correction/i }) as HTMLAnchorElement;
+    const rowBody = new URL(rowLink.href).searchParams.get("body")!;
+    expect(rowBody).toContain("SRC-PMID-27040132");
+    expect(rowBody).toContain("AMIRA-BM-001");
+    expect(rowBody).toContain("Rosuvastatin");
+    expect(new URL(rowLink.href).searchParams.get("title")).toContain("AMIRA-BM-001");
+  });
+
+  it("24. Offers no way to edit a canonical record from the page", async () => {
+    mockFetch();
+    const { container } = renderPage();
+    await waitFor(() => expect(sec(container, "ob-records").querySelectorAll("tbody tr").length).toBe(2));
+    const records = sec(container, "ob-records");
+    // No editable controls anywhere in the record table.
+    expect(records.querySelectorAll("input:not([type='search']), textarea, [contenteditable='true'], select").length).toBe(0);
+    expect(sec(container, "ob-actions").textContent)
+      .toMatch(/do not alter the benchmark until they are reviewed and accepted/i);
+  });
+
   it("Search narrows the record list without altering the totals", async () => {
     mockFetch();
     const { container } = renderPage();

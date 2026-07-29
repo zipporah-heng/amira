@@ -120,11 +120,19 @@ export function CriticalSignals() {
         {sel("Signal Type", signalType, setSignalType, data.signal_types)}
         {sel("Life Stage", lifeStage, setLifeStage, lifeStages)}
         {sel("Evidence Status", status, setStatus, data.evidence_statuses)}
+        {/* A search box that reads as an input: bordered, white, with its own icon,
+            a visible focus ring and a clear control once text is entered. */}
         <div className="field cs-search">
-          <label>Search</label>
-          <div className="field-wrap">
-            <input aria-label="Search" placeholder="Medicine or finding text"
+          <label htmlFor="cs-search-input">Search</label>
+          <div className="cs-search-wrap">
+            <span className="cs-search-icon" aria-hidden="true">🔍</span>
+            <input id="cs-search-input" type="search" className="cs-search-input"
+              aria-label="Search medicine or finding" placeholder="Search medicine or finding"
               value={q} onChange={(e) => setQ(e.target.value)} />
+            {q && (
+              <button type="button" className="cs-search-clear" aria-label="Clear search"
+                      onClick={() => setQ("")}>×</button>
+            )}
           </div>
         </div>
       </div>

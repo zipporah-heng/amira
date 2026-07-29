@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { MethodologyFlow } from "../components/MethodologyFlow";
-import { HormonalFocus } from "../components/HormonalFocus";
 import { MATURITY_ANCHOR } from "../maturityLevels";
 
 /** Definitions of the maturity ladder. The AWARDED level is never defined here —
@@ -45,15 +44,17 @@ export function Methodology() {
         evidence, then shows what the research did and did not report.
       </p>
 
+      {/* One introduction, then straight into the numbered steps. The previous pair of
+          lavender panels repeated the same positioning and blurred the hierarchy. */}
       <div className="method-positioning">
-        <p>AMIRA is designed as a trusted women's evidence layer for clinical, research, and
-          life-sciences platforms.</p>
-        <p>AMIRA reports evidence coverage within defined source sets, guidelines, conditions, and
-          review dates. It does not claim global completeness, is not FDA-approved, and does not
-          provide autonomous medical guidance.</p>
+        <p>
+          AMIRA is a source-linked women's evidence layer that structures what studies report about
+          women, menopause, and hormone therapy while preserving what was <strong>not reported</strong> or{" "}
+          <strong>could not be located</strong>. It is designed for clinical, research, and
+          life-sciences platforms. It does not claim complete coverage, provide autonomous medical
+          guidance, or replace human review.
+        </p>
       </div>
-
-      <HormonalFocus />
 
       <MethodologyFlow />
 
