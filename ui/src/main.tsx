@@ -11,6 +11,7 @@ import "./theme.css";
 import "./clinical.css";
 import "./mockup.css";
 import "./polish.css";
+import "./approved.css";
 
 const withShell = (el: React.ReactNode) => <AmiraShell>{el}</AmiraShell>;
 

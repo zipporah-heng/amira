@@ -1,0 +1,286 @@
+/* APPROVED AMIRA DESIGN — Check Evidence review + Compare Evidence matrix.
+   Loaded last so it owns the final presentation of these two pages.
+   Semantic colour is reserved for evidence states; no medicine gets its own colour. */
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* The signal card inside the evidence summary carries no second maturity panel —
+   maturity is presented once, in the medicine summary card above it. */
+.notice-single { margin-top: 16px; }
+.notice-single .notice-grid { grid-template-columns: 1fr; }
+
+/* ============================ Shared evidence chips ============================ */
+.ev-chip {
+  display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 650;
+  padding: 6px 13px; border-radius: 999px; border: 1px solid var(--border); line-height: 1.35;
+}
+.ev-chip-glyph { font-size: 12px; font-weight: 800; }
+.ev-chip.reported { background: var(--present-bg); color: var(--present-ink); border-color: #bfe3d3; }
+.ev-chip.limited { background: var(--unclear-bg); color: var(--unclear-ink); border-color: #f0dcb0; }
+.ev-chip.not_reported { background: var(--missing-bg); color: var(--missing-ink); border-color: #f2c9d6; }
+.ev-chip.incomplete { background: #f2f3f6; color: var(--grey-incomplete); border-color: #dfe1e8; }
+
+/* ============================ Check Evidence layout ============================ */
+.ev-layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 24px; margin-top: 20px; align-items: start; }
+.ev-nav { position: sticky; top: 86px; }
+.ev-nav-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.ev-nav-link {
+  display: flex; flex-direction: column; gap: 1px; padding: 9px 12px; border-radius: 10px;
+  text-decoration: none; border-left: 3px solid transparent; min-height: 44px; justify-content: center;
+}
+.ev-nav-link:hover { background: var(--lav-50); text-decoration: none; }
+.ev-nav-link:focus-visible { outline: 3px solid var(--lav-300); outline-offset: 2px; }
+.ev-nav-label { font-size: 14px; font-weight: 650; color: var(--lav-700); }
+.ev-nav-sub { font-size: 11.5px; color: var(--ink-3); }
+.ev-nav-export {
+  margin-top: 16px; padding: 16px; border: 1px solid var(--border); border-radius: 14px;
+  background: var(--lav-50);
+}
+.ev-nav-export-h { font-size: 13.5px; font-weight: 750; color: var(--lav-700); }
+.ev-nav-export-sub { font-size: 12px; color: var(--ink-3); margin: 5px 0 11px; }
+.ev-nav-export-err { font-size: 12px; color: var(--missing-ink); margin-top: 8px; }
+.ev-export-btn { width: 100%; justify-content: center; white-space: nowrap; }
+
+.ev-main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.ev-section { padding: 22px 24px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.ev-section-h { font-size: 21px; font-weight: 700; color: var(--ink); }
+.ev-section-sub { font-size: 13px; color: var(--ink-3); margin-top: 3px; margin-bottom: 14px; }
+.ev-section-h + :not(.ev-section-sub) { margin-top: 14px; }
+.ev-body { font-size: 15px; color: var(--ink-2); margin-top: 12px; line-height: 1.6; }
+.ev-foot { font-size: 12.5px; color: var(--ink-3); margin-top: 12px; line-height: 1.55; }
+.ev-link { font-size: 13.5px; font-weight: 650; color: var(--lav-700); display: inline-block; margin-top: 10px; }
+.ev-link:hover { text-decoration: underline; }
+
+/* Medicine summary card */
+.ev-med-card { border: 1px solid var(--border); border-radius: 14px; padding: 20px; background: var(--lav-50); }
+.ev-med-head { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.ev-med-name { font-size: 24px; font-weight: 750; color: var(--ink); }
+.ev-med-ing { font-size: 14px; font-weight: 650; color: var(--lav-700); margin-top: 2px; }
+.ev-med-meta { font-size: 13.5px; color: var(--ink-2); margin-top: 3px; }
+.ev-med-note { font-size: 12.5px; color: var(--ink-3); margin-top: 8px; max-width: 60ch; }
+.ev-selected-badge {
+  display: inline-block; margin-top: 11px; font-size: 10.5px; font-weight: 800; letter-spacing: .05em;
+  text-transform: uppercase; color: #fff; background: var(--lav-500); padding: 4px 11px; border-radius: 999px;
+}
+.ev-mat { text-align: right; flex-shrink: 0; }
+.ev-mat-k { font-size: 10.5px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-3); }
+.ev-mat-v { font-size: 40px; font-weight: 800; color: var(--lav-700); line-height: 1.1; }
+.ev-mat-den { font-size: 20px; font-weight: 700; color: var(--ink-3); }
+.ev-mat-label { font-size: 13px; font-weight: 650; color: var(--ink-2); }
+.ev-mat-check { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); }
+.ev-mat-check-h { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
+.ev-mat-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.ev-mat-list li { display: grid; grid-template-columns: 20px auto 1fr; gap: 8px; align-items: baseline; font-size: 13px; }
+.ev-mat-ic { font-weight: 800; }
+.ev-mat-list li.on .ev-mat-ic { color: var(--present-ink); }
+.ev-mat-list li.off .ev-mat-ic { color: var(--grey-incomplete); }
+.ev-mat-lv { font-weight: 700; color: var(--ink); white-space: nowrap; }
+.ev-mat-list li.off .ev-mat-lv { color: var(--ink-3); font-weight: 650; }
+.ev-mat-desc { color: var(--ink-3); }
+.ev-mat-more { display: inline-block; margin-top: 12px; font-size: 13px; font-weight: 650; color: var(--lav-700); }
+.ev-mat-note { font-size: 12.5px; color: var(--ink-3); margin-top: 14px; line-height: 1.55; }
+
+/* Metric cards */
+.ev-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.ev-metric { border: 1px solid var(--border); border-radius: 12px; padding: 15px 16px; background: var(--surface); }
+.ev-metric-k { font-size: 11px; font-weight: 750; letter-spacing: .03em; text-transform: uppercase; color: var(--ink-3); }
+.ev-metric-v { font-size: 17px; font-weight: 750; color: var(--ink); margin-top: 6px; line-height: 1.35; }
+.ev-metric-v.reported { color: var(--present-ink); }
+.ev-metric-v.limited { color: var(--unclear-ink); }
+.ev-metric-v.not_reported { color: var(--missing-ink); }
+.ev-metric-v.incomplete { color: var(--grey-incomplete); }
+.ev-metric-note { font-size: 12px; color: var(--ink-3); margin-top: 6px; line-height: 1.45; }
+
+/* Adverse effects + label rows */
+.ev-ae { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.ev-ae-item {
+  font-size: 13.5px; font-weight: 600; color: var(--ink-2); background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: 999px; padding: 6px 13px;
+}
+.ev-rows { display: flex; flex-direction: column; gap: 10px; }
+.ev-row { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.ev-row:last-child { border-bottom: 0; }
+.ev-row-k { font-size: 14px; font-weight: 650; color: var(--ink-2); }
+
+/* Exact passages */
+.ev-passages { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.ev-passage { border: 1px solid var(--border); border-radius: 12px; padding: 15px 16px; background: var(--surface); }
+.ev-passage-scope { font-size: 13px; font-weight: 700; color: var(--lav-700); }
+.ev-passage-q {
+  margin: 8px 0 0; padding-left: 12px; border-left: 3px solid var(--lav-200);
+  font-size: 14px; color: var(--ink-2); line-height: 1.6;
+}
+.ev-passage-src { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: baseline; margin-top: 10px; font-size: 12px; color: var(--ink-3); }
+.ev-passage-src .ev-link { margin-top: 0; }
+.ev-sources { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; }
+.ev-source-id { color: var(--ink-3); font-size: 12px; }
+.ev-about-links { margin-top: 14px; }
+.ev-limits { margin-top: 16px; padding: 14px 16px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; }
+.ev-limits-h { font-size: 13px; font-weight: 750; color: var(--ink); margin-bottom: 8px; }
+.ev-limits ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); line-height: 1.6; }
+
+@media (max-width: 1000px) {
+  .ev-layout { grid-template-columns: 1fr; }
+  .ev-nav { position: static; }
+  .ev-nav-list { flex-direction: row; flex-wrap: wrap; gap: 6px; }
+  .ev-nav-link { border-left: 0; border: 1px solid var(--border); border-radius: 999px; padding: 8px 13px; }
+  .ev-nav-sub { display: none; }
+  .ev-nav-export { margin-top: 12px; }
+}
+@media (max-width: 640px) {
+  .ev-section { padding: 18px 16px; }
+  .ev-med-name { font-size: 21px; }
+  .ev-mat-v { font-size: 34px; }
+  .ev-mat-list li { grid-template-columns: 18px 1fr; }
+  .ev-mat-desc { grid-column: 1 / -1; padding-left: 26px; }
+}
+
+/* ===================== Check + Compare contextual actions ===================== */
+/* Both buttons stay on one line, share a height, and move together onto a new row. */
+.filter-actions { display: flex; gap: 10px; align-items: flex-end; flex-wrap: nowrap; }
+.filter-actions .cta,
+.filter-actions .compare-btn {
+  height: 46px; display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 20px; white-space: nowrap; border-radius: 11px; font-size: 15px; font-weight: 650;
+  line-height: 1; flex: 0 0 auto;
+}
+.compare-btn {
+  text-decoration: none; background: var(--surface); color: var(--lav-700);
+  border: 1px solid var(--lav-500);
+}
+.compare-btn:hover { background: var(--lav-50); text-decoration: none; }
+.compare-btn:focus-visible, .check-btn:focus-visible { outline: 3px solid var(--lav-300); outline-offset: 2px; }
+/* Selector row: equal, generous columns that WRAP, so no value is clipped ("GLP-1
+   receptor agonist", "Menopause / Postmenopause") and the actions never squeeze the
+   selectors. The previous fixed 6-column grid pinned each field to 168px, which cut
+   the Drug Class and Life Stage values off. */
+.filter-row {
+  display: grid;
+  /* 250px is the width the longest option value ("Menopause / Postmenopause")
+     needs alongside its icon and dropdown arrow. */
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+.filter-row .field { min-width: 0; }
+/* Both actions sit together on their own full-width row beneath the selectors. */
+.filter-row .filter-actions { grid-column: 1 / -1; }
+
+/* ============================ Compare Evidence ============================ */
+.cmp-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; flex-wrap: wrap; }
+.cmp-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.cmp-btn {
+  display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 18px; border-radius: 11px;
+  font-size: 14.5px; font-weight: 650; white-space: nowrap; cursor: pointer;
+  background: var(--surface); color: var(--lav-700); border: 1px solid var(--lav-200);
+}
+.cmp-btn:hover { background: var(--lav-50); }
+.cmp-btn.primary { background: var(--lav-500); color: #fff; border-color: var(--lav-500); }
+.cmp-btn.primary:hover { background: var(--lav-700); }
+.cmp-btn:focus-visible { outline: 3px solid var(--lav-300); outline-offset: 2px; }
+.cmp-btn[disabled] { opacity: .6; cursor: default; }
+.cmp-btn-sub { font-size: 11.5px; font-weight: 600; opacity: .85; }
+
+.cmp-note {
+  display: flex; gap: 10px; align-items: flex-start; margin-top: 16px; padding: 13px 16px;
+  background: var(--lav-50); border: 1px solid var(--lav-200); border-radius: 12px;
+  font-size: 13.5px; color: var(--ink-2); line-height: 1.55;
+}
+
+/* Fixed evidence-label column + one column per medicine, rows aligned by CSS grid. */
+.cmp-matrix { margin-top: 18px; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; background: var(--surface); }
+.cmp-scroll { overflow-x: auto; }
+.cmp-grid { display: grid; min-width: min-content; }
+.cmp-cell { padding: 13px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; min-width: 0; }
+.cmp-cell.label {
+  position: sticky; left: 0; z-index: 2; background: var(--surface-2);
+  font-size: 13px; font-weight: 650; color: var(--ink-2); gap: 8px; border-right: 1px solid var(--border);
+}
+.cmp-cell.value { font-size: 13.5px; color: var(--ink); background: var(--surface); }
+.cmp-cell.value .cmp-val { min-width: 0; overflow-wrap: anywhere; }
+.cmp-row-head { background: var(--surface-2); }
+.cmp-colhead {
+  padding: 18px 16px; border-bottom: 1px solid var(--border); background: var(--surface);
+  display: flex; flex-direction: column; gap: 4px; align-items: flex-start;
+}
+.cmp-colhead.selected { background: var(--lav-50); box-shadow: inset 0 3px 0 var(--lav-500); }
+.cmp-colhead.selected .cmp-colname { color: var(--lav-700); }
+.cmp-colname { font-size: 19px; font-weight: 750; color: var(--ink); }
+.cmp-colsub { font-size: 12.5px; color: var(--ink-3); }
+.cmp-selbadge {
+  font-size: 10px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
+  color: #fff; background: var(--lav-500); padding: 3px 9px; border-radius: 999px;
+}
+.cmp-incomplete-badge {
+  font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--grey-incomplete); background: #f2f3f6; border: 1px solid #dfe1e8;
+  padding: 3px 9px; border-radius: 999px;
+}
+.cmp-expand {
+  background: none; border: 0; padding: 0; font-size: 12.5px; font-weight: 650;
+  color: var(--lav-700); cursor: pointer; text-align: left;
+}
+.cmp-expand:hover { text-decoration: underline; }
+.cmp-expand:focus-visible { outline: 3px solid var(--lav-300); outline-offset: 2px; }
+.cmp-inline-link { font-size: 12.5px; font-weight: 650; color: var(--lav-700); }
+.cmp-empty { margin-top: 16px; padding: 16px 18px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); font-size: 14px; color: var(--ink-2); }
+
+/* Medicine switcher (tablet / mobile: one medicine at a time) */
+.cmp-switcher { display: none; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.cmp-switch-btn {
+  border: 1px solid var(--border); background: var(--surface); color: var(--ink-2);
+  border-radius: 999px; padding: 9px 15px; font-size: 13.5px; font-weight: 650; cursor: pointer; min-height: 44px;
+}
+.cmp-switch-btn[aria-pressed="true"] { background: var(--lav-100); color: var(--lav-700); border-color: var(--lav-200); font-weight: 750; }
+.cmp-switch-btn:focus-visible { outline: 3px solid var(--lav-300); outline-offset: 2px; }
+
+/* Edit Comparison */
+.cmp-editor { margin-top: 14px; padding: 18px 20px; border: 1px solid var(--lav-200); border-radius: 14px; background: var(--lav-50); }
+.cmp-editor-h { font-size: 15px; font-weight: 750; color: var(--ink); }
+.cmp-editor-sub { font-size: 12.5px; color: var(--ink-3); margin-top: 4px; }
+.cmp-editor-list { list-style: none; margin: 14px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; }
+.cmp-editor-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; font-size: 13.5px; min-height: 44px; }
+.cmp-editor-item input { width: 17px; height: 17px; accent-color: var(--lav-500); }
+.cmp-editor-item.locked { opacity: .85; }
+.cmp-editor-note { font-size: 12px; color: var(--ink-3); margin-top: 12px; line-height: 1.5; }
+
+/* Reviewed source coverage */
+.cmp-coverage { margin-top: 20px; padding: 20px 22px; background: var(--lav-50); border: 1px solid var(--lav-200); border-radius: 16px; }
+.cmp-coverage-head { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+.cmp-coverage-h { font-size: 17px; font-weight: 750; color: var(--ink); }
+.cmp-coverage-sub { font-size: 12.5px; color: var(--ink-3); margin-top: 5px; max-width: 62ch; line-height: 1.55; }
+.cmp-coverage-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 16px; }
+.cmp-cov-cell { background: var(--surface); border: 1px solid var(--border); border-radius: 11px; padding: 13px 14px; }
+.cmp-cov-k { font-size: 11px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: var(--ink-3); }
+.cmp-cov-v { font-size: 16px; font-weight: 750; color: var(--ink); margin-top: 5px; }
+.cmp-cov-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; background: var(--surface); }
+.cmp-cov-table th, .cmp-cov-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.cmp-cov-table th { font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--ink-3); }
+.cmp-cov-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 11px; margin-top: 16px; }
+
+@media (max-width: 1000px) {
+  .cmp-switcher { display: flex; }
+  /* One medicine at a time: a two-column matrix that fits the viewport, so the
+     evidence values are readable without scrolling the grid sideways. */
+  /* min-width:0 lets the single medicine column wrap to the viewport instead of
+     forcing the grid wider than the screen. */
+  .cmp-grid { grid-template-columns: minmax(104px, 36%) minmax(0, 1fr) !important; min-width: 0; }
+  .cmp-cell.value { overflow-wrap: anywhere; }
+  .cmp-cell { padding: 12px 13px; }
+  .cmp-colhead { padding: 14px 13px; }
+  .cmp-colname { font-size: 17px; }
+}
+@media (max-width: 640px) {
+  .cmp-head { flex-direction: column; }
+  .cmp-actions { width: 100%; }
+  .cmp-actions .cmp-btn { flex: 1 1 auto; justify-content: center; }
+  .cmp-btn { font-size: 13.5px; padding: 0 14px; }
+  .cmp-coverage { padding: 16px 15px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .001ms !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+}
