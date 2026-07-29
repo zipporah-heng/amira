@@ -143,6 +143,46 @@
 .cmp-viewfull { font-size: 13px; font-weight: 700; color: var(--lav-700); }
 .cmp-passage { font-size: 12px; color: var(--ink-2); }
 
+/* --- Compare Evidence (dynamic, condition-driven cards) --- */
+.ce-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 18px; align-items: stretch; }
+@media (max-width: 1100px) { .ce-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 720px) { .ce-grid { grid-template-columns: 1fr; } }
+.ce-card { display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border);
+  border-radius: 16px; padding: 18px; background: var(--surface); border-top: 4px solid var(--border); }
+.ce-card.selected { border-top-color: var(--lav-700); box-shadow: 0 2px 14px rgba(108,75,171,0.10); }
+.ce-selbadge { display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .05em;
+  text-transform: uppercase; color: #fff; background: var(--lav-700); padding: 3px 9px; border-radius: 999px; margin-bottom: 6px; }
+.ce-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.ce-brand { font-size: 20px; font-weight: 800; color: var(--ink); }
+.ce-ingredient { font-size: 12.5px; font-weight: 700; color: var(--lav-700); }
+.ce-mat { text-align: right; flex-shrink: 0; }
+.ce-mat-k { display: block; font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-3); }
+.ce-mat-v { font-size: 26px; font-weight: 800; color: var(--ink); }
+.ce-mat-den { font-size: 15px; font-weight: 700; color: var(--ink-3); }
+.ce-row { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 4px 0; border-bottom: 1px solid var(--border); }
+.ce-rep { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.ce-cell { text-align: center; }
+.ce-cell-k { font-size: 10.5px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; color: var(--ink-3); }
+.ce-cell-v { font-size: 12.5px; font-weight: 700; color: var(--ink); margin-top: 3px; line-height: 1.3; }
+.ce-cell-v.yes { color: #1d6b47; }
+.ce-cell-v.no { color: #8a5a00; }
+.ce-block { padding: 5px 0; border-bottom: 1px solid var(--border); }
+.ce-block .cmp-k { display: block; margin-bottom: 3px; }
+.ce-incomplete { padding: 12px 0; }
+.ce-inc-badge { display: inline-block; font-size: 12px; font-weight: 700; background: #fff6e6; color: #8a5a00;
+  border: 1px solid #f2dca8; border-radius: 999px; padding: 4px 11px; }
+.ce-inc-sub { font-size: 12px; color: var(--ink-3); margin-top: 6px; }
+.ce-links { display: flex; flex-direction: column; gap: 6px; margin-top: auto; padding-top: 8px; }
+.ce-export { align-self: flex-start; margin-top: 4px; font-size: 12.5px; font-weight: 700; color: var(--lav-700);
+  background: var(--lav-50); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+.ce-export:hover { background: #efe9fb; }
+
+/* Check Evidence / Compare Evidence — adjacent actions beneath the selectors. */
+.filter-actions { display: flex; gap: 10px; align-items: center; }
+.compare-btn { display: inline-flex; align-items: center; text-decoration: none; background: var(--surface);
+  color: var(--lav-700); border: 1px solid var(--lav-700); }
+.compare-btn:hover { background: var(--lav-50); }
+
 /* --- Representation: 7 cards one row (redesigned: circular icon + status pill) --- */
 .representation { padding: 26px 28px; }
 .rep-h { font-size: 27px; font-weight: 750; letter-spacing: -0.01em; margin-bottom: 20px; }

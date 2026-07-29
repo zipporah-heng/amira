@@ -7,7 +7,7 @@ const REPO_URL = "https://github.com/zipporah-heng/amira";
 const NAV = [
   { to: "/amira/check-evidence", label: "Check Evidence" },
   { to: "/amira/research-map", label: "Research Map" },
-  { to: "/amira/compare", label: "Compare Evidence" },
+  { to: "/amira/compare-evidence", label: "Compare Evidence" },
   { to: "/amira/open-benchmark", label: "Open Benchmark" },
   { to: "/amira/methodology", label: "Methodology" },
 ];
