@@ -124,18 +124,15 @@ describe("Check Evidence — compact three-column summary", () => {
 });
 
 describe("Check Evidence — anchors and final order", () => {
-  it("3+4. Every anchor id sits on a section container with a sticky-header offset", () => {
+  it("3+4. Every anchor id sits on a container covered by the sticky-header offset rule", () => {
     const { container } = renderPage();
-    for (const s of SECTIONS) {
+    // The selectors in approved.css that carry scroll-margin-top: 96px.
+    const OFFSET_SELECTORS = [".ev-section", "#evidence-scope", "#representation",
+      "#remains-unknown", "#ai-found", ".notice-panel", ".notice-maturity"];
+    for (const s of [...SECTIONS, { id: "evidence-scope" }, { id: "evidence-maturity" }]) {
       const el = container.querySelector(`#${s.id}`);
       expect(el, s.id).not.toBeNull();
-      // Section containers carry the class that provides scroll-margin-top.
-      const isSection = el!.classList.contains("ev-section")
-        || el!.closest(".ev-section") !== null
-        || el!.classList.contains("notice-panel")
-        || el!.classList.contains("notice-maturity")
-        || el!.classList.contains("card");
-      expect(isSection, s.id).toBe(true);
+      expect(OFFSET_SELECTORS.some((sel) => el!.matches(sel)), s.id).toBe(true);
     }
   });
 
