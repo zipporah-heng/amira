@@ -7,7 +7,7 @@ import { EvidenceReview } from "../components/EvidenceReview";
 import { Representation } from "../components/Representation";
 import { AiFound } from "../components/AiFound";
 import { EvidenceTraceDrawer } from "../components/EvidenceTraceDrawer";
-import { EvidenceScope, WhatRemainsUnknown } from "../components/EvidenceClarity";
+import { WhatRemainsUnknown } from "../components/EvidenceClarity";
 import { ContinueExploring } from "../components/ContinueExploring";
 
 // Digoxin leads: a striking, source-linked finding on the first, default view.
@@ -113,7 +113,6 @@ export function CheckEvidence() {
           }
           maturityCard={<MaturityPanel report={report} />}
           signal={signals.find((s) => s.medicine === report.banner!.medicine) || null}
-          scopeCard={<EvidenceScope report={report} />}
           representationCard={<Representation report={report} />}
           unknownCard={<WhatRemainsUnknown report={report} />}
           aiFoundCard={<AiFound report={report} onOpenTrace={() => setTraceOpen(true)} />}

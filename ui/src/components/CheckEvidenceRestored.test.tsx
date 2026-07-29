@@ -5,7 +5,7 @@ import { EvidenceReview } from "./EvidenceReview";
 import { Representation } from "./Representation";
 import { AiFound } from "./AiFound";
 import { WhatToNotice } from "./WhatToNotice";
-import { EvidenceScope, WhatRemainsUnknown } from "./EvidenceClarity";
+import { WhatRemainsUnknown } from "./EvidenceClarity";
 import * as M from "../evidenceModel";
 
 /** REGRESSION GUARD: the original AMIRA evidence components must live inside the new
@@ -85,7 +85,6 @@ const renderPage = (r: EvidenceResponse = OZEMPIC) =>
     <EvidenceReview
       report={r}
       signalCard={<WhatToNotice report={r} signal={null} />}
-      scopeCard={<EvidenceScope report={r} />}
       representationCard={<Representation report={r} />}
       unknownCard={<WhatRemainsUnknown report={r} />}
       aiFoundCard={<AiFound report={r} onOpenTrace={() => {}} />}
@@ -106,7 +105,6 @@ describe("Hybrid integration — every approved component coexists", () => {
       "1. circular maturity meter": !!container.querySelector("svg.maturity-meter"),
       "2. maturity checklist": container.querySelectorAll(".nm-item, .ev-mat-check li").length >= 5,
       "3. what should I notice": !!container.querySelector("#important-finding"),
-      "4. evidence scope": !!container.querySelector("#evidence-scope"),
       "5. how were women represented": !!container.querySelector("#representation"),
       "6. what remains unknown": !!container.querySelector("#remains-unknown"),
       "7. how AMIRA's AI found this": !!container.querySelector("#ai-found"),
@@ -127,7 +125,7 @@ describe("Hybrid integration — every approved component coexists", () => {
 
   it("Follows the approved order: quick understanding first, detailed inspection second", () => {
     const { container } = renderPage();
-    const order = ["evidence-summary", "important-finding", "evidence-maturity", "evidence-scope",
+    const order = ["evidence-summary", "important-finding", "evidence-maturity",
       "representation", "women-in-the-evidence", "remains-unknown", "sex-specific-effectiveness",
       "women-specific-safety", "common-adverse-effects", "life-stage-evidence", "hormonal-context",
       "exact-passages", "source-coverage", "ai-found", "about-this-evidence-review"];

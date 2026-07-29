@@ -5,7 +5,7 @@ import { EvidenceReview, SECTIONS } from "./EvidenceReview";
 import { NoticePanel, MaturityPanel } from "./WhatToNotice";
 import { Representation } from "./Representation";
 import { AiFound } from "./AiFound";
-import { EvidenceScope, WhatRemainsUnknown } from "./EvidenceClarity";
+import { WhatRemainsUnknown } from "./EvidenceClarity";
 import { CriticalSignals } from "./CriticalSignals";
 import { Methodology } from "../pages/Methodology";
 import type { EvidenceResponse } from "../api";
@@ -67,7 +67,6 @@ const renderPage = (r: EvidenceResponse = OZEMPIC) =>
       report={r}
       signalCard={<NoticePanel report={r} signal={null} />}
       maturityCard={<MaturityPanel report={r} />}
-      scopeCard={<EvidenceScope report={r} />}
       representationCard={<Representation report={r} />}
       unknownCard={<WhatRemainsUnknown report={r} />}
       aiFoundCard={<AiFound report={r} onOpenTrace={() => {}} />}
@@ -127,9 +126,9 @@ describe("Check Evidence — anchors and final order", () => {
   it("3+4. Every anchor id sits on a container covered by the sticky-header offset rule", () => {
     const { container } = renderPage();
     // The selectors in approved.css that carry scroll-margin-top: 96px.
-    const OFFSET_SELECTORS = [".ev-section", "#evidence-scope", "#representation",
+    const OFFSET_SELECTORS = [".ev-section", "#representation",
       "#remains-unknown", "#ai-found", ".notice-panel", ".notice-maturity"];
-    for (const s of [...SECTIONS, { id: "evidence-scope" }, { id: "evidence-maturity" }]) {
+    for (const s of [...SECTIONS, { id: "evidence-maturity" }]) {
       const el = container.querySelector(`#${s.id}`);
       expect(el, s.id).not.toBeNull();
       expect(OFFSET_SELECTORS.some((sel) => el!.matches(sel)), s.id).toBe(true);
@@ -180,7 +179,7 @@ describe("Check Evidence — anchors and final order", () => {
 
   it("8+9. Every scientific component and the PDF export remain present", () => {
     const { container } = renderPage();
-    for (const sel of ["svg.maturity-meter", ".nm-check", "#important-finding", "#evidence-scope",
+    for (const sel of ["svg.maturity-meter", ".nm-check", "#important-finding",
       "#representation", "#remains-unknown", "#ai-found", ".schema-panel", ".ev-nav-list",
       "#exact-passages", "#source-coverage", "#about-this-evidence-review", ".ev-export-btn",
       ".trace-open"]) {
