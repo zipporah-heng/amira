@@ -1,4 +1,4 @@
-import type { EvidenceResponse, Finding } from "./api";
+import type { EvidenceResponse, Finding, WomenIncludedStudy } from "./api";
 
 /** THE SINGLE DERIVATION LAYER for everything AMIRA displays or exports about one
  *  medicine's evidence.
@@ -62,30 +62,96 @@ export function evidencePopulation(r: EvidenceResponse): EvidenceCell {
   return { label: t.display_name, detail: scope || undefined, tone: "reported" };
 }
 
-/** Women included — reflects ANY verified female-participation evidence: a reported
- *  count, a reported percentage, a derived female subtotal, the canonical "Women
- *  Counted" level, or a verified sex-specific finding. Keying this on the reported
- *  count alone previously made a percentage-only record read "Not reported". */
+/** Bounded wording used whenever female enrolment is known for some reviewed studies
+ *  but not all. It replaces any combined figure — never sits beside one. */
+export const PARTIAL_WOMEN_LABEL = "Partially reported across reviewed studies";
+
+/** The canonical study-by-study female enrolment rows. Every surface (Check Evidence,
+ *  Compare Evidence, the PDF exports) renders these same rows. */
+export function womenIncludedStudies(r: EvidenceResponse): WomenIncludedStudy[] {
+  return r.totals?.women_included?.per_study || [];
+}
+
+/** One study's female enrolment, worded exactly as the API composed it. */
+export function studyWomenLabel(s: WomenIncludedStudy): string {
+  if (s.female_n == null) return "Female enrollment count not located";
+  const approx = s.female_basis === "derived" ? "approximately " : "";
+  const pct = s.female_pct_reported != null ? `, ${s.female_pct_reported}%` : "";
+  if (s.total_enrollment == null) return `${approx}${s.female_n.toLocaleString()} women`;
+  return `${approx}${s.female_n.toLocaleString()} of ${s.total_enrollment.toLocaleString()}${pct}`;
+}
+
+/** The supporting sentence for a partially reported medicine, e.g.
+ *  "DECISION reported 284 of 1,001 women, 28.0%. The female enrollment count was not
+ *  located for DIG." Composed by the API so no surface can reword it. */
+export function womenIncludedDetail(r: EvidenceResponse): string {
+  return r.totals?.women_included?.detail || "";
+}
+
+/** True when the medicine-level figure is only partly known. */
+export function womenIncludedPartial(r: EvidenceResponse): boolean {
+  return r.totals?.women_included?.state === "partially_reported";
+}
+
+/** Women included — the canonical medicine-level answer.
+ *
+ *  FAIL-CLOSED AGGREGATION: a combined numerator/denominator (and therefore any
+ *  combined percentage) is shown ONLY when every reviewed study contributes a
+ *  compatible verified pair. A known count from one study is never divided by a
+ *  denominator that includes studies with unknown female enrolment — that produced
+ *  the incorrect "284 of 7,801" for Digoxin. When coverage is partial the label is
+ *  bounded wording and the study-specific values carry the numbers. */
 export function womenIncluded(r: EvidenceResponse): EvidenceCell {
   const t = r.totals;
   if (!t) return { label: "Not established", tone: "incomplete" };
+  const wi = t.women_included;
+
+  // Canonical path — the API states the answer, including its bounded wording.
+  if (wi) {
+    if (wi.state === "reported") {
+      const pct = wi.combined_percentage != null ? ` (${wi.combined_percentage}%)` : "";
+      return { label: `${wi.label}${pct}`, tone: "reported" };
+    }
+    if (wi.state === "partially_reported") {
+      return { label: PARTIAL_WOMEN_LABEL, detail: wi.detail, tone: "limited" };
+    }
+    // Nothing located anywhere. A verified sex-specific finding still counts as
+    // evidence that women were included, so it is not called "not reported".
+    const hasFinding =
+      (r.effectiveness?.findings?.length || 0) > 0 ||
+      (r.safety?.significant_findings?.length || 0) > 0 ||
+      (r.safety?.other_findings?.length || 0) > 0;
+    if (hasFinding || levelSatisfied(r, 1)) {
+      return { label: PARTIAL_WOMEN_LABEL, detail: wi.detail, tone: "limited" };
+    }
+    return { label: "Not reported", detail: wi.detail || undefined, tone: "not_reported" };
+  }
+
+  // Fallback for a response without the canonical block: still never combine across
+  // studies with unknown female enrolment.
+  const missing = t.trials_without_female_count_or_percentage?.length || 0;
   const counted = levelSatisfied(r, 1);
   const reported = t.women_reported_count > 0 ? t.women_reported_count : 0;
-  const estimated = !reported && t.women_estimated_total > 0 ? t.women_estimated_total : 0;
-  const pct = t.women_pct_of_participants;
-  const hasFigure = reported > 0 || estimated > 0 || pct != null;
   const hasFinding =
     (r.effectiveness?.findings?.length || 0) > 0 ||
     (r.safety?.significant_findings?.length || 0) > 0 ||
     (r.safety?.other_findings?.length || 0) > 0;
-  if (!(counted || hasFigure || hasFinding)) return { label: "Not reported", tone: "not_reported" };
-
-  const n = reported || estimated;
+  if (missing > 0) {
+    if (!(reported || counted || hasFinding)) return { label: "Not reported", tone: "not_reported" };
+    return { label: PARTIAL_WOMEN_LABEL, tone: "limited" };
+  }
+  const n = reported || (t.women_estimated_total > 0 ? t.women_estimated_total : 0);
   const total = t.participants_total;
-  let detail = "";
-  if (n && total) detail = `${estimated ? "approximately " : ""}${n.toLocaleString()} of ${total.toLocaleString()}`;
-  if (pct != null) detail = detail ? `${detail} (${pct}%)` : `${pct}%`;
-  return { label: detail || "Reported", detail: detail ? undefined : undefined, tone: "reported" };
+  const pct = t.women_pct_of_participants;
+  if (!(n && total)) {
+    if (counted || hasFinding) return { label: "Reported", tone: "reported" };
+    return { label: "Not reported", tone: "not_reported" };
+  }
+  const approx = reported ? "" : "approximately ";
+  return {
+    label: `${approx}${n.toLocaleString()} of ${total.toLocaleString()}${pct != null ? ` (${pct}%)` : ""}`,
+    tone: "reported",
+  };
 }
 
 /** Women counted — the participants were reported. Distinct from Women analyzed. */
@@ -114,6 +180,9 @@ export const sexSpecificOutcomes = womenAnalyzed;
 export function shortLabel(cell: EvidenceCell): string {
   // Keep an already-short canonical answer verbatim (e.g. "Yes", "Yes (post hoc)").
   if (cell.label.length <= 18) return cell.label;
+  // Partial female-enrolment coverage keeps its meaning in the compact row: it must read
+  // as partially reported, not merely "Limited".
+  if (cell.label === PARTIAL_WOMEN_LABEL) return "Partially reported";
   switch (cell.tone) {
     case "reported": return "Reported";
     case "limited": return "Limited";

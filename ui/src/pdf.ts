@@ -144,6 +144,18 @@ function medicineBody(ctx: Ctx, r: EvidenceResponse) {
 
   heading(ctx, "Women in the evidence");
   row(ctx, "Women included", M.womenIncluded(r).label);
+  // Study-specific female enrolment. Whenever coverage is partial these rows carry the
+  // numbers, because a medicine-level ratio would mix a known numerator with a
+  // denominator that includes studies of unknown female enrolment.
+  const womenStudies = M.womenIncludedStudies(r);
+  if (womenStudies.length) {
+    text(ctx, "Female enrollment by reviewed study", { size: 9, bold: true, color: MUTED });
+    for (const s of womenStudies) {
+      const total = s.total_enrollment != null ? `${s.total_enrollment.toLocaleString()} participants` : "total not located";
+      text(ctx, `- ${s.study}: ${total}; ${M.studyWomenLabel(s)}`, { size: 10, indent: 8 });
+    }
+    if (M.womenIncludedDetail(r)) text(ctx, M.womenIncludedDetail(r), { size: 9, color: MUTED, gap: 4 });
+  }
   row(ctx, "Women counted (who took part)", M.womenCounted(r).label);
   row(ctx, "Women analyzed (outcomes analysed separately by sex)", M.womenAnalyzed(r).label);
 
@@ -213,22 +225,59 @@ async function finishBytes(ctx: Ctx): Promise<Uint8Array> {
   return ctx.doc.save({ useObjectStreams: false });
 }
 
+/** The %PDF signature every real PDF must start with. */
+const PDF_SIGNATURE = [0x25, 0x50, 0x44, 0x46];   // "%PDF"
+
 /** Wrap PDF bytes as an application/pdf blob (copied into a plain ArrayBuffer so the
- *  Blob part type is unambiguous). */
+ *  Blob part type is unambiguous). Bytes that are not a PDF never reach the browser:
+ *  the caller's error path shows a visible message instead of downloading rubbish. */
 export function pdfBlob(bytes: Uint8Array): Blob {
+  if (!bytes || bytes.byteLength === 0) throw new Error("PDF generation produced no bytes");
+  const signed = PDF_SIGNATURE.every((b, i) => bytes[i] === b);
+  if (!signed) throw new Error("PDF generation produced bytes without a %PDF signature");
   const buf = new ArrayBuffer(bytes.byteLength);
   new Uint8Array(buf).set(bytes);
   return new Blob([buf], { type: "application/pdf" });
 }
 
-/** Trigger a browser download of a blob under an explicit filename. */
+/** How long the object URL stays alive after the click. Long enough for any browser to
+ *  finish reading the blob, short enough not to leak for the session. */
+const OBJECT_URL_TTL_MS = 60_000;
+
+/** Trigger a browser download of a blob under an explicit filename.
+ *
+ *  Three things here are load-bearing, and their absence is what made every export fail
+ *  silently in production:
+ *   1. the anchor MUST be in the document when it is clicked — a detached anchor's click
+ *      is ignored (no download, no error);
+ *   2. the object URL MUST NOT be revoked in the same turn as the click, or the browser
+ *      has nothing left to read when it starts the download;
+ *   3. an unusable blob MUST throw, so the caller can show a visible message rather
+ *      than appearing to succeed.
+ *
+ *  No popup window is used, so a blocked popup cannot break the export. */
 export function downloadBlob(blob: Blob, filename: string) {
+  if (!blob || blob.size === 0) throw new Error("The generated file was empty");
+  if (blob.type !== "application/pdf") throw new Error(`Unexpected file type: ${blob.type || "none"}`);
+  if (!filename.toLowerCase().endsWith(".pdf")) throw new Error(`Unexpected filename: ${filename}`);
+
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+  a.rel = "noopener";
+  a.style.position = "fixed";
+  a.style.left = "-9999px";
+  // (1) attach before clicking …
+  document.body.appendChild(a);
+  try {
+    a.click();
+  } finally {
+    // … and detach afterwards. (2) The URL outlives the click.
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), OBJECT_URL_TTL_MS);
+  }
+  return url;
 }
 
 /** Individual Evidence Brief — one medicine. */

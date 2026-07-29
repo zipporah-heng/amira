@@ -201,8 +201,9 @@ export function EvidenceReview({
     try {
       const blob = await buildEvidenceBriefPdf(report);
       downloadBlob(blob, evidenceBriefFilename(report));
-    } catch {
-      setPdfError("The evidence brief could not be generated. Please try again.");
+    } catch (e: any) {
+      // Visible, beside the button. A failed export is never silent.
+      setPdfError(`The evidence brief could not be generated${e?.message ? `: ${e.message}` : ""}. Please try again.`);
     } finally { setBusy(false); }
   };
 
@@ -269,16 +270,43 @@ export function EvidenceReview({
         <Section id="women-in-the-evidence" title="Women in the evidence" sub="Counts and analysis">
           <div className="ev-metrics">
             <MetricCard label="Women included" value={M.womenIncluded(report).label}
-              tone={M.womenIncluded(report).tone} note="In the studies" />
+              tone={M.womenIncluded(report).tone}
+              note={M.womenIncludedPartial(report) ? "Partial study coverage" : "In the studies"} />
             <MetricCard label="Women counted" value={M.womenCounted(report).label}
               tone={M.womenCounted(report).tone} note="Who took part in the studies" />
             <MetricCard label="Women analyzed" value={M.womenAnalyzed(report).label}
               tone={M.womenAnalyzed(report).tone} note="Whether results were analysed separately by sex" />
             <MetricCard label="Evidence population" value={pop.label} tone={pop.tone} note={pop.detail} />
           </div>
+          {/* Study-specific female enrolment. A medicine-level figure is only combined
+              when every study reports both sides of the ratio, so these rows are the
+              authoritative numbers whenever coverage is partial. */}
+          {M.womenIncludedStudies(report).length > 0 && (
+            <table className="ev-women-studies">
+              <caption>Female enrollment by reviewed study</caption>
+              <thead>
+                <tr><th scope="col">Study</th><th scope="col">Total participants</th><th scope="col">Women</th></tr>
+              </thead>
+              <tbody>
+                {M.womenIncludedStudies(report).map((s) => (
+                  <tr key={s.trial_id}>
+                    <th scope="row">{s.study}</th>
+                    <td>{s.total_enrollment != null ? s.total_enrollment.toLocaleString() : "Not located"}</td>
+                    <td className={s.female_n == null ? "ev-not-located" : undefined}>
+                      {M.studyWomenLabel(s)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {M.womenIncludedDetail(report) && (
+            <p className="ev-foot">{M.womenIncludedDetail(report)}</p>
+          )}
           <p className="ev-foot">
             Women counted and women analyzed are separate questions. A study can report how many women
-            took part without analysing their outcomes separately.
+            took part without analysing their outcomes separately. A female count from one study is
+            never divided by a total that includes studies whose female enrollment was not located.
           </p>
         </Section>
 
