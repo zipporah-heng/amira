@@ -148,6 +148,13 @@ export function EvidenceSearch({ filters, setFilters, onCheck, catalog }: {
 
   const hormonalOpts = hormonalContextOptions(filters.lifeStage);
 
+  // "Compare Evidence" preserves the FULL current selection as URL params, so the
+  // comparison page opens in the same condition/medicine context (no reset).
+  const compareHref = `/amira/compare-evidence?${new URLSearchParams({
+    healthArea: filters.healthArea, condition: filters.condition, drugClass: filters.drugClass,
+    medicine: filters.medicine, lifeStage: filters.lifeStage, hormonalContext: filters.hormonalContext,
+  }).toString()}`;
+
   return (
     <div className="card filter-card">
       <div className="filter-row">
@@ -169,7 +176,10 @@ export function EvidenceSearch({ filters, setFilters, onCheck, catalog }: {
         <Field label="Hormonal Context" icon="🧴" value={filters.hormonalContext}
           onChange={(v) => setFilters({ ...filters, hormonalContext: v })}
           options={opt(hormonalOpts)} />
-        <button className="cta check-btn" onClick={onCheck}>Check Evidence</button>
+        <div className="filter-actions">
+          <button className="cta check-btn" onClick={onCheck}>Check Evidence</button>
+          <a className="cta compare-btn" href={compareHref}>Compare Evidence</a>
+        </div>
       </div>
       <div className="safety-line" style={{ marginTop: 14 }}>
         <span>ℹ️</span> AMIRA reviews published research across multiple health areas. Medicines with

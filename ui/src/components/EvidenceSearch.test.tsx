@@ -134,3 +134,26 @@ describe("Life Stage + Hormonal Context", () => {
     expect(screen.queryByLabelText("Hormone Therapy")).toBeNull();
   });
 });
+
+describe("Check Evidence + Compare Evidence — adjacent actions preserve context", () => {
+  it("places Compare Evidence beside Check Evidence, carrying the full selection as URL params", () => {
+    render(<Harness initial={{
+      healthArea: "Cardiovascular", condition: "Heart failure", drugClass: "Cardiac glycoside",
+      medicine: "Digoxin", lifeStage: "older_adult", hormonalContext: "Menopause status",
+    }} />);
+    // Both actions live together beneath the selectors.
+    const actions = document.querySelector(".filter-actions")!;
+    expect(within(actions as HTMLElement).getByText("Check Evidence")).toBeInTheDocument();
+    const compare = within(actions as HTMLElement).getByText("Compare Evidence") as HTMLAnchorElement;
+
+    const url = new URL(compare.href, "http://localhost");
+    expect(url.pathname).toBe("/amira/compare-evidence");
+    const p = url.searchParams;
+    expect(p.get("healthArea")).toBe("Cardiovascular");
+    expect(p.get("condition")).toBe("Heart failure");
+    expect(p.get("drugClass")).toBe("Cardiac glycoside");
+    expect(p.get("medicine")).toBe("Digoxin");
+    expect(p.get("lifeStage")).toBe("older_adult");
+    expect(p.get("hormonalContext")).toBe("Menopause status");
+  });
+});

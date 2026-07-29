@@ -19,6 +19,7 @@ const router = createBrowserRouter([
   { path: "/amira", element: <Navigate to="/amira/check-evidence" replace /> },
   { path: "/amira/check-evidence", element: withShell(<CheckEvidence />) },
   { path: "/amira/research-map", element: withShell(<ResearchMap />) },
+  { path: "/amira/compare-evidence", element: withShell(<Compare />) },
   { path: "/amira/compare", element: withShell(<Compare />) },
   { path: "/amira/open-benchmark", element: withShell(<OpenBenchmark />) },
   { path: "/amira/methodology", element: withShell(<Methodology />) },
