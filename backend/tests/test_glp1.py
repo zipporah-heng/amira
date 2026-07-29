@@ -196,6 +196,35 @@ def test_mounjaro_women_counted_and_percentage_are_consistent():
     assert r["banner"]["maturity"]["level"] >= 2  # and Women Analyzed
 
 
+def test_known_adverse_effects_from_prescribing_information():
+    # OVERALL safety layer: a compact common-adverse-reaction list from the label,
+    # with a resolvable prescribing-information source — distinct from the by-sex layer.
+    oze = engine.check_evidence("Type 2 diabetes", "Ozempic")["banner"]["known_adverse_effects"]
+    weg = engine.check_evidence("Weight management", "Wegovy")["banner"]["known_adverse_effects"]
+    mou = engine.check_evidence("Type 2 diabetes", "Mounjaro")["banner"]["known_adverse_effects"]
+    assert oze and {"Nausea", "Vomiting", "Diarrhea", "Abdominal pain", "Constipation"} == set(oze["list"])
+    # Wegovy includes fatigue (used later in the narrative); Mounjaro must NOT list fatigue.
+    assert weg and "Fatigue" in weg["list"] and {"Nausea", "Vomiting", "Diarrhea"} <= set(weg["list"])
+    assert mou and "Fatigue" not in mou["list"]
+    assert {"Nausea", "Vomiting", "Diarrhea", "Decreased appetite"} <= set(mou["list"])
+    # Every adverse-effect list resolves to an authoritative prescribing-information source.
+    for kae in (oze, weg, mou):
+        assert kae["source"]["resolved"] is True
+        assert (kae["exact_passage"] or "").strip()
+        assert dataset.source_is_valid(kae["source"]["source_id"])[0]
+
+
+def test_two_safety_layers_are_distinct():
+    # A = known overall adverse effects (label); B = women-specific safety (by sex).
+    # They are separate evidence questions and must not be conflated.
+    oze = engine.check_evidence("Type 2 diabetes", "Ozempic")
+    assert oze["banner"]["known_adverse_effects"] is not None          # overall present
+    assert oze["safety"]["state"] == clinical.SAF_SEX_SIGNAL           # by-sex reported
+    weg = engine.check_evidence("Weight management", "Wegovy")
+    assert weg["banner"]["known_adverse_effects"] is not None          # overall present
+    assert weg["safety"]["state"] == clinical.SAF_NOT_REPORTED         # by-sex NOT inferred from enrolment
+
+
 def test_frozen_outputs_unchanged():
     r = engine.check_evidence("Cardiovascular disease prevention", "Rosuvastatin")
     d = engine.check_evidence("Heart failure", "Dapagliflozin")

@@ -70,6 +70,41 @@ describe("EvidenceSearch — 6-level cascade with Health Area", () => {
   });
 });
 
+describe("EvidenceSearch — brand label never appends the active ingredient", () => {
+  const brandCatalog: HealthAreaEntry[] = [
+    { health_area: "Metabolic Health", conditions: [
+      { condition: "Type 2 diabetes", drug_classes: [
+        { drug_class: "GLP-1 receptor agonist", medicines: [
+          { medicine: "Ozempic", status: "verified", active_ingredient: "Semaglutide" }] },
+        { drug_class: "Dual GIP/GLP-1 receptor agonist", medicines: [
+          { medicine: "Mounjaro", status: "verified", active_ingredient: "Tirzepatide" }] },
+      ] },
+    ] },
+  ];
+  function BrandHarness({ initial }: { initial: Partial<Filters> }) {
+    const [filters, setFilters] = useState<Filters>({
+      healthArea: "Metabolic Health", condition: "Type 2 diabetes", drugClass: "GLP-1 receptor agonist",
+      medicine: "Ozempic", lifeStage: "not_specified", hormonalContext: "Any", ...initial });
+    return <EvidenceSearch filters={filters} setFilters={setFilters} onCheck={() => {}} catalog={brandCatalog} />;
+  }
+
+  it("shows only the brand name (no '· semaglutide' / '· tirzepatide') and keeps a plain value", () => {
+    const first = render(<BrandHarness initial={{ drugClass: "GLP-1 receptor agonist", medicine: "Ozempic" }} />);
+    let med = screen.getByLabelText("Medicine") as HTMLSelectElement;
+    let labels = within(med).getAllByRole("option").map((o) => o.textContent);
+    expect(labels).toEqual(["Ozempic"]);
+    expect(labels.some((l) => /·|semaglutide/i.test(l || ""))).toBe(false);
+    expect(med.value).toBe("Ozempic");
+    first.unmount();
+
+    render(<BrandHarness initial={{ drugClass: "Dual GIP/GLP-1 receptor agonist", medicine: "Mounjaro" }} />);
+    med = screen.getByLabelText("Medicine") as HTMLSelectElement;
+    labels = within(med).getAllByRole("option").map((o) => o.textContent);
+    expect(labels).toEqual(["Mounjaro"]);
+    expect(labels.some((l) => /·|tirzepatide/i.test(l || ""))).toBe(false);
+  });
+});
+
 describe("Life Stage + Hormonal Context", () => {
   it("includes the Older Adult life stage", () => {
     render(<Harness />);

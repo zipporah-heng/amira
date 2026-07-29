@@ -23,7 +23,10 @@
     "NCT03548935",
     "PMID33567185",
     "PMID34170647",
-    "FDA-MOUNJARO-SNAPSHOT"
+    "FDA-MOUNJARO-SNAPSHOT",
+    "DAILYMED-OZEMPIC",
+    "DAILYMED-WEGOVY",
+    "DAILYMED-MOUNJARO"
   ],
   "medicines": [
     "Aspirin",
@@ -41,15 +44,15 @@
   ],
   "counts": {
     "trials": 14,
-    "sources": 25,
+    "sources": 28,
     "assertions": 112,
     "findings": 20,
     "direct_comparisons": 1,
-    "screening_records": 30
+    "screening_records": 33
   },
   "screening_summary": {
-    "identified": 30,
-    "included": 25,
+    "identified": 33,
+    "included": 28,
     "excluded": 3,
     "deferred": 2
   },

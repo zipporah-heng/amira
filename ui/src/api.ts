@@ -226,10 +226,18 @@ export interface WhoRow {
   age_note: string;
 }
 
+export interface KnownAdverseEffects {
+  list: string[];
+  exact_passage?: string | null;
+  source_locator?: string | null;
+  source: { source_id: string; title: string | null; url: string | null; publisher?: string | null; resolved?: boolean };
+}
+
 export interface Banner {
   medicine: string;
   active_ingredient?: string | null;
   brand_note?: string | null;
+  known_adverse_effects?: KnownAdverseEffects | null;
   drug_class: string;
   indication: string | null;
   // false when the selected medicine's evidence review is incomplete (unscored).

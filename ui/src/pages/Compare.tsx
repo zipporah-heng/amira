@@ -51,6 +51,14 @@ function CompareCard({ report }: { report: EvidenceResponse }) {
     .slice(0, 3)
     .map((s) => ({ label: s.study, url: s.source_url }));
 
+  // A. Known adverse effects (label-level, overall). B. Women-specific safety (by-sex).
+  const kae = b.known_adverse_effects;
+  const safetyFindings = [
+    ...(report.safety?.significant_findings || []),
+    ...(report.safety?.other_findings || []),
+  ];
+  const bySex = safetyFindings.find((f) => f.female_rate || f.male_rate);
+
   return (
     <div className="cmp-card">
       {/* 1. Brand + active ingredient */}
@@ -66,17 +74,36 @@ function CompareCard({ report }: { report: EvidenceResponse }) {
       <div className="cmp-row"><span className="cmp-k">Women represented</span>
         <span className="cmp-v">{pct != null ? `${pct}%` : "—"}{women ? ` · ${womenIsEstimate ? "~" : ""}${women.toLocaleString()} of ${t.participants_total.toLocaleString()}` : ""}</span></div>
 
-      {/* 4. Were women analyzed? */}
+      {/* 4. Known adverse effects (OVERALL — from the reviewed prescribing information) */}
+      {kae && kae.list?.length > 0 && (
+        <div className="cmp-block">
+          <div className="cmp-k">Known adverse effects (reviewed sources)</div>
+          <div className="cmp-ae">{kae.list.join(" · ")}</div>
+          {kae.source?.url && (
+            <a className="cmp-passage" href={kae.source.url} target="_blank" rel="noopener noreferrer">
+              Prescribing information →
+            </a>
+          )}
+        </div>
+      )}
+
+      {/* 5. Were women analyzed? (sex-specific EFFECTIVENESS) */}
       <div className="cmp-block">
         <div className="cmp-k">Were women analyzed?</div>
         <div><span className={`cmp-chip ${an.tone}`}>{an.label}</span></div>
         <div className="cmp-sub">{report.effectiveness?.state}</div>
       </div>
 
-      {/* 5. Sex-specific safety */}
+      {/* 6. Women-specific safety (by sex — a DIFFERENT question from overall AEs) */}
       <div className="cmp-block">
-        <div className="cmp-k">Sex-specific safety</div>
+        <div className="cmp-k">Women-specific safety</div>
         <div className="cmp-sub">{report.safety?.state}</div>
+        {bySex && (bySex.female_rate || bySex.male_rate) && (
+          <div className="cmp-bysex">
+            {bySex.female_rate && <div>Women: {bySex.female_rate}</div>}
+            {bySex.male_rate && <div>Men: {bySex.male_rate}</div>}
+          </div>
+        )}
       </div>
 
       {/* 6. Life stage + hormonal context */}

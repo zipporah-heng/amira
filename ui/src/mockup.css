@@ -136,6 +136,9 @@
 .cmp-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
 .cmp-badge.pending { background: #eef1f6; color: #4a5568; border: 1px solid #dbe1ea; }
 .cmp-badge.ok { background: #cdeadb; color: #1d6b47; }
+.cmp-ae { font-size: 13px; color: var(--ink); font-weight: 600; line-height: 1.5; margin-top: 2px; }
+.cmp-bysex { font-size: 12.5px; color: var(--ink-2); line-height: 1.5; margin-top: 5px;
+  border-left: 3px solid var(--border); padding-left: 8px; }
 .cmp-links { display: flex; flex-direction: column; gap: 5px; margin-top: auto; padding-top: 8px; }
 .cmp-viewfull { font-size: 13px; font-weight: 700; color: var(--lav-700); }
 .cmp-passage { font-size: 12px; color: var(--ink-2); }
