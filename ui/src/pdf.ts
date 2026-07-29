@@ -1,6 +1,7 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import type { EvidenceResponse } from "./api";
 import * as M from "./evidenceModel";
+import { REVIEWED_THROUGH_LABEL, freshness } from "./criticalSignal";
 
 /** REAL PDF EXPORTS (application/pdf, %PDF signature, selectable text).
  *
@@ -195,7 +196,9 @@ function medicineBody(ctx: Ctx, r: EvidenceResponse) {
 
   heading(ctx, "About this evidence review");
   row(ctx, "Human review status", M.humanReviewStatus(r));
-  row(ctx, "Evidence cutoff date", M.evidenceCutoff(r));
+  const fresh = freshness(M.evidenceCutoff(r));
+  row(ctx, REVIEWED_THROUGH_LABEL,
+    `${M.evidenceCutoff(r)}${fresh ? ` (${fresh.label})` : ""}`);
   row(ctx, "Sources reviewed", String(M.sourceRecords(r).length));
   row(ctx, "Dataset version", r.dataset_version || "");
 
@@ -284,7 +287,7 @@ export async function buildComparisonBytes(reports: EvidenceResponse[], conditio
     { label: "Life-stage evidence", value: (r) => M.lifeStageEvidence(r).label },
     { label: "Hormonal context", value: (r) => M.hormonalContext(r).hormonalContextAnalysis.label },
     { label: "Human review status", value: (r) => M.humanReviewStatus(r) },
-    { label: "Evidence cutoff date", value: (r) => M.evidenceCutoff(r) },
+    { label: REVIEWED_THROUGH_LABEL, value: (r) => M.evidenceCutoff(r) },
     { label: "Exact passages", value: (r) => String(M.exactPassages(r).length) },
   ];
   for (const row_ of rows) {

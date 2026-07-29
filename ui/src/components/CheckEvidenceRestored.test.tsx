@@ -142,7 +142,10 @@ describe("Hybrid integration — every approved component coexists", () => {
   it("Offers navigation links for the restored summary sections too", () => {
     const { container } = renderPage();
     const labels = [...container.querySelectorAll(".ev-nav-label")].map((n) => n.textContent);
-    expect(labels).toContain("What should I notice?");
+    // "What should I notice?" is no longer a separate destination — Evidence Summary
+    // is the anchor for the whole three-column row that contains it.
+    expect(labels).not.toContain("What should I notice?");
+    expect(container.querySelector("#important-finding")).not.toBeNull();
     expect(labels).toContain("How were women represented?");
     expect(labels).toContain("How AMIRA's AI found this evidence");
     expect(labels).toContain("What remains unknown");
