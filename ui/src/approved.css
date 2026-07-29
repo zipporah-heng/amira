@@ -88,6 +88,10 @@
   text-transform: uppercase; color: #fff; background: var(--lav-500); padding: 4px 11px; border-radius: 999px;
 }
 .ev-mat { text-align: right; flex-shrink: 0; }
+/* Compact marker beside the medicine identity; the full circular meter is in the
+   two-column summary directly below. */
+.ev-mat-compact .ev-mat-v { font-size: 30px; }
+.ev-mat-compact .ev-mat-den { font-size: 16px; }
 .ev-mat-k { font-size: 10.5px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-3); }
 .ev-mat-v { font-size: 40px; font-weight: 800; color: var(--lav-700); line-height: 1.1; }
 .ev-mat-den { font-size: 20px; font-weight: 700; color: var(--ink-3); }

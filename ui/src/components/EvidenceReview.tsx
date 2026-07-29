@@ -2,8 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import type { EvidenceResponse } from "../api";
 import * as M from "../evidenceModel";
 import { buildEvidenceBriefPdf, evidenceBriefFilename, downloadBlob } from "../pdf";
-import { maturityChecklist, MATURITY_ANCHOR } from "../maturityLevels";
-import { MaturityMeter } from "./MaturityMeter";
 
 /** The approved Check Evidence review: a section navigation beside the evidence
  *  sections, in the approved order.
@@ -13,8 +11,14 @@ import { MaturityMeter } from "./MaturityMeter";
  *  medical claim: canonical states are rendered verbatim, and a missing analysis
  *  stays missing rather than becoming evidence of no difference. */
 
+/** The section navigation. The approved detailed sections, plus links to the original
+ *  scientific summary components that sit above them — quick understanding first,
+ *  detailed inspection second. */
 export const SECTIONS = [
   { id: "evidence-summary", label: "Evidence Summary" },
+  { id: "important-finding", label: "What should I notice?" },
+  { id: "representation", label: "How were women represented?" },
+  { id: "ai-found", label: "How AMIRA's AI found this" },
   { id: "women-in-the-evidence", label: "Women in the Evidence" },
   { id: "sex-specific-effectiveness", label: "Sex-specific Effectiveness" },
   { id: "women-specific-safety", label: "Women-specific Safety" },
@@ -27,7 +31,10 @@ export const SECTIONS = [
 ];
 
 const SECTION_SUB: Record<string, string> = {
-  "evidence-summary": "Counts and analysis",
+  "evidence-summary": "Medicine and maturity",
+  "important-finding": "The primary result",
+  "representation": "Canonical states at a glance",
+  "ai-found": "Pipeline and schema",
   "women-in-the-evidence": "Counts and analysis",
   "sex-specific-effectiveness": "What the research shows",
   "women-specific-safety": "What the research shows",
@@ -109,26 +116,42 @@ function MetricCard({ label, value, tone, note }: {
   );
 }
 
-export function EvidenceReview({ report, signalCard, representationCard, aiFoundCard }: {
+export function EvidenceReview({
+  report, signalCard, scopeCard, representationCard, unknownCard, aiFoundCard, footerCard,
+}: {
   report: EvidenceResponse;
-  /** The verified critical-signal presentation for this medicine, when one exists. */
+  /** "What should I notice?" — the signal plus the circular maturity meter and its
+   *  checklist, in the original two-column summary layout. */
   signalCard?: React.ReactNode;
+  /** The bounded Evidence Scope panel. */
+  scopeCard?: React.ReactNode;
   /** "How were women represented?" — the canonical summary row. */
   representationCard?: React.ReactNode;
+  /** "What remains unknown" — bounded reviewed-source gaps. */
+  unknownCard?: React.ReactNode;
   /** "How AMIRA's AI found this evidence" + the Women's Evidence Schema panel. */
   aiFoundCard?: React.ReactNode;
+  /** Anything that follows the review (e.g. continue-exploring links). */
+  footerCard?: React.ReactNode;
 }) {
   const [busy, setBusy] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [jumpOpen, setJumpOpen] = useState(false);
-  const active = useActiveSection(SECTIONS.map((s) => s.id));
+  // A summary link is offered only when its component is actually rendered, so the
+  // navigation can never point at a section that is not on the page.
+  const optional: Record<string, boolean> = {
+    "important-finding": !!signalCard,
+    "representation": !!representationCard,
+    "ai-found": !!aiFoundCard,
+  };
+  const navSections = SECTIONS.filter((s) => optional[s.id] !== false);
+  const active = useActiveSection(navSections.map((s) => s.id));
   const mat = M.maturity(report);
   const pop = M.evidencePopulation(report);
   const ae = M.commonAdverseEffects(report);
   const hc = M.hormonalContext(report);
   const passages = M.exactPassages(report);
   const sources = M.sourceRecords(report);
-  const checklist = mat.scorable ? maturityChecklist(mat.level) : [];
 
   const jump = (id: string) => {
     const el = document.getElementById(id);
@@ -160,7 +183,7 @@ export function EvidenceReview({ report, signalCard, representationCard, aiFound
           <span className="ev-nav-caret" aria-hidden="true">{jumpOpen ? "▲" : "▼"}</span>
         </button>
         <ul className={`ev-nav-list ${jumpOpen ? "open" : ""}`} id="ev-nav-list">
-          {SECTIONS.map((s) => (
+          {navSections.map((s) => (
             <li key={s.id}>
               <a className={`ev-nav-link ${active === s.id ? "active" : ""}`} href={`#${s.id}`}
                  aria-current={active === s.id ? "true" : undefined}
@@ -196,49 +219,33 @@ export function EvidenceReview({ report, signalCard, representationCard, aiFound
                 {M.brandNote(report) && <p className="ev-med-note">{M.brandNote(report)}</p>}
                 <span className="ev-selected-badge">Selected medicine</span>
               </div>
-              {/* The circular Evidence Maturity meter, driven by the canonical derived
-                  level — never a hard-coded value, and an unscorable medicine shows a
-                  dash rather than a fabricated 0 / 5. */}
-              <div className="ev-mat">
+              {/* A compact maturity marker beside the medicine identity. The prominent
+                  circular meter and its checklist live in the two-column summary below,
+                  so the canonical level is presented once in full. */}
+              <div className="ev-mat ev-mat-compact">
                 <div className="ev-mat-k">Evidence maturity</div>
-                <MaturityMeter level={mat.level} maxLevel={mat.maxLevel}
-                               label={mat.scorable ? mat.label : "Not yet established"}
-                               scored={mat.scorable} />
-                <p className="ev-mat-completeness">
-                  This measures evidence completeness, not whether the medicine is better.
-                </p>
+                <div className="ev-mat-v">
+                  {mat.scorable ? <>{mat.level}<span className="ev-mat-den"> / {mat.maxLevel}</span></> : "—"}
+                </div>
+                <div className="ev-mat-label">{mat.scorable ? mat.label : "Not yet established"}</div>
               </div>
             </div>
-            {checklist.length > 0 && (
-              <div className="ev-mat-check">
-                <div className="ev-mat-check-h">How this level was reached</div>
-                <ul className="ev-mat-list">
-                  {checklist.map((c) => (
-                    <li key={c.level} className={c.isReached ? "on" : "off"}>
-                      <span className="ev-mat-ic" aria-hidden="true">{c.isReached ? "✓" : "○"}</span>
-                      <span className="sr-only">{c.isReached ? "level reached" : "level not reached"}</span>
-                      <span className="ev-mat-lv">Level {c.level} · {c.label}</span>
-                      <span className="ev-mat-desc">{c.description}</span>
-                    </li>
-                  ))}
-                </ul>
-                <a className="ev-mat-more" href={`/amira/methodology#${MATURITY_ANCHOR}`}>
-                  About evidence maturity levels →
-                </a>
-              </div>
-            )}
             <p className="ev-mat-note">
               Evidence maturity reflects the depth and specificity of women's health reporting in the
               research. It is not a quality rating and is not intended to compare this medicine to others.
             </p>
           </div>
+
+          {/* The original two-column summary: the primary finding on the left, the
+              circular maturity meter and its checklist on the right. */}
+          {signalCard}
         </Section>
 
-        {/* 5. What should I notice? — 6. How were women represented? —
-            7. How AMIRA's AI found this evidence. Restored inside this layout, in the
-            approved order, all reading the same canonical evidence record. */}
-        {signalCard}
+        {/* Quick evidence understanding, in the approved order, all reading the same
+            canonical evidence record as the detailed review below. */}
+        {scopeCard}
         {representationCard}
+        {unknownCard}
         {aiFoundCard}
 
         <Section id="women-in-the-evidence" title="Women in the evidence" sub="Counts and analysis">
@@ -386,6 +393,8 @@ export function EvidenceReview({ report, signalCard, representationCard, aiFound
           </div>
           <p className="ev-foot">{M.NON_RECOMMENDATION}</p>
         </Section>
+
+        {footerCard}
       </div>
     </div>
   );

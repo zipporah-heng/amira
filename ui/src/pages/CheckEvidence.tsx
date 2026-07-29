@@ -8,6 +8,8 @@ import { Representation } from "../components/Representation";
 import { AiFound } from "../components/AiFound";
 import { EvidenceTraceDrawer } from "../components/EvidenceTraceDrawer";
 import { ReusableScienceTeaser } from "../components/ReusableScienceTeaser";
+import { EvidenceScope, WhatRemainsUnknown } from "../components/EvidenceClarity";
+import { ContinueExploring } from "../components/ContinueExploring";
 
 // Digoxin leads: a striking, source-linked finding on the first, default view.
 const DEFAULTS: Filters = {
@@ -106,15 +108,24 @@ export function CheckEvidence() {
            evidence summary rather than becoming a second competing headline. */
         <EvidenceReview
           report={report}
+          /* The original two-column summary: the primary finding beside the circular
+             maturity meter and its checklist. */
           signalCard={
             <WhatToNotice
               report={report}
               signal={signals.find((s) => s.medicine === report.banner!.medicine) || null}
-              showMaturity={false}
             />
           }
+          scopeCard={<EvidenceScope report={report} />}
           representationCard={<Representation report={report} />}
+          unknownCard={<WhatRemainsUnknown report={report} />}
           aiFoundCard={<AiFound report={report} onOpenTrace={() => setTraceOpen(true)} />}
+          footerCard={
+            <ContinueExploring
+              onWhy={() => document.getElementById("important-finding")?.scrollIntoView({ block: "start" })}
+              onPassages={() => setTraceOpen(true)}
+            />
+          }
         />
       )}
 
