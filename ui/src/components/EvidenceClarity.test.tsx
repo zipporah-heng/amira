@@ -1,25 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { EvidenceResponse } from "../api";
-import { EvidenceScope, WhatRemainsUnknown } from "./EvidenceClarity";
-
-describe("EvidenceScope (Phase 7)", () => {
-  const report = {
-    study_selection: { rcts_for_selected_medicine: 2, publications_for_selected_medicine: 1 },
-    effectiveness: { findings: [{}] },
-    safety: { significant_findings: [{}], trend_findings: [], other_findings: [] },
-    source_cutoff: "2026-07-18", human_verification_status: "pending",
-  } as unknown as EvidenceResponse;
-
-  it("shows bounded scope with no global completeness claim and a pending human-review badge", () => {
-    render(<EvidenceScope report={report} />);
-    expect(screen.getByText(/Guideline-level coverage review not yet completed/)).toBeInTheDocument();
-    expect(screen.getByText(/2 evidence records · 1 publication/)).toBeInTheDocument();
-    expect(screen.getByText("2026-07-18")).toBeInTheDocument();
-    expect(screen.getByText("Human review pending")).toBeInTheDocument();
-    expect((document.body.textContent || "")).not.toMatch(/All relevant studies reviewed/i);
-  });
-});
+import { WhatRemainsUnknown } from "./EvidenceClarity";
 
 describe("WhatRemainsUnknown (Phase 8)", () => {
   const report = {

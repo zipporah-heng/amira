@@ -77,13 +77,18 @@ describe("Evidence Scope is retired from Check Evidence", () => {
     expect(toc.querySelector('a[href="#evidence-scope"]')).toBeNull();
   });
 
-  it("3. Keeps the underlying metadata — the page no longer mounts it", () => {
-    // The component and its derivations survive; only the render site is gone.
+  it("3. Deletes the component while keeping the underlying metadata", () => {
+    // The panel is gone from the codebase, not merely unmounted.
     const clarity = readFileSync(src("components/EvidenceClarity.tsx"), "utf8");
-    expect(clarity).toContain("export function EvidenceScope");
+    expect(clarity).not.toContain("EvidenceScope");
     const page = readFileSync(src("pages/CheckEvidence.tsx"), "utf8");
     expect(page).not.toContain("EvidenceScope");
     expect(page).not.toContain("scopeCard");
+    // Its fields survive as canonical derivations shared by the page and the PDF.
+    const model = readFileSync(src("evidenceModel.ts"), "utf8");
+    expect(model).toContain("export function evidenceRecordsReviewed");
+    expect(model).toContain("export function sexSpecificFindingsLocated");
+    expect(model).toContain("export const GUIDELINE_LIMITATION");
   });
 
   it("4. Introduces no replacement card", () => {
