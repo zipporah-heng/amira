@@ -146,7 +146,7 @@ function MetricCard({ label, value, tone, note }: {
 }
 
 export function EvidenceReview({
-  report, signalCard, maturityCard, scopeCard, representationCard, unknownCard, aiFoundCard, footerCard,
+  report, signalCard, maturityCard, representationCard, unknownCard, aiFoundCard, footerCard,
   signal,
 }: {
   report: EvidenceResponse;
@@ -154,8 +154,6 @@ export function EvidenceReview({
   signalCard?: React.ReactNode;
   /** Evidence Maturity — the circular meter and its checklist, column three. */
   maturityCard?: React.ReactNode;
-  /** The bounded Evidence Scope panel. */
-  scopeCard?: React.ReactNode;
   /** "How were women represented?" — the canonical summary row. */
   representationCard?: React.ReactNode;
   /** "What remains unknown" — bounded reviewed-source gaps. */
@@ -185,6 +183,10 @@ export function EvidenceReview({
   const hc = M.hormonalContext(report);
   const passages = M.exactPassages(report);
   const sources = M.sourceRecords(report);
+  // Carried over from the retired Evidence Scope panel — the same canonical fields,
+  // now shown in the sections they belong to.
+  const records = M.evidenceRecordsReviewed(report);
+  const sexFindings = M.sexSpecificFindingsLocated(report);
 
   const jump = (id: string) => {
     const el = document.getElementById(id);
@@ -262,7 +264,6 @@ export function EvidenceReview({
 
         {/* Quick evidence understanding, all reading the same canonical record as the
             detailed review below. */}
-        {scopeCard}
         {representationCard}
 
         <Section id="women-in-the-evidence" title="Women in the evidence" sub="Counts and analysis">
@@ -388,8 +389,15 @@ export function EvidenceReview({
             <MetricCard label="Sources reviewed" value={String(sources.length)} tone="reported" />
             <MetricCard label="Studies behind this result"
               value={String(report.studies_behind?.length ?? report.trials?.length ?? 0)} tone="reported" />
-            <MetricCard label={CS.REVIEWED_THROUGH_LABEL} value={M.evidenceCutoff(report)} tone="reported"
-              note={CS.freshness(M.evidenceCutoff(report))?.label} />
+            {records && (
+              <>
+                <MetricCard label="Evidence records reviewed" value={String(records.records)} tone="reported"
+                  note="Randomized or regulatory records for this medicine" />
+                <MetricCard label="Publications reviewed" value={String(records.publications)} tone="reported" />
+              </>
+            )}
+            <MetricCard label="Sex-specific findings located" value={String(sexFindings)} tone="reported"
+              note="Effectiveness and safety findings reported by sex" />
           </div>
           <ul className="ev-sources">
             {sources.map((s) => (

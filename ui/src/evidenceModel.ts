@@ -256,12 +256,39 @@ export function humanReviewStatus(r: EvidenceResponse) {
 
 export const evidenceCutoff = (r: EvidenceResponse) => r.source_cutoff || "";
 
+/** What AMIRA actually reviewed for this medicine, from the canonical study selection.
+ *  Null when the response carries no selection record — never estimated. */
+export function evidenceRecordsReviewed(r: EvidenceResponse) {
+  const ss = r.study_selection;
+  if (!ss) return null;
+  return {
+    records: ss.rcts_for_selected_medicine,
+    publications: ss.publications_for_selected_medicine,
+  };
+}
+
+/** How many sex-specific findings were located for this medicine, counted from the
+ *  canonical finding lists rather than stored as a headline number. */
+export function sexSpecificFindingsLocated(r: EvidenceResponse): number {
+  const eff = r.effectiveness?.findings?.length || 0;
+  const saf = (r.safety?.significant_findings?.length || 0)
+    + (r.safety?.trend_findings?.length || 0)
+    + (r.safety?.other_findings?.length || 0);
+  return eff + saf;
+}
+
+/** AMIRA has not completed a guideline-level coverage review. Stated as a limitation
+ *  rather than implied by silence. */
+export const GUIDELINE_LIMITATION =
+  "Guideline-level coverage review not yet completed. AMIRA reports coverage within a defined source set, not against a full guideline source list.";
+
 /** Known limitations, taken from the canonical evidence gaps plus AMIRA's standing
- *  interpretation boundary. */
+ *  interpretation boundaries. */
 export function limitations(r: EvidenceResponse): string[] {
   const gaps = (r.evidence_gaps || []).map((g) => g.statement).filter(Boolean);
   return [
     ...gaps,
+    GUIDELINE_LIMITATION,
     "AMIRA reports what is known from the reviewed sources. It does not claim that every relevant study has been reviewed.",
   ];
 }

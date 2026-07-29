@@ -58,7 +58,7 @@
 /* Every anchor target starts below the sticky header when linked to directly —
    including the restored components, which are plain cards rather than .ev-section. */
 .ev-section,
-#evidence-scope, #representation, #remains-unknown, #ai-found,
+#representation, #remains-unknown, #ai-found,
 .ev-summary3 .notice-panel, .ev-summary3 .notice-maturity { scroll-margin-top: 96px; }
 .ev-nav-export {
   margin-top: 16px; padding: 16px; border: 1px solid var(--border); border-radius: 14px;
