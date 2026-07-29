@@ -5,6 +5,7 @@ import { EvidenceReview } from "./EvidenceReview";
 import { Representation } from "./Representation";
 import { AiFound } from "./AiFound";
 import { WhatToNotice } from "./WhatToNotice";
+import { EvidenceScope, WhatRemainsUnknown } from "./EvidenceClarity";
 import * as M from "../evidenceModel";
 
 /** REGRESSION GUARD: the original AMIRA evidence components must live inside the new
@@ -77,13 +78,16 @@ const OZEMPIC = report({
   sourceUrl: "https://pmc.ncbi.nlm.nih.gov/articles/PMC6551895/",
 });
 
-/** The full Check Evidence composition, exactly as the page assembles it. */
+/** The full Check Evidence composition, exactly as the page assembles it: the original
+ *  scientific summary components integrated above the newer detailed review. */
 const renderPage = (r: EvidenceResponse = OZEMPIC) =>
   render(
     <EvidenceReview
       report={r}
-      signalCard={<WhatToNotice report={r} signal={null} showMaturity={false} />}
+      signalCard={<WhatToNotice report={r} signal={null} />}
+      scopeCard={<EvidenceScope report={r} />}
       representationCard={<Representation report={r} />}
+      unknownCard={<WhatRemainsUnknown report={r} />}
       aiFoundCard={<AiFound report={r} onOpenTrace={() => {}} />}
     />,
   );
@@ -94,6 +98,71 @@ const toneOf = (cell: HTMLElement) =>
   [...cell.querySelector(".rep-pill")!.classList].find((c) => c !== "rep-pill");
 
 afterEach(() => vi.unstubAllGlobals());
+
+describe("Hybrid integration — every approved component coexists", () => {
+  it("Renders the original scientific summary AND the newer detailed review together", () => {
+    const { container } = renderPage();
+    const present: Record<string, boolean> = {
+      "1. circular maturity meter": !!container.querySelector("svg.maturity-meter"),
+      "2. maturity checklist": container.querySelectorAll(".nm-item, .ev-mat-check li").length >= 5,
+      "3. what should I notice": !!container.querySelector("#important-finding"),
+      "4. evidence scope": !!container.querySelector("#evidence-scope"),
+      "5. how were women represented": !!container.querySelector("#representation"),
+      "6. what remains unknown": !!container.querySelector("#remains-unknown"),
+      "7. how AMIRA's AI found this": !!container.querySelector("#ai-found"),
+      "8. women's evidence schema": !!container.querySelector(".schema-panel"),
+      "9. left table of contents": !!container.querySelector(".ev-nav-list"),
+      "10. detailed evidence sections": ["women-in-the-evidence", "sex-specific-effectiveness",
+        "women-specific-safety", "common-adverse-effects", "life-stage-evidence", "hormonal-context"]
+        .every((id) => !!container.querySelector(`#${id}`)),
+      "11. exact passages": !!container.querySelector("#exact-passages"),
+      "12. source coverage": !!container.querySelector("#source-coverage"),
+      "13. about this evidence review": !!container.querySelector("#about-this-evidence-review"),
+      "14. PDF export control": !!container.querySelector(".ev-export-btn"),
+      "15. open evidence trace": !!container.querySelector(".trace-open"),
+    };
+    const missing = Object.entries(present).filter(([, ok]) => !ok).map(([k]) => k);
+    expect(missing).toEqual([]);
+  });
+
+  it("Follows the approved order: quick understanding first, detailed inspection second", () => {
+    const { container } = renderPage();
+    const order = ["evidence-summary", "important-finding", "evidence-scope", "representation",
+      "remains-unknown", "ai-found", "women-in-the-evidence", "sex-specific-effectiveness",
+      "women-specific-safety", "common-adverse-effects", "life-stage-evidence", "hormonal-context",
+      "exact-passages", "source-coverage", "about-this-evidence-review"];
+    const positions = order.map((id) => {
+      const el = container.querySelector(`#${id}`);
+      expect(el, id).not.toBeNull();
+      return [...container.querySelectorAll("*")].indexOf(el!);
+    });
+    expect(positions).toEqual([...positions].sort((a, b) => a - b));
+  });
+
+  it("Offers navigation links for the restored summary sections too", () => {
+    const { container } = renderPage();
+    const labels = [...container.querySelectorAll(".ev-nav-label")].map((n) => n.textContent);
+    expect(labels).toContain("What should I notice?");
+    expect(labels).toContain("How were women represented?");
+    expect(labels).toContain("How AMIRA's AI found this");
+    expect(labels).toContain("Evidence Summary");
+    expect(labels).toContain("About This Evidence Review");
+    // Every link still resolves to a real section.
+    for (const link of [...container.querySelectorAll(".ev-nav-link")] as HTMLAnchorElement[]) {
+      expect(container.querySelector(link.getAttribute("href")!)).not.toBeNull();
+    }
+  });
+
+  it("Presents the maturity level once in full, without a competing second meter", () => {
+    const { container } = renderPage();
+    expect(container.querySelectorAll("svg.maturity-meter").length).toBe(1);
+    // The summary card keeps a compact marker of the same canonical level.
+    const compact = container.querySelector(".ev-mat-compact .ev-mat-v")!.textContent;
+    expect(compact).toContain(String(M.maturity(OZEMPIC).level));
+    expect(container.querySelector("svg.maturity-meter")!.getAttribute("aria-label"))
+      .toContain(`${M.maturity(OZEMPIC).level} of 5`);
+  });
+});
 
 describe("Restored components", () => {
   it("1. Shows the circular Evidence Maturity meter in the Evidence Summary", () => {
@@ -107,17 +176,16 @@ describe("Restored components", () => {
     expect(meter.textContent).toContain("Women Analyzed");
     expect(meter.getAttribute("aria-label")).toMatch(/Evidence maturity 2 of 5/i);
     expect(summary.textContent)
-      .toMatch(/measures evidence completeness, not whether the medicine is better/i);
+      .toMatch(/measures evidence completeness[—,] ?not whether the medicine is better/i);
   });
 
   it("2. Shows the maturity checklist with reached and unreached levels", () => {
     const { container } = renderPage();
-    const list = container.querySelector(".ev-mat-check")!;
+    const list = container.querySelector(".nm-check")!;
     ["Women Counted", "Women Analyzed", "Life Stage Aware", "Hormone Aware", "Precision Women's Evidence"]
       .forEach((l) => expect(list.textContent).toContain(l));
-    const items = [...list.querySelectorAll("li")];
-    expect(items.filter((li) => li.classList.contains("on")).length).toBe(2);
-    expect(items.filter((li) => li.classList.contains("off")).length).toBe(3);
+    expect(list.querySelectorAll(".nm-ic.on").length).toBe(2);
+    expect(list.querySelectorAll(".nm-ic.off").length).toBe(3);
     // Reached / not reached is conveyed in text, never by colour alone.
     expect(list.textContent).toContain("level reached");
     expect(list.textContent).toContain("level not reached");
@@ -218,8 +286,9 @@ describe("Restored components", () => {
     (atorva.banner as any).maturity.scorable = false;
     const { container } = renderPage(atorva);
     expect(container.querySelector("svg.maturity-meter")!.textContent).toContain("—");
+    expect(container.querySelector(".ev-mat-compact .ev-mat-v")!.textContent).toBe("—");
     expect(container.textContent).not.toContain("0 / 5");
-    expect(container.querySelector(".ev-mat-check")).toBeNull();
+    expect(container.querySelector(".nm-check")).toBeNull();
   });
 });
 
@@ -249,7 +318,7 @@ describe("10. Cross-component consistency — no component contradicts another",
     const level = M.maturity(r).level;
     const meter = container.querySelector("svg.maturity-meter")!;
     expect(meter.getAttribute("aria-label")).toContain(`${level} of 5`);
-    const reached = [...container.querySelectorAll(".ev-mat-check li.on")].length;
+    const reached = container.querySelectorAll(".nm-check .nm-ic.on").length;
     expect(reached).toBe(level);
 
     // Women analyzed === Sex-specific outcomes (same wording, same tone)
