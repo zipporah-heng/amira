@@ -23,6 +23,12 @@ export function ContinueExploring({ onWhy, onPassages }: { onWhy: () => void; on
           </button>
         ))}
       </div>
+      {/* The reusable scientific assets are documented on the Open Benchmark page;
+          Check Evidence stays focused on selection → finding → evidence → sources →
+          limitations, and points there from here. */}
+      <a className="continue-assets" href="/amira/open-benchmark">
+        Explore AMIRA's reusable scientific assets →
+      </a>
     </section>
   );
 }

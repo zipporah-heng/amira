@@ -7,7 +7,6 @@ import { EvidenceReview } from "../components/EvidenceReview";
 import { Representation } from "../components/Representation";
 import { AiFound } from "../components/AiFound";
 import { EvidenceTraceDrawer } from "../components/EvidenceTraceDrawer";
-import { ReusableScienceTeaser } from "../components/ReusableScienceTeaser";
 import { EvidenceScope, WhatRemainsUnknown } from "../components/EvidenceClarity";
 import { ContinueExploring } from "../components/ContinueExploring";
 
@@ -81,10 +80,6 @@ export function CheckEvidence() {
 
       {/* Hormonal-health focus (concise; does not overwhelm the journey) */}
       <HormonalFocus compact />
-
-      {/* A compact pointer to the reusable scientific assets; the documentation itself
-          lives on the Open Benchmark page. */}
-      <ReusableScienceTeaser />
 
       {/* Evidence selectors — one compact row */}
       <EvidenceSearch filters={filters} setFilters={setFilters} onCheck={() => run(filters)} catalog={catalog} />

@@ -79,41 +79,75 @@
 .ev-link { font-size: 13.5px; font-weight: 650; color: var(--lav-700); display: inline-block; margin-top: 10px; }
 .ev-link:hover { text-decoration: underline; }
 
-/* ---- Compact three-column evidence summary: identity · result · maturity ---- */
-.ev-summary3 { display: grid; grid-template-columns: 20% 50% 30%; gap: 18px; align-items: stretch; }
-.ev-summary3 > * { min-width: 0; }
-.ev-identity {
-  border: 1px solid var(--border); border-radius: 14px; padding: 16px 17px;
-  background: var(--lav-50); align-self: stretch;
+/* ---- Compact three-column evidence summary: identity · finding · maturity ----
+   An explicit grid whose tracks can all shrink (minmax with a 0 lower bound on the
+   flexible middle column), so no card can push past the container's right edge. All
+   three columns stretch to the tallest card. */
+.ev-summary3 {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.75fr) minmax(0, 1.8fr) minmax(250px, 1fr);
+  gap: 16px;
+  align-items: stretch;
+  width: 100%;
+  box-sizing: border-box;
 }
-.ev-identity .ev-med-name { font-size: 20px; line-height: 1.25; }
-.ev-identity .ev-med-ing { font-size: 13px; margin-top: 2px; }
-.ev-identity-facts { margin: 12px 0 0; display: flex; flex-direction: column; gap: 9px; }
-.ev-identity-facts div { display: flex; flex-direction: column; gap: 1px; }
+.ev-summary3 > * {
+  min-width: 0;      /* lets a long headline wrap instead of widening the track */
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  /* No transform, negative margin or absolute positioning: nothing may escape the
+     Evidence Summary container. */
+  transform: none;
+  margin: 0;
+  position: static;
+  max-width: 100%;
+}
+
+.ev-identity {
+  border: 1px solid var(--border); border-radius: 14px; padding: 15px 16px;
+  background: var(--lav-50);
+}
+.ev-identity .ev-med-name { font-size: 19px; line-height: 1.25; overflow-wrap: anywhere; }
+.ev-identity .ev-med-ing { font-size: 12.5px; margin-top: 2px; overflow-wrap: anywhere; }
+.ev-identity-facts { margin: 11px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.ev-identity-facts div { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .ev-identity-facts dt {
   font-size: 10px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-3);
 }
-.ev-identity-facts dd { margin: 0; font-size: 13px; font-weight: 600; color: var(--ink-2); }
-.ev-identity .ev-med-note { font-size: 11.5px; margin-top: 10px; }
-.ev-identity .ev-selected-badge { margin-top: 12px; }
-/* The two panels sit directly in the row — no nested card chrome. */
-.ev-summary3 .notice-panel, .ev-summary3 .notice-maturity { scroll-margin-top: 96px; }
+.ev-identity-facts dd { margin: 0; font-size: 12.5px; font-weight: 600; color: var(--ink-2); overflow-wrap: anywhere; }
+.ev-identity .ev-med-note { font-size: 11.5px; margin-top: 9px; }
+.ev-identity .ev-selected-badge { margin-top: auto; align-self: flex-start; }
+
+/* The finding card fills its whole column. */
+.ev-summary3 .notice-panel { scroll-margin-top: 96px; }
+.ev-summary3 .notice-panel > .notice-finding {
+  flex: 1 1 auto; height: 100%; width: 100%; box-sizing: border-box; margin: 0;
+}
+.ev-summary3 .notice-finding .nf-body { min-width: 0; }
+/* The headline and statistics wrap across the full width of the middle column. */
+.ev-summary3 .nf-headline, .ev-summary3 .nf-stats { max-width: none; overflow-wrap: anywhere; }
+.ev-summary3 .notice-title { margin: 0 0 10px; }
+
 .ev-summary3 .notice-maturity {
   border: 1px solid var(--border); border-radius: 14px; padding: 16px; background: var(--surface);
+  scroll-margin-top: 96px; overflow: hidden;
 }
-/* All three columns share the row's height. */
-.ev-summary3 > * { display: flex; flex-direction: column; }
-.ev-summary3 .notice-title { margin-bottom: 12px; }
+.ev-summary3 .notice-maturity .maturity-meter { max-width: 100%; height: auto; }
 
 @media (max-width: 1100px) {
-  /* Tablet: identity becomes a compact top row; result and maturity sit beneath it. */
-  .ev-summary3 { grid-template-columns: 1fr 1fr; }
+  /* Tablet: identity above; finding and maturity side by side. */
+  .ev-summary3 { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
   .ev-identity { grid-column: 1 / -1; }
   .ev-identity-facts { flex-direction: row; gap: 22px; flex-wrap: wrap; }
+  .ev-identity .ev-selected-badge { margin-top: 12px; }
 }
 @media (max-width: 760px) {
-  /* Mobile: identity, then result, then maturity. */
-  .ev-summary3 { grid-template-columns: 1fr; }
+  /* Mobile: all three stacked, in the same order, with no horizontal overflow. */
+  .ev-summary3 { grid-template-columns: minmax(0, 1fr); }
+  .ev-summary3 > * { height: auto; }
 }
 
 /* Medicine summary card */
@@ -428,7 +462,12 @@
 .cs-search-clear:hover { background: var(--lav-100); color: var(--lav-700); }
 .cs-search-clear:focus-visible, .cs-search-input:focus-visible { outline: 3px solid var(--lav-300); outline-offset: 2px; }
 
-/* ==================== Reusable-science teaser (front page) ==================== */
+.continue-assets {
+  display: inline-block; margin-top: 14px; font-size: 13.5px; font-weight: 650; color: var(--lav-700);
+}
+.continue-assets:hover { text-decoration: underline; }
+
+/* ==================== Reusable-science teaser (Open Benchmark) ==================== */
 .sci-teaser {
   display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
   margin-top: 14px; padding: 16px 20px; background: var(--lav-50);
