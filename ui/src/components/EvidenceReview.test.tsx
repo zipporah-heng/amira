@@ -1,5 +1,5 @@
-import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { EvidenceReview, SECTIONS } from "./EvidenceReview";
 import type { EvidenceResponse } from "../api";
 
@@ -94,6 +94,53 @@ describe("Check Evidence — approved review layout", () => {
     }
   });
 
+  it("Clicking a section link scrolls to that exact section", () => {
+    const { container } = render_(OZEMPIC);
+    const calls: string[] = [];
+    SECTIONS.forEach((s) => {
+      const el = container.querySelector(`#${s.id}`) as HTMLElement;
+      el.scrollIntoView = vi.fn(() => calls.push(s.id)) as any;
+    });
+    for (const s of SECTIONS) {
+      fireEvent.click(container.querySelector(`a[href="#${s.id}"]`)!);
+    }
+    expect(calls).toEqual(SECTIONS.map((s) => s.id));
+  });
+
+  it("Marks exactly one section as active, and never drops the navigation", () => {
+    const { container } = render_(OZEMPIC);
+    const active = container.querySelectorAll(".ev-nav-link.active");
+    expect(active.length).toBe(1);
+    expect(active[0].getAttribute("aria-current")).toBe("true");
+    // The list is always present — restoring other components must not displace it.
+    expect(container.querySelectorAll(".ev-nav-link").length).toBe(SECTIONS.length);
+  });
+
+  it("Offers a compact 'Jump to section' menu that opens and closes", () => {
+    const { container } = render_(OZEMPIC);
+    const toggle = screen.getByRole("button", { name: /Jump to section/i });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(toggle.getAttribute("aria-controls")).toBe("ev-nav-list");
+    expect(container.querySelector("#ev-nav-list")!.classList.contains("open")).toBe(false);
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(container.querySelector("#ev-nav-list")!.classList.contains("open")).toBe(true);
+    // Choosing a section closes the menu again.
+    fireEvent.click(container.querySelector(`a[href="#exact-passages"]`)!);
+    expect(container.querySelector("#ev-nav-list")!.classList.contains("open")).toBe(false);
+  });
+
+  it("Keeps the Export Evidence Brief PDF action beneath the navigation", () => {
+    const { container } = render_(OZEMPIC);
+    const nav = container.querySelector(".ev-nav")!;
+    const list = nav.querySelector(".ev-nav-list")!;
+    const exportPanel = nav.querySelector(".ev-nav-export")!;
+    expect(exportPanel).not.toBeNull();
+    // Document order: the list comes before the export panel, inside the same nav.
+    expect(list.compareDocumentPosition(exportPanel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(exportPanel.querySelector(".ev-export-btn")).not.toBeNull();
+  });
+
   it("5. Shows the active ingredient separately (never inside the medicine name)", () => {
     const { container } = render_(OZEMPIC);
     expect(container.querySelector(".ev-med-name")!.textContent).toBe("Ozempic");
@@ -178,8 +225,9 @@ describe("Check Evidence — approved review layout", () => {
       sourceId: "SRC-CARDS", sourceTitle: "CARDS", sourceUrl: "https://pubmed.ncbi.nlm.nih.gov/15325833/",
     });
     const { container } = render(<EvidenceReview report={unscored} />);
-    expect(container.querySelector(".ev-mat-v")!.textContent).toBe("—");
-    expect(container.querySelector(".ev-mat-label")!.textContent).toBe("Not yet established");
+    const meter = container.querySelector("svg.maturity-meter")!;
+    expect(meter.getAttribute("aria-label")).toMatch(/not yet established/i);
+    expect(meter.textContent).toContain("—");
     expect(container.textContent).not.toContain("0 / 5");
     expect(container.querySelector(".ev-mat-check")).toBeNull();
   });

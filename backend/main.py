@@ -433,6 +433,39 @@ def dl_benchmark():
                    "application/x-ndjson")
 
 
+@app.get("/api/schema")
+def get_schema():
+    """The canonical Women's Evidence Schema, served straight from the repository file.
+
+    The UI renders these field names and definitions so there is never a second,
+    UI-only copy of the schema that could drift from the one the pipeline validates
+    extractions against.
+    """
+    path = REPO / "schema" / "womens_evidence_schema_v0.2.json"
+    if not path.exists():
+        return {**_envelope(), "available": False, "fields": []}
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    required = set(doc.get("required", []))
+    fields = [
+        {
+            "field": name,
+            "description": (spec.get("description") or "").strip(),
+            "required": name in required,
+        }
+        for name, spec in (doc.get("properties") or {}).items()
+    ]
+    return {
+        **_envelope(),
+        "available": True,
+        "title": doc.get("title"),
+        "schema_version": doc.get("version"),
+        "schema_path": "schema/womens_evidence_schema_v0.2.json",
+        "field_count": len(fields),
+        "required_count": len(required),
+        "fields": fields,
+    }
+
+
 @app.get("/api/benchmark")
 def get_benchmark():
     path = BENCHMARK_DIR / "amira_benchmark.jsonl"
@@ -441,6 +474,22 @@ def get_benchmark():
         return {**_envelope(), "status": "BENCHMARK NOT BUILT", "items": []}
     items = [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
     meta = json.loads(meta_path.read_text(encoding="utf-8"))
+
+    # Resolve each record's medicine and condition by JOINING on the trial that owns
+    # the quoted document (its NCT id or primary source). This is a canonical lookup in
+    # trials.json — never a guess. Records that do not resolve keep no medicine at all.
+    by_nct, by_source = {}, {}
+    for t in dataset.trials():
+        entry = {"medicine": t.get("medicine"), "condition": t.get("condition") or t.get("indication")}
+        if t.get("nct_id"):
+            by_nct[t["nct_id"]] = entry
+        if t.get("primary_source_id"):
+            by_source[t["primary_source_id"]] = entry
+    for it in items:
+        match = by_nct.get(it.get("nct_id")) or by_source.get(it.get("source_id"))
+        if match:
+            it.setdefault("medicine", match["medicine"])
+            it.setdefault("condition", match["condition"])
     evaluation = (
         json.loads(EVAL_RESULTS.read_text(encoding="utf-8"))
         if EVAL_RESULTS.exists()

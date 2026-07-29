@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { EvidenceResponse } from "../api";
 import * as M from "../evidenceModel";
 import { buildEvidenceBriefPdf, evidenceBriefFilename, downloadBlob } from "../pdf";
 import { maturityChecklist, MATURITY_ANCHOR } from "../maturityLevels";
+import { MaturityMeter } from "./MaturityMeter";
 
 /** The approved Check Evidence review: a section navigation beside the evidence
  *  sections, in the approved order.
@@ -51,6 +52,39 @@ export function StateChip({ cell }: { cell: M.EvidenceCell }) {
   );
 }
 
+/** Highlights the section the reader is currently in. Uses IntersectionObserver where
+ *  available and degrades to the first section when it is not (e.g. jsdom), so the
+ *  navigation is never left without an active item. */
+function useActiveSection(ids: string[]) {
+  const [active, setActive] = useState(ids[0]);
+  const visible = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (typeof IntersectionObserver !== "function") return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) visible.current.add(e.target.id);
+          else visible.current.delete(e.target.id);
+        }
+        // The topmost section currently on screen wins.
+        const first = ids.find((id) => visible.current.has(id));
+        if (first) setActive(first);
+      },
+      // Offset the top by the sticky header so a section counts as "current" only
+      // once it is actually readable beneath it.
+      { rootMargin: "-96px 0px -60% 0px", threshold: 0 },
+    );
+    ids.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) obs.observe(el);
+    });
+    return () => obs.disconnect();
+  }, [ids.join("|")]);
+
+  return active;
+}
+
 function Section({ id, title, sub, children }: {
   id: string; title: string; sub?: string; children: React.ReactNode;
 }) {
@@ -75,13 +109,19 @@ function MetricCard({ label, value, tone, note }: {
   );
 }
 
-export function EvidenceReview({ report, signalCard }: {
+export function EvidenceReview({ report, signalCard, representationCard, aiFoundCard }: {
   report: EvidenceResponse;
   /** The verified critical-signal presentation for this medicine, when one exists. */
   signalCard?: React.ReactNode;
+  /** "How were women represented?" — the canonical summary row. */
+  representationCard?: React.ReactNode;
+  /** "How AMIRA's AI found this evidence" + the Women's Evidence Schema panel. */
+  aiFoundCard?: React.ReactNode;
 }) {
   const [busy, setBusy] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [jumpOpen, setJumpOpen] = useState(false);
+  const active = useActiveSection(SECTIONS.map((s) => s.id));
   const mat = M.maturity(report);
   const pop = M.evidencePopulation(report);
   const ae = M.commonAdverseEffects(report);
@@ -93,8 +133,9 @@ export function EvidenceReview({ report, signalCard }: {
   const jump = (id: string) => {
     const el = document.getElementById(id);
     // Instant, not smooth: programmatic smooth scrolling is a no-op in some embedded
-    // browsers, which would silently break every section link.
-    if (el) el.scrollIntoView({ behavior: "auto", block: "start" });
+    // browsers, which would silently break every section link. Guarded so a missing
+    // scrollIntoView can never abort the rest of the click handler.
+    try { el?.scrollIntoView({ behavior: "auto", block: "start" }); } catch { /* no-op */ }
   };
 
   const exportPdf = async () => {
@@ -109,13 +150,21 @@ export function EvidenceReview({ report, signalCard }: {
 
   return (
     <div className="ev-layout">
-      {/* ---- Section navigation ---- */}
+      {/* ---- Section navigation (approved: sticky on desktop, "Jump to section"
+              on mobile). Restoring the meter, representation row and AI trace must
+              never displace it. ---- */}
       <nav className="ev-nav" aria-label="Evidence sections">
-        <ul className="ev-nav-list">
+        <button className="ev-nav-toggle" aria-expanded={jumpOpen} aria-controls="ev-nav-list"
+                onClick={() => setJumpOpen((v) => !v)}>
+          <span>Jump to section</span>
+          <span className="ev-nav-caret" aria-hidden="true">{jumpOpen ? "▲" : "▼"}</span>
+        </button>
+        <ul className={`ev-nav-list ${jumpOpen ? "open" : ""}`} id="ev-nav-list">
           {SECTIONS.map((s) => (
             <li key={s.id}>
-              <a className="ev-nav-link" href={`#${s.id}`}
-                 onClick={(e) => { e.preventDefault(); jump(s.id); }}>
+              <a className={`ev-nav-link ${active === s.id ? "active" : ""}`} href={`#${s.id}`}
+                 aria-current={active === s.id ? "true" : undefined}
+                 onClick={(e) => { e.preventDefault(); jump(s.id); setJumpOpen(false); }}>
                 <span className="ev-nav-label">{s.label}</span>
                 <span className="ev-nav-sub">{SECTION_SUB[s.id]}</span>
               </a>
@@ -147,12 +196,17 @@ export function EvidenceReview({ report, signalCard }: {
                 {M.brandNote(report) && <p className="ev-med-note">{M.brandNote(report)}</p>}
                 <span className="ev-selected-badge">Selected medicine</span>
               </div>
+              {/* The circular Evidence Maturity meter, driven by the canonical derived
+                  level — never a hard-coded value, and an unscorable medicine shows a
+                  dash rather than a fabricated 0 / 5. */}
               <div className="ev-mat">
                 <div className="ev-mat-k">Evidence maturity</div>
-                <div className="ev-mat-v">
-                  {mat.scorable ? <>{mat.level}<span className="ev-mat-den"> / {mat.maxLevel}</span></> : "—"}
-                </div>
-                <div className="ev-mat-label">{mat.scorable ? mat.label : "Not yet established"}</div>
+                <MaturityMeter level={mat.level} maxLevel={mat.maxLevel}
+                               label={mat.scorable ? mat.label : "Not yet established"}
+                               scored={mat.scorable} />
+                <p className="ev-mat-completeness">
+                  This measures evidence completeness, not whether the medicine is better.
+                </p>
               </div>
             </div>
             {checklist.length > 0 && (
@@ -178,8 +232,14 @@ export function EvidenceReview({ report, signalCard }: {
               research. It is not a quality rating and is not intended to compare this medicine to others.
             </p>
           </div>
-          {signalCard}
         </Section>
+
+        {/* 5. What should I notice? — 6. How were women represented? —
+            7. How AMIRA's AI found this evidence. Restored inside this layout, in the
+            approved order, all reading the same canonical evidence record. */}
+        {signalCard}
+        {representationCard}
+        {aiFoundCard}
 
         <Section id="women-in-the-evidence" title="Women in the evidence" sub="Counts and analysis">
           <div className="ev-metrics">

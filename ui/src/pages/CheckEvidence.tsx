@@ -4,6 +4,10 @@ import { EvidenceSearch, hormonalContextToApi, type Filters, type HealthAreaEntr
 import { HormonalFocus } from "../components/HormonalFocus";
 import { WhatToNotice } from "../components/WhatToNotice";
 import { EvidenceReview } from "../components/EvidenceReview";
+import { Representation } from "../components/Representation";
+import { AiFound } from "../components/AiFound";
+import { EvidenceTraceDrawer } from "../components/EvidenceTraceDrawer";
+import { ReusableScienceTeaser } from "../components/ReusableScienceTeaser";
 
 // Digoxin leads: a striking, source-linked finding on the first, default view.
 const DEFAULTS: Filters = {
@@ -48,6 +52,7 @@ export function CheckEvidence() {
   const [error, setError] = useState<string | null>(null);
   const [catalog, setCatalog] = useState<HealthAreaEntry[]>([]);
   const [signals, setSignals] = useState<CriticalSignal[]>([]);
+  const [traceOpen, setTraceOpen] = useState(false);
 
   const run = async (f: Filters) => {
     setLoading(true); setError(null);
@@ -74,6 +79,10 @@ export function CheckEvidence() {
 
       {/* Hormonal-health focus (concise; does not overwhelm the journey) */}
       <HormonalFocus compact />
+
+      {/* A compact pointer to the reusable scientific assets; the documentation itself
+          lives on the Open Benchmark page. */}
+      <ReusableScienceTeaser />
 
       {/* Evidence selectors — one compact row */}
       <EvidenceSearch filters={filters} setFilters={setFilters} onCheck={() => run(filters)} catalog={catalog} />
@@ -104,8 +113,12 @@ export function CheckEvidence() {
               showMaturity={false}
             />
           }
+          representationCard={<Representation report={report} />}
+          aiFoundCard={<AiFound report={report} onOpenTrace={() => setTraceOpen(true)} />}
         />
       )}
+
+      {traceOpen && <EvidenceTraceDrawer medicine={medicine} onClose={() => setTraceOpen(false)} />}
     </div>
   );
 }
