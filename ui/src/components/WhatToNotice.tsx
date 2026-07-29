@@ -50,6 +50,7 @@ function SignalCard({ signal }: { signal: CriticalSignal }) {
     <div className={`notice-finding ${tone}`}>
       <div className="nf-icon" aria-hidden>{icon}</div>
       <div className="nf-body">
+        <h2 className="notice-title">What should I notice?</h2>
         <div className="nf-badges">
           <span className={`nf-badge ${tone}`}>{signal.signal_type} Signal</span>
           <span className="nf-badge status">{signal.evidence_status}</span>
@@ -133,6 +134,7 @@ function FindingCard({ report }: { report: EvidenceResponse }) {
     <div className={`notice-finding ${tone}`}>
       <div className="nf-icon" aria-hidden>{icon}</div>
       <div className="nf-body">
+        <h2 className="notice-title">What should I notice?</h2>
         {eyebrow && <div className="nf-eyebrow">{eyebrow}</div>}
         <div className="nf-headline">{headline}</div>
         {statLine && <div className="nf-stats">{statLine}</div>}
@@ -194,7 +196,6 @@ export function NoticePanel({ report, signal = null }: {
 }) {
   return (
     <div className="notice-panel" id="important-finding">
-      <h2 className="notice-title">What should I notice?</h2>
       {signal ? <SignalCard signal={signal} /> : <FindingCard report={report} />}
     </div>
   );
