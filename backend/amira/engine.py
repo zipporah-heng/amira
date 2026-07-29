@@ -170,6 +170,15 @@ def women_included_summary(trial_ids: List[str]) -> dict:
         if pv["valid"] and pv["basis"] == "reported":
             female_pct = float(pv["value"])
 
+        # The WITHIN-STUDY percentage: this study's own female count over its own
+        # total. Both numbers are canonical reported values for the same study, so the
+        # ratio is a within-study figure — never a cross-study one. It is displayed in
+        # preference to a rounded percentage recorded in the source (e.g. DECISION's
+        # "28% were women (n = 284)" of 1,001 → 28.4%); the recorded value stays
+        # available in female_pct_reported.
+        within = (round(female_n / total * 100, 1)
+                  if female_n is not None and total else None)
+
         per_study.append({
             "trial_id": tid,
             "study": _trial_name(tid),
@@ -178,6 +187,7 @@ def women_included_summary(trial_ids: List[str]) -> dict:
             "female_n": female_n,
             "female_basis": female_basis,
             "female_pct_reported": female_pct,
+            "female_pct_within_study": within,
             # Compatible = both sides of the ratio exist for THIS study.
             "combinable": female_n is not None and total is not None,
         })
@@ -189,7 +199,7 @@ def women_included_summary(trial_ids: List[str]) -> dict:
     def _study_sentence(s: dict) -> str:
         if s["female_n"] is None:
             return f"The female enrollment count was not located for {s['study']}."
-        pct = s["female_pct_reported"]
+        pct = s["female_pct_within_study"] if s["female_pct_within_study"] is not None else s["female_pct_reported"]
         pct_txt = f", {pct}%" if pct is not None else ""
         approx = "approximately " if s["female_basis"] == "derived" else ""
         if s["total_enrollment"] is None:

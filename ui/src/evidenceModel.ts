@@ -72,11 +72,16 @@ export function womenIncludedStudies(r: EvidenceResponse): WomenIncludedStudy[] 
   return r.totals?.women_included?.per_study || [];
 }
 
-/** One study's female enrolment, worded exactly as the API composed it. */
+/** One study's female enrolment, worded exactly as the API composed it.
+ *
+ *  The percentage is the WITHIN-STUDY ratio of that study's own female count to its own
+ *  total (e.g. DECISION 284 / 1,001 = 28.4%), which is why it can differ slightly from a
+ *  rounded figure quoted in the source (28%). It is never a cross-study ratio. */
 export function studyWomenLabel(s: WomenIncludedStudy): string {
   if (s.female_n == null) return "Female enrollment count not located";
   const approx = s.female_basis === "derived" ? "approximately " : "";
-  const pct = s.female_pct_reported != null ? `, ${s.female_pct_reported}%` : "";
+  const shown = s.female_pct_within_study ?? s.female_pct_reported;
+  const pct = shown != null ? `, ${shown}%` : "";
   if (s.total_enrollment == null) return `${approx}${s.female_n.toLocaleString()} women`;
   return `${approx}${s.female_n.toLocaleString()} of ${s.total_enrollment.toLocaleString()}${pct}`;
 }

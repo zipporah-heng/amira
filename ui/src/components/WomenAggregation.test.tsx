@@ -23,13 +23,16 @@ import type { EvidenceResponse, WomenIncludedStudy } from "../api";
 /** Canonical per-study rows, exactly as /api/check-evidence composes them. */
 const DIGOXIN_STUDIES: WomenIncludedStudy[] = [
   { trial_id: "DIG", study: "DIG", total_enrollment: 6800, total_enrollment_state: "reported",
-    female_n: null, female_basis: "not_located", female_pct_reported: null, combinable: false },
+    female_n: null, female_basis: "not_located", female_pct_reported: null,
+    female_pct_within_study: null, combinable: false },
+  // The source records 28%; the displayed figure is the within-study ratio 284 / 1,001.
   { trial_id: "DECISION", study: "DECISION", total_enrollment: 1001, total_enrollment_state: "reported",
-    female_n: 284, female_basis: "reported", female_pct_reported: 28.0, combinable: true },
+    female_n: 284, female_basis: "reported", female_pct_reported: 28.0,
+    female_pct_within_study: 28.4, combinable: true },
 ];
 
 const DIGOXIN_DETAIL =
-  "The female enrollment count was not located for DIG. DECISION reported 284 of 1,001 women, 28.0%.";
+  "The female enrollment count was not located for DIG. DECISION reported 284 of 1,001 women, 28.4%.";
 
 function report(o: any): EvidenceResponse {
   const level = o.level ?? 2;
@@ -104,11 +107,13 @@ const ROSUVASTATIN = report({
   eff: "Sex-specific analysis reported", saf: "Sex-specific safety not reported",
   studies: [
     { trial_id: "JUPITER", study: "JUPITER", total_enrollment: 17802, total_enrollment_state: "reported",
-      female_n: 6801, female_basis: "reported", female_pct_reported: null, combinable: true },
+      female_n: 6801, female_basis: "reported", female_pct_reported: null,
+      female_pct_within_study: 38.2, combinable: true },
     { trial_id: "HOPE-3", study: "HOPE-3", total_enrollment: 12705, total_enrollment_state: "reported",
-      female_n: 5844, female_basis: "derived", female_pct_reported: 46.0, combinable: true },
+      female_n: 5844, female_basis: "derived", female_pct_reported: 46.0,
+      female_pct_within_study: 46.0, combinable: true },
   ],
-  detail: "JUPITER reported 6,801 of 17,802 women. HOPE-3 reported approximately 5,844 of 12,705 women, 46.0%.",
+  detail: "JUPITER reported 6,801 of 17,802 women, 38.2%. HOPE-3 reported approximately 5,844 of 12,705 women, 46.0%.",
   combined: { label: "approximately 12,645 of 30,507", count: 12645, total: 30507, percentage: 41.4,
     basis: "mixed_reported_and_derived" },
 });
@@ -119,7 +124,8 @@ const ATORVASTATIN = report({
   eff: "Sex-specific effectiveness not reported", saf: "Sex-specific safety not reported",
   studies: [
     { trial_id: "CARDS", study: "CARDS", total_enrollment: 2800, total_enrollment_state: "reported",
-      female_n: null, female_basis: "not_located", female_pct_reported: null, combinable: false },
+      female_n: null, female_basis: "not_located", female_pct_reported: null,
+      female_pct_within_study: null, combinable: false },
   ],
   detail: "The female enrollment count was not located for CARDS.",
 });
@@ -155,9 +161,8 @@ describe("Digoxin women count", () => {
     const table = container.querySelector(".ev-women-studies")! as HTMLElement;
     const dec = within(table).getByText("DECISION").closest("tr")! as HTMLElement;
     expect(within(dec).getByText("1,001")).toBeInTheDocument();
-    // The canonical reported percentage for DECISION is 28.0%; it is shown as recorded,
-    // never recomputed into a different figure.
-    expect(within(dec).getByText("284 of 1,001, 28%")).toBeInTheDocument();
+    // The within-study ratio of DECISION's own count to its own total.
+    expect(within(dec).getByText("284 of 1,001, 28.4%")).toBeInTheDocument();
   });
 
   it("4. The medicine-level answer is labelled partial, with no combined percentage", () => {

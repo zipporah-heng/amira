@@ -81,12 +81,14 @@ class TestDigoxin:
         estimates = [f.get("female_estimate") or "" for f in DIGOXIN["effectiveness"]["findings"]]
         assert any("1.23" in e for e in estimates)
 
-    def test_the_reported_decision_percentage_is_shown_as_recorded(self):
-        # The DECISION source states "28% were women (n = 284)" of 1,001 participants.
-        # AMIRA shows the recorded 28.0%, not a recomputed 28.4%.
+    def test_the_displayed_decision_percentage_is_the_within_study_ratio(self):
+        # DECISION's own 284 of its own 1,001 = 28.4%. The source's rounded "28% were
+        # women (n = 284)" is retained in female_pct_reported, but the displayed figure
+        # is the within-study ratio. Neither is ever a cross-study percentage.
         rows = {s["trial_id"]: s for s in DIGOXIN["totals"]["women_included"]["per_study"]}
         assert rows["DECISION"]["female_pct_reported"] == 28.0
-        assert "28.0%" in DIGOXIN["totals"]["women_included"]["detail"]
+        assert rows["DECISION"]["female_pct_within_study"] == 28.4
+        assert "284 of 1,001 women, 28.4%" in DIGOXIN["totals"]["women_included"]["detail"]
 
 
 class TestFailClosedRuleAcrossEveryMedicine:
@@ -130,6 +132,9 @@ class TestFailClosedRuleAcrossEveryMedicine:
         for s in r["totals"]["women_included"]["per_study"]:
             if s["female_n"] is not None and s["total_enrollment"] is not None:
                 assert s["female_n"] <= s["total_enrollment"], f"{medicine}/{s['trial_id']}"
+                # The displayed percentage is this study's own ratio, never cross-study.
+                assert s["female_pct_within_study"] == pytest.approx(
+                    round(s["female_n"] / s["total_enrollment"] * 100, 1)), medicine
 
     def test_a_partly_derived_combined_figure_is_labelled_approximate(self):
         r = engine.check_evidence("Cardiovascular disease prevention", "Rosuvastatin")

@@ -100,7 +100,10 @@ export interface WomenIncludedStudy {
   total_enrollment_state: string;
   female_n: number | null;
   female_basis: "reported" | "derived" | "not_located";
+  /** The percentage recorded in the source, when one is recorded. */
   female_pct_reported: number | null;
+  /** This study's own female count over its own total — the displayed percentage. */
+  female_pct_within_study: number | null;
   combinable: boolean;
 }
 

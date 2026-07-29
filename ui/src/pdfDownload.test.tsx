@@ -51,7 +51,7 @@ function report(o: any): EvidenceResponse {
         combined_basis: "reported", studies_reporting_women: 1, studies_reviewed: 1,
         per_study: [{ trial_id: o.study, study: o.study, total_enrollment: o.total,
           total_enrollment_state: "reported", female_n: o.women, female_basis: "reported",
-          female_pct_reported: o.pct, combinable: true }],
+          female_pct_reported: o.pct, female_pct_within_study: o.pct, combinable: true }],
       },
     },
   } as unknown as EvidenceResponse;
