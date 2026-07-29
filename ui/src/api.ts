@@ -533,6 +533,30 @@ export async function getNhanes(drugClass: string): Promise<NhanesContext> {
   return r.json();
 }
 
+export interface SchemaField {
+  field: string;
+  description: string;
+  required: boolean;
+}
+
+export interface SchemaResponse {
+  available: boolean;
+  title?: string;
+  schema_version?: string;
+  schema_path?: string;
+  field_count?: number;
+  required_count?: number;
+  fields: SchemaField[];
+}
+
+/** The canonical Women's Evidence Schema, read from the repository file itself so the
+ *  interface never carries a second copy that could drift from the pipeline's. */
+export async function getSchema(): Promise<SchemaResponse> {
+  const r = await fetch("/api/schema");
+  if (!r.ok) throw new Error(`Request failed (${r.status})`);
+  return r.json();
+}
+
 export async function getAssets(): Promise<AssetsResponse> {
   const r = await fetch("/api/assets");
   if (!r.ok) throw new Error(`Request failed (${r.status})`);

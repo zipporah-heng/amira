@@ -1,13 +1,13 @@
 import type { EvidenceResponse } from "../api";
+import * as M from "../evidenceModel";
 
-/** "How were women represented?" — exactly seven cards in one row (mockup).
- *  Each card: line icon, status check, short label, colour-coded border.
- *  States are derived truthfully from the reviewed evidence (the mockup's
- *  illustrative labels are not copied as facts). Pregnancy and hormonal
- *  variability are intentionally kept out of this summary row. */
-
-type Tone = "yes" | "limited" | "missing" | "neutral";
-const TONE_LABEL: Record<Tone, string> = { yes: "Yes", limited: "Limited", missing: "Not reported", neutral: "Not located" };
+/** "How were women represented?" — the canonical evidence fields at a glance.
+ *
+ *  Every card reads ui/src/evidenceModel.ts, the SAME derivation layer the detailed
+ *  sections and the PDF export use, so this row can never report a state that
+ *  contradicts the section below it. Only the wording is shortened; the state is not
+ *  re-derived here. Nothing is inferred: menopause is never taken from age, and a
+ *  dimension AMIRA has not reviewed stays explicitly unestablished. */
 
 const Icon = ({ name }: { name: string }) => {
   const p: Record<string, JSX.Element> = {
@@ -16,6 +16,7 @@ const Icon = ({ name }: { name: string }) => {
     shield: <><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z" /><path d="M9 12l2 2 4-4" /></>,
     calendar: <><rect x="4" y="5" width="16" height="16" rx="2" /><path d="M8 3v4M16 3v4M4 10h16" /></>,
     pill: <><rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-40 12 12)" /><path d="M9 8l5 5" /></>,
+    baby: <><circle cx="12" cy="9" r="4" /><path d="M6 21c0-3.3 2.7-6 6-6s6 2.7 6 6" /><path d="M10 9h.01M14 9h.01" /></>,
     person: <><circle cx="12" cy="7" r="3.2" /><path d="M5 21c0-4 3.1-7 7-7s7 3 7 7" /></>,
     group: <><circle cx="8" cy="9" r="2.4" /><circle cx="16" cy="9" r="2.4" /><path d="M3 20c0-3 2.2-5 5-5s5 2 5 5" /><path d="M13 20c0-2.4 1.4-4.2 3.5-4.8 2.1.6 3.5 2.4 3.5 4.8" /></>,
   };
@@ -25,70 +26,54 @@ const Icon = ({ name }: { name: string }) => {
   );
 };
 
+const GLYPH: Record<M.StateTone, string> = {
+  reported: "✓", limited: "!", not_reported: "✕", incomplete: "?",
+};
+
 export function Representation({ report }: { report: EvidenceResponse }) {
-  const t = report.totals!;
-  const dim = (d: string) => report.dimensions.find((x) => x.dimension === d)?.n_reporting ?? 0;
+  const hc = M.hormonalContext(report);
+  const included = M.womenIncluded(report);
+  const pct = report.totals?.women_pct_of_participants;
 
-  // "Women included" must reflect ANY verified female-participation evidence — a
-  // reported count, a reported percentage, a derived female subtotal, OR the
-  // canonical "Women Counted" maturity level (level >= 1) OR a verified sex-specific
-  // finding. Keying it on the reported COUNT alone made it read "Not reported" for a
-  // brand (e.g. Mounjaro) whose female participation is stored as a percentage, which
-  // contradicted the maturity checklist. This uses canonical fields, not hard-coded text.
-  const womenCounted = report.maturity?.rule_trace?.find((x) => x.level === 1)?.satisfied ?? false;
-  const femaleFigureStored =
-    t.women_reported_count > 0 ||
-    t.women_estimated_total > 0 ||
-    t.women_pct_of_participants != null;
-  const sexAnalysisStored =
-    (report.effectiveness?.findings?.length || 0) > 0 ||
-    (report.safety?.significant_findings?.length || 0) > 0 ||
-    (report.safety?.other_findings?.length || 0) > 0;
-  const womenIncluded = womenCounted || femaleFigureStored || sexAnalysisStored;
-  const womenPct = t.women_pct_of_participants;
-  const effState = (report.effectiveness?.state || "").toLowerCase();
-  const safState = (report.safety?.state || "").toLowerCase();
-  const postHoc = (report.effectiveness?.findings || []).some((f) => /post hoc/i.test(f.interpretation || ""));
-  const olderEnrolled = report.trials.some((tr) => {
-    const m = (tr.minimum_age || "").match(/(\d+)/); return m ? parseInt(m[1], 10) >= 60 : false;
-  });
-
-  const effTone: Tone = effState.includes("not reported") ? "missing"
-    : effState.includes("insufficient") ? "neutral"
-    : (effState.includes("significant") && !effState.includes("no ")) ? "yes"
-    : "yes";
-  const safTone: Tone = safState.includes("not reported") ? "missing"
-    : safState.includes("insufficient") ? "neutral"
-    : safState.includes("significant") && !safState.includes("no ") ? "yes" : "limited";
-
-  const cards: { title: string; icon: string; tone: Tone; sub?: string }[] = [
-    { title: "Women included", icon: "women", tone: womenIncluded ? "yes" : "missing",
-      sub: womenIncluded && womenPct != null ? `${womenPct}%` : undefined },
-    { title: "Sex-specific outcomes", icon: "chart", tone: effTone, sub: postHoc ? "post hoc" : undefined },
-    { title: "Sex-specific safety", icon: "shield", tone: safTone },
-    { title: "Menopause", icon: "calendar", tone: dim("menopause_status_reported") > 0 ? "yes" : "missing" },
-    { title: "Hormone therapy", icon: "pill", tone: dim("hormone_therapy_reported") > 0 ? "yes" : "missing" },
-    { title: "Older women", icon: "person", tone: olderEnrolled ? "limited" : "missing" },
-    { title: "Race and ethnicity", icon: "group", tone: "neutral" },
+  const cards: { title: string; icon: string; cell: M.EvidenceCell; sub?: string }[] = [
+    // "Women included" keeps its percentage; the state itself is the shared one.
+    { title: "Women included", icon: "women", cell: included,
+      sub: included.tone === "reported" && pct != null ? `${pct}%` : undefined },
+    // Sex-specific outcomes IS the women-analyzed question — same value, same wording.
+    { title: "Sex-specific outcomes", icon: "chart", cell: M.sexSpecificOutcomes(report) },
+    { title: "Sex-specific safety", icon: "shield", cell: M.safety(report) },
+    { title: "Menopause", icon: "calendar", cell: hc.menopauseRepresentation },
+    { title: "Hormone therapy", icon: "pill", cell: hc.hormoneTherapyRepresentation },
+    { title: "Pregnancy", icon: "baby", cell: M.pregnancyEvidence(report) },
+    { title: "Older women or age reporting", icon: "person", cell: M.ageReporting(report) },
+    { title: "Race and ethnicity", icon: "group", cell: M.raceEthnicity(report) },
   ];
 
   return (
     <section className="card representation" id="representation" style={{ marginTop: 18 }}>
       <h2 className="rep-h">How were women represented?</h2>
+      <p className="rep-sub">
+        A summary of the same canonical evidence states shown in the detailed sections below.
+      </p>
       <div className="rep-row">
-        {cards.map((c) => (
-          <div className={`rep-cell ${c.tone}`} key={c.title}>
-            <div className="rep-cell-title">{c.title}</div>
-            <div className={`rep-cell-icon ${c.tone}`}><Icon name={c.icon} /></div>
-            <div className={`rep-pill ${c.tone}`}>
-              <span className="rep-pill-glyph" aria-hidden>
-                {c.tone === "yes" ? "✓" : c.tone === "limited" ? "!" : c.tone === "neutral" ? "?" : "✕"}
-              </span>
-              {TONE_LABEL[c.tone]}{c.sub ? ` · ${c.sub}` : ""}
+        {cards.map((c) => {
+          const short = M.shortLabel(c.cell);
+          return (
+            <div className={`rep-cell ${c.cell.tone}`} key={c.title}>
+              <div className="rep-cell-title">{c.title}</div>
+              <div className={`rep-cell-icon ${c.cell.tone}`}><Icon name={c.icon} /></div>
+              <div className={`rep-pill ${c.cell.tone}`}>
+                <span className="rep-pill-glyph" aria-hidden>{GLYPH[c.cell.tone]}</span>
+                {short}{c.sub ? ` · ${c.sub}` : ""}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
+      <p className="ev-foot">
+        Menopausal status is never inferred from age, and a dimension AMIRA has not reviewed is
+        shown as not established rather than as absent from the research.
+      </p>
     </section>
   );
 }

@@ -114,7 +114,11 @@ function FindingCard({ report }: { report: EvidenceResponse }) {
     headline = `${medicine}: fewer ${pluralize(f.endpoint)} reported in women in ${trialOf(f.scope)}`;
     statLine = [f.female_estimate, f.female_ci].filter(Boolean).join(" · ");
   } else if (f) {
-    headline = `${medicine}: a sex-specific signal on ${f.endpoint.toLowerCase()}`;
+    // A finding without a recorded endpoint must not crash the page — report the
+    // signal without naming an outcome AMIRA does not have.
+    headline = f.endpoint
+      ? `${medicine}: a sex-specific signal on ${f.endpoint.toLowerCase()}`
+      : `${medicine}: a sex-specific signal was reported`;
     statLine = [f.female_estimate, f.female_ci].filter(Boolean).join(" · ");
   } else {
     headline = `No drug-specific sex-based finding was located for ${medicine}.`;

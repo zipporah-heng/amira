@@ -105,6 +105,45 @@ export function womenAnalyzed(r: EvidenceResponse): EvidenceCell {
   };
 }
 
+/** "Sex-specific outcomes" in the representation row IS the women-analyzed question.
+ *  Aliased (not re-derived) so the summary row can never disagree with the detail. */
+export const sexSpecificOutcomes = womenAnalyzed;
+
+/** A compact label for the representation row, derived from the SAME cell the detailed
+ *  section renders. Only the wording is shortened — never the state. */
+export function shortLabel(cell: EvidenceCell): string {
+  // Keep an already-short canonical answer verbatim (e.g. "Yes", "Yes (post hoc)").
+  if (cell.label.length <= 18) return cell.label;
+  switch (cell.tone) {
+    case "reported": return "Reported";
+    case "limited": return "Limited";
+    case "not_reported": return "Not reported";
+    default: return "Not established";
+  }
+}
+
+/** Pregnancy-specific evidence, from the canonical pregnancy dimension. */
+export function pregnancyEvidence(r: EvidenceResponse): EvidenceCell {
+  const n = r.dimensions?.find((x) => x.dimension === "pregnancy_evidence_reported")?.n_reporting ?? 0;
+  return n > 0 ? { label: "Reported", tone: "reported" } : { label: "Not reported", tone: "not_reported" };
+}
+
+/** Age reporting — whether the reviewed records state an age eligibility. This is a
+ *  registry FACT about reporting; it never implies that older women were studied, and
+ *  age is never used to infer menopausal status. */
+export function ageReporting(r: EvidenceResponse): EvidenceCell {
+  const withAge = (r.trials || []).filter((t) => !!t.minimum_age);
+  if (!withAge.length) return { label: "Not reported", tone: "not_reported" };
+  return { label: "Reported", detail: `Minimum age ${withAge[0].minimum_age}`, tone: "reported" };
+}
+
+/** Race and ethnicity is not a dimension AMIRA has reviewed for any medicine, so it
+ *  stays explicitly unestablished rather than being reported as absent from the
+ *  literature — AMIRA never claims a source is silent on something it did not check. */
+export function raceEthnicity(_r: EvidenceResponse): EvidenceCell {
+  return { label: "Not established", detail: "Not a reviewed dimension", tone: "incomplete" };
+}
+
 export function effectiveness(r: EvidenceResponse): EvidenceCell {
   const state = r.effectiveness?.state || "";
   return { label: state || "Not established", tone: toneForState(state) };
