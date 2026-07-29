@@ -102,6 +102,14 @@ export function CheckEvidence() {
 
       {report && report.supported && report.banner && report.totals && (
         <>
+          {/* Active ingredient shown SEPARATELY in the result (never appended to the
+              selectable medicine name). Brand note (e.g. Zepbound) sits alongside it. */}
+          {report.banner.active_ingredient && (
+            <p className="med-ingredient">
+              <span className="med-ingredient-k">Active ingredient:</span> {report.banner.active_ingredient.toLowerCase()}
+              {report.banner.brand_note ? <span className="med-brandnote"> · {report.banner.brand_note}</span> : null}
+            </p>
+          )}
           {/* "What should I notice?" is the SINGLE primary presentation of the signal.
               When a verified Critical Signal exists for this medicine it is consolidated
               INTO this card (no separate standalone panel above the selector). */}

@@ -208,5 +208,26 @@
     "decision": "include",
     "reason": "FDA Snapshot reports HbA1c change and gastrointestinal adverse reactions by sex (~53% women); no formal between-sex comparison located.",
     "screened_at": "2026-07-28T00:00:00Z"
+  },
+  {
+    "candidate": "DailyMed prescribing information: Ozempic (semaglutide)",
+    "identifier_type": "regulatory",
+    "decision": "include",
+    "reason": "Ozempic label Highlights — common adverse reactions (>=5%) for the overall-safety layer.",
+    "screened_at": "2026-07-28T00:00:00Z"
+  },
+  {
+    "candidate": "DailyMed prescribing information: Wegovy (semaglutide 2.4 mg)",
+    "identifier_type": "regulatory",
+    "decision": "include",
+    "reason": "Wegovy label Highlights — common adverse reactions (>=5%, includes fatigue) for the overall-safety layer.",
+    "screened_at": "2026-07-28T00:00:00Z"
+  },
+  {
+    "candidate": "DailyMed prescribing information: Mounjaro (tirzepatide)",
+    "identifier_type": "regulatory",
+    "decision": "include",
+    "reason": "Mounjaro label Highlights — common adverse reactions (>=5%) for the overall-safety layer.",
+    "screened_at": "2026-07-28T00:00:00Z"
   }
 ]

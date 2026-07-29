@@ -111,12 +111,10 @@ export function EvidenceSearch({ filters, setFilters, onCheck, catalog }: {
   const conditions = conditionsFor(filters.healthArea).map((c) => c.condition);
   const classNames = classesFor(filters.healthArea, filters.condition).map((c) => c.drug_class);
   const medEntries = medsFor(filters.healthArea, filters.condition, filters.drugClass);
-  // Brand name is the option value (keeps each brand's evidence scope distinct); the
-  // active ingredient is shown as secondary metadata (e.g. "Ozempic · semaglutide").
-  const medOpts = medEntries.map((m) => ({
-    label: m.active_ingredient ? `${m.medicine} · ${m.active_ingredient.toLowerCase()}` : m.medicine,
-    value: m.medicine,
-  }));
+  // The selector shows ONLY the brand/product name. The active ingredient is shown
+  // separately in the evidence result (never appended to the selectable name), so the
+  // ingredient can never look like part of the selectable medicine.
+  const medOpts = medEntries.map((m) => ({ label: m.medicine, value: m.medicine }));
 
   const onHealthAreaChange = (healthArea: string) => {
     const cond = conditionsFor(healthArea)[0];

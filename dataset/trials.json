@@ -312,7 +312,13 @@
     "has_registry_results": true,
     "registry_url": "https://clinicaltrials.gov/study/NCT01720446",
     "primary_source_label": "ClinicalTrials.gov",
-    "primary_source_id": "SRC-CTGOV-NCT01720446"
+    "primary_source_id": "SRC-CTGOV-NCT01720446",
+    "known_adverse_effects": {
+      "source_id": "SRC-DAILYMED-OZEMPIC",
+      "list": ["Nausea", "Vomiting", "Diarrhea", "Abdominal pain", "Constipation"],
+      "exact_passage": "The most common adverse reactions, reported in >=5% of patients treated with OZEMPIC, are nausea, vomiting, diarrhea, abdominal pain and constipation.",
+      "source_locator": "Highlights of Prescribing Information, Adverse Reactions"
+    }
   },
   {
     "trial_id": "STEP-1",
@@ -340,7 +346,13 @@
     "has_registry_results": true,
     "registry_url": "https://clinicaltrials.gov/study/NCT03548935",
     "primary_source_label": "ClinicalTrials.gov",
-    "primary_source_id": "SRC-CTGOV-NCT03548935"
+    "primary_source_id": "SRC-CTGOV-NCT03548935",
+    "known_adverse_effects": {
+      "source_id": "SRC-DAILYMED-WEGOVY",
+      "list": ["Nausea", "Vomiting", "Diarrhea", "Constipation", "Fatigue"],
+      "exact_passage": "The most common adverse reactions, reported in >=5% of patients treated with WEGOVY, include nausea, diarrhea, vomiting, constipation, abdominal pain, headache, fatigue, dyspepsia and dizziness.",
+      "source_locator": "Highlights of Prescribing Information, Adverse Reactions"
+    }
   },
   {
     "trial_id": "SURPASS-2",
@@ -369,6 +381,12 @@
     "has_registry_results": true,
     "registry_url": "https://clinicaltrials.gov/study/NCT03987919",
     "primary_source_label": "PubMed",
-    "primary_source_id": "SRC-PMID-34170647"
+    "primary_source_id": "SRC-PMID-34170647",
+    "known_adverse_effects": {
+      "source_id": "SRC-DAILYMED-MOUNJARO",
+      "list": ["Nausea", "Vomiting", "Diarrhea", "Decreased appetite", "Constipation", "Abdominal pain"],
+      "exact_passage": "The most common adverse reactions, reported in >=5% of patients treated with MOUNJARO, are nausea, diarrhea, decreased appetite, vomiting, constipation, dyspepsia and abdominal pain.",
+      "source_locator": "Highlights of Prescribing Information, Adverse Reactions"
+    }
   }
 ]

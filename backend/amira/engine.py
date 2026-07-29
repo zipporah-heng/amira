@@ -480,6 +480,20 @@ def check_evidence(condition: str, medicine: str,
     indication = matched[0].get("indication")
     active_ingredient = matched[0].get("active_ingredient")
     brand_note = matched[0].get("brand_note")
+    # Known adverse effects from the reviewed prescribing information (label-level).
+    # This is the OVERALL-safety layer, kept distinct from the sex-specific safety
+    # analysis. The source link is dangling-safe.
+    kae_raw = matched[0].get("known_adverse_effects")
+    known_adverse_effects = None
+    if kae_raw and kae_raw.get("list"):
+        s = dataset.source_link_safe(kae_raw.get("source_id"))
+        known_adverse_effects = {
+            "list": kae_raw["list"],
+            "exact_passage": kae_raw.get("exact_passage"),
+            "source_locator": kae_raw.get("source_locator"),
+            "source": {"source_id": s["source_id"], "title": s["title"], "url": s["url"],
+                       "publisher": s.get("publisher"), "resolved": s["resolved"]},
+        }
 
     mat = maturity.evaluate(trial_ids)
     effectiveness = clinical.effectiveness_state(medicine)
@@ -544,6 +558,7 @@ def check_evidence(condition: str, medicine: str,
             "medicine": medicine,
             "active_ingredient": active_ingredient,
             "brand_note": brand_note,
+            "known_adverse_effects": known_adverse_effects,
             "drug_class": drug_class,
             "indication": indication,
             # Presentation flag: true when this medicine's evidence review is

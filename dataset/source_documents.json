@@ -348,5 +348,47 @@
     "api_url": null,
     "retrieved_at": "2026-07-28T00:00:00Z",
     "license_note": "U.S. Government public-domain regulatory snapshot. The FDA site blocks automated retrieval; the by-sex excerpts reflect the Snapshot's reported values and await named human verification. Short excerpts quoted for citation."
+  },
+  {
+    "source_id": "SRC-DAILYMED-OZEMPIC",
+    "source_type": "regulatory_prescribing_information",
+    "title": "OZEMPIC (semaglutide) injection — Highlights of Prescribing Information (DailyMed)",
+    "publisher": "DailyMed (U.S. National Library of Medicine)",
+    "year": null,
+    "nct_id": null,
+    "pmid": null,
+    "pmcid": null,
+    "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?query=ozempic",
+    "api_url": null,
+    "retrieved_at": "2026-07-28T00:00:00Z",
+    "license_note": "U.S. Government public-domain prescribing information (DailyMed). Common-adverse-reaction Highlights for the Ozempic (semaglutide) type 2 diabetes label; exact wording awaits named human verification. Short excerpts quoted for citation."
+  },
+  {
+    "source_id": "SRC-DAILYMED-WEGOVY",
+    "source_type": "regulatory_prescribing_information",
+    "title": "WEGOVY (semaglutide) injection — Highlights of Prescribing Information (DailyMed)",
+    "publisher": "DailyMed (U.S. National Library of Medicine)",
+    "year": null,
+    "nct_id": null,
+    "pmid": null,
+    "pmcid": null,
+    "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?query=wegovy",
+    "api_url": null,
+    "retrieved_at": "2026-07-28T00:00:00Z",
+    "license_note": "U.S. Government public-domain prescribing information (DailyMed). Common-adverse-reaction Highlights for the Wegovy (semaglutide 2.4 mg) weight-management label; exact wording awaits named human verification. Short excerpts quoted for citation."
+  },
+  {
+    "source_id": "SRC-DAILYMED-MOUNJARO",
+    "source_type": "regulatory_prescribing_information",
+    "title": "MOUNJARO (tirzepatide) injection — Highlights of Prescribing Information (DailyMed)",
+    "publisher": "DailyMed (U.S. National Library of Medicine)",
+    "year": null,
+    "nct_id": null,
+    "pmid": null,
+    "pmcid": null,
+    "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?query=mounjaro",
+    "api_url": null,
+    "retrieved_at": "2026-07-28T00:00:00Z",
+    "license_note": "U.S. Government public-domain prescribing information (DailyMed). Common-adverse-reaction Highlights for the Mounjaro (tirzepatide) type 2 diabetes label; exact wording awaits named human verification. Short excerpts quoted for citation."
   }
 ]
