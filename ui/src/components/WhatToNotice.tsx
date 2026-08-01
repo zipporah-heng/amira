@@ -152,7 +152,7 @@ function FindingCard({ report }: { report: EvidenceResponse }) {
   );
 }
 
-/** "How this level was reached" — a compact, accessible checklist that EXPLAINS the
+/** "How this score was calculated" — a compact, accessible checklist that EXPLAINS the
  *  canonical derived maturity level. Reached/unreached is conveyed by icon shape AND
  *  a screen-reader label (never colour alone); the checklist is derived only from
  *  `level` (never recomputed). */
@@ -161,9 +161,9 @@ function MaturityChecklist({ level }: { level: number }) {
   return (
     <div className="nm-how">
       <div className="nm-how-head">
-        How this level was reached
+        How this score was calculated
         <span className="nm-info" role="img"
-          aria-label="How this evidence maturity level is determined"
+          aria-label="How this evidence maturity score is calculated"
           title="Levels are cumulative: each level is reached only when the one before it is. Derived from what the reviewed research reported.">ⓘ</span>
       </div>
       <ul className="nm-check">
@@ -203,6 +203,12 @@ export function NoticePanel({ report, signal = null }: {
 
 /** Evidence Maturity on its own — the circular meter, the canonical level, the
  *  completeness explanation and the five-level checklist. */
+/** The caption beneath the score, and what the score does and does not mean. Wording
+ *  only — the level, its thresholds and its rule trace are untouched. */
+export const MATURITY_CAPTION = "Evidence Criteria Met";
+export const MATURITY_NOTE =
+  "This measures the completeness of women's evidence, not whether the medicine is safe or effective.";
+
 export function MaturityPanel({ report }: { report: EvidenceResponse }) {
   const mat = report.maturity!;
   return (
@@ -211,9 +217,14 @@ export function MaturityPanel({ report }: { report: EvidenceResponse }) {
       {report.banner!.evidence_review_complete === false && (
         <span className="review-status-badge" role="status">Evidence review incomplete</span>
       )}
-      <MaturityMeter level={mat.level} maxLevel={mat.max_level} label={mat.label} scored={mat.scorable !== false} />
-      <p className="nm-note">This measures evidence completeness—not whether the medicine is better.</p>
-      {/* "How this level was reached" — the checklist EXPLAINS the canonical derived
+      {/* The caption under the score names what the score counts. An unscored medicine
+          keeps its canonical status wording ("Not yet established") rather than
+          claiming criteria were met. Neither changes how the score is derived. */}
+      <MaturityMeter level={mat.level} maxLevel={mat.max_level}
+        label={mat.scorable !== false ? MATURITY_CAPTION : mat.label}
+        scored={mat.scorable !== false} />
+      <p className="nm-note">{MATURITY_NOTE}</p>
+      {/* "How this score was calculated" — the checklist EXPLAINS the canonical derived
           level. Shown only for a scored medicine (never a 0/5 checklist for an
           unscored / evidence-review-incomplete medicine). */}
       {mat.scorable !== false && <MaturityChecklist level={mat.level} />}

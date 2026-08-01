@@ -77,7 +77,7 @@
 .mm-label { font-size: 12.5px; fill: var(--ink-3); font-weight: 650; }
 .nm-note { font-size: 13px; color: var(--ink-3); margin-top: 4px; max-width: 280px; line-height: 1.45; }
 
-/* --- "How this level was reached" checklist (explains the derived maturity level) --- */
+/* --- "How this score was calculated" checklist (explains the derived maturity level) --- */
 .nm-how { width: 100%; text-align: left; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
 .nm-how-head { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800;
   letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }

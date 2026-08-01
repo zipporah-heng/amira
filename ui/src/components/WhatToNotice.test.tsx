@@ -30,7 +30,9 @@ describe("WhatToNotice", () => {
     expect(screen.getByText("Evidence Maturity")).toBeInTheDocument();
     expect(container.querySelector(".maturity-meter")).not.toBeNull();
     expect(screen.getByLabelText(/Evidence maturity 2 of 5/i)).toBeInTheDocument();
-    expect(screen.getByText(/This measures evidence completeness/)).toBeInTheDocument();
+    expect(screen.getByText("Evidence Criteria Met")).toBeInTheDocument();
+    expect(screen.getByText(/measures the completeness of women's evidence/)).toBeInTheDocument();
+    expect(screen.getByText(/not whether the medicine is safe or effective/)).toBeInTheDocument();
   });
 
   it("does not render a molecule or an experimental 0–100 pilot score", () => {

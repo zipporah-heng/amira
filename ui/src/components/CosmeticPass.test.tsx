@@ -118,7 +118,7 @@ describe("Check Evidence — compact three-column summary", () => {
     expect(maturity.querySelector("svg.maturity-meter")!.getAttribute("aria-label"))
       .toMatch(/Evidence maturity 2 of 5/);
     expect(maturity.querySelectorAll(".nm-check li").length).toBe(5);
-    expect(maturity.textContent).toMatch(/measures evidence completeness/i);
+    expect(maturity.textContent).toMatch(/measures the completeness of women's evidence/i);
   });
 });
 
