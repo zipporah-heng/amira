@@ -34,8 +34,8 @@ export function MaturityMeter({ level, maxLevel = 5, label, scored = true }: {
   return (
     <svg className="maturity-meter" viewBox="0 0 220 150" role="img"
          aria-label={scored
-           ? `Evidence maturity ${level} of ${maxLevel}: ${label}`
-           : `Evidence maturity not yet established: ${label}`}>
+           ? `AMIRA Evidence Maturity Score: ${level} of ${maxLevel} evidence criteria met`
+           : `AMIRA Evidence Maturity Score not yet established: ${label}`}>
       {segments.map((s, i) => (
         <path key={i} d={s.d} stroke={s.color} strokeWidth={STROKE} strokeLinecap="round" fill="none" />
       ))}

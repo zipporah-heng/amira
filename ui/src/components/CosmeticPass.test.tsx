@@ -116,9 +116,12 @@ describe("Check Evidence — compact three-column summary", () => {
     expect(finding.textContent).toContain("What should I notice?");
     const maturity = container.querySelector("#evidence-maturity")!;
     expect(maturity.querySelector("svg.maturity-meter")!.getAttribute("aria-label"))
-      .toMatch(/Evidence maturity 2 of 5/);
+      .toMatch(/AMIRA Evidence Maturity Score: 2 of 5 evidence criteria met/);
     expect(maturity.querySelectorAll(".nm-check li").length).toBe(5);
-    expect(maturity.textContent).toMatch(/measures the completeness of women's evidence/i);
+    expect(maturity.textContent)
+      .toMatch(/measures the maturity and completeness of evidence about women/i);
+    expect(maturity.textContent)
+      .toMatch(/does not measure whether a medicine is safe or effective/i);
   });
 });
 

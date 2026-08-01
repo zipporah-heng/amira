@@ -54,7 +54,7 @@ describe("WhatToNotice — consolidated Digoxin signal (Part A)", () => {
 
   it("keeps the Evidence Maturity card and shows NO standalone signal panel", () => {
     const { container } = render(<WhatToNotice report={digoxinReport} signal={digoxinSignal} />);
-    expect(screen.getByText("Evidence Maturity")).toBeInTheDocument();
+    expect(screen.getByText("AMIRA Evidence Maturity Score")).toBeInTheDocument();
     expect(container.querySelector(".maturity-meter")).not.toBeNull();
     // The old standalone pink critical-signal panel class must be gone.
     expect(container.querySelector(".cs-check")).toBeNull();

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { EvidenceResponse } from "../api";
 import { WhatToNotice } from "./WhatToNotice";
 
-/** The "How this score was calculated" checklist inside the Evidence Maturity card. It
+/** The "How this score was reached" checklist inside the Evidence Maturity card. It
  *  explains the canonical maturity level; it never recomputes maturity. */
 
 function report(opts: { medicine: string; level: number; scorable?: boolean; reviewComplete?: boolean }): EvidenceResponse {
@@ -24,10 +24,11 @@ function report(opts: { medicine: string; level: number; scorable?: boolean; rev
 describe("Evidence Maturity checklist — Digoxin (Level 2)", () => {
   const r = report({ medicine: "Digoxin", level: 2 });
 
-  it("shows the 2/5 gauge and the 'How this score was calculated' checklist", () => {
+  it("shows the 2/5 gauge and the 'How this score was reached' checklist", () => {
     const { container } = render(<WhatToNotice report={r} />);
-    expect(screen.getByLabelText(/Evidence maturity 2 of 5/i)).toBeInTheDocument();
-    expect(screen.getByText("How this score was calculated")).toBeInTheDocument();
+    expect(screen.getByLabelText(/AMIRA Evidence Maturity Score: 2 of 5 evidence criteria met/i))
+      .toBeInTheDocument();
+    expect(screen.getByText("How this score was reached")).toBeInTheDocument();
     expect(container.querySelectorAll(".nm-check li").length).toBe(5);
   });
 
@@ -60,7 +61,7 @@ describe("Evidence Maturity checklist — Digoxin (Level 2)", () => {
 
   it("has an accessible information icon", () => {
     render(<WhatToNotice report={r} />);
-    expect(screen.getByLabelText(/how this evidence maturity score is calculated/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/how this evidence maturity score is reached/i)).toBeInTheDocument();
   });
 });
 
