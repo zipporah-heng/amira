@@ -27,10 +27,16 @@ describe("WhatToNotice", () => {
 
   it("renders the verified 2/5 maturity meter and completeness note", () => {
     const { container } = render(<WhatToNotice report={report} />);
-    expect(screen.getByText("Evidence Maturity")).toBeInTheDocument();
+    expect(screen.getByText("AMIRA Evidence Maturity Score")).toBeInTheDocument();
     expect(container.querySelector(".maturity-meter")).not.toBeNull();
-    expect(screen.getByLabelText(/Evidence maturity 2 of 5/i)).toBeInTheDocument();
-    expect(screen.getByText(/This measures evidence completeness/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/AMIRA Evidence Maturity Score: 2 of 5 evidence criteria met/i))
+      .toBeInTheDocument();
+    expect(screen.getByText("2 of 5 evidence criteria met")).toBeInTheDocument();
+    expect(screen.getByText("Evidence Criteria Met")).toBeInTheDocument();
+    expect(screen.getByText(/measures the maturity and completeness of evidence about women/))
+      .toBeInTheDocument();
+    expect(screen.getByText(/does not measure whether a medicine is safe or effective/))
+      .toBeInTheDocument();
   });
 
   it("does not render a molecule or an experimental 0–100 pilot score", () => {

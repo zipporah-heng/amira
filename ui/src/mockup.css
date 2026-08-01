@@ -77,11 +77,12 @@
 .mm-label { font-size: 12.5px; fill: var(--ink-3); font-weight: 650; }
 .nm-note { font-size: 13px; color: var(--ink-3); margin-top: 4px; max-width: 280px; line-height: 1.45; }
 
-/* --- "How this level was reached" checklist (explains the derived maturity level) --- */
+/* --- "How this score was reached" checklist (explains the derived maturity level) --- */
 .nm-how { width: 100%; text-align: left; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
 .nm-how-head { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800;
   letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }
 .nm-info { font-size: 12px; color: var(--lav-700); cursor: help; line-height: 1; }
+.nm-how-sub { margin: 6px 0 0; font-size: 13px; font-weight: 700; color: var(--ink); }
 .nm-check { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
 .nm-check li { display: flex; align-items: flex-start; gap: 9px; }
 .nm-ic { flex-shrink: 0; width: 18px; height: 18px; border-radius: 999px; display: inline-flex;

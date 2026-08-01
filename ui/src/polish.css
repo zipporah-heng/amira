@@ -45,7 +45,12 @@
 .nf-link { font-size: 16px; }
 .nm-head { font-size: 17px; }
 .nm-note { font-size: 14px; }
-.mm-value { font-size: 40px; } .mm-den { font-size: 20px; } .mm-label { font-size: 14px; }
+.mm-value { font-size: 40px; } .mm-den { font-size: 20px; }
+/* The caption sits inside the gauge ring: at its baseline the clear width is
+   2*sqrt((R - stroke/2)^2 - dy^2) = ~133 user units. "Evidence Criteria Met"
+   measures ~141 units at 14px and would graze the arc, so the caption keeps the
+   base 12.5px. Type size only — the gauge geometry and the card layout are
+   unchanged. */
 .rep-cell-title { font-size: 14px; }
 .rep-status { font-size: 13px; }
 .op-med { font-size: 19px; }

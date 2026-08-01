@@ -174,10 +174,15 @@ describe("Restored components", () => {
     expect(meter.querySelectorAll("path").length).toBe(5);           // five segments
     expect(meter.textContent).toContain("2");
     expect(meter.textContent).toContain("/ 5");
-    expect(meter.textContent).toContain("Women Analyzed");
-    expect(meter.getAttribute("aria-label")).toMatch(/Evidence maturity 2 of 5/i);
+    // The caption names what the score counts; the canonical level name stays in the
+    // checklist below it.
+    expect(meter.textContent).toContain("Evidence Criteria Met");
+    expect(meter.getAttribute("aria-label"))
+      .toMatch(/AMIRA Evidence Maturity Score: 2 of 5 evidence criteria met/i);
     expect(summary.textContent)
-      .toMatch(/measures evidence completeness[—,] ?not whether the medicine is better/i);
+      .toMatch(/measures the maturity and completeness of evidence about women/i);
+    expect(summary.textContent)
+      .toMatch(/does not measure whether a medicine is safe or effective/i);
   });
 
   it("2. Shows the maturity checklist with reached and unreached levels", () => {
